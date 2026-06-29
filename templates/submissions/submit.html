@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ question.title }} - CodeAssess</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #1a1a2e; color: #fff; display: flex; height: 100vh; }
+        .left-panel { width: 40%; background: #16213e; padding: 24px; overflow-y: auto; border-right: 2px solid #0f3460; }
+        .right-panel { width: 60%; display: flex; flex-direction: column; }
+        .navbar { background: #0f3460; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; }
+        .navbar .logo { color: #ffa116; font-weight: 700; font-size: 18px; }
+        .question-title { font-size: 20px; font-weight: 700; color: #ffa116; margin-bottom: 12px; }
+        .difficulty { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 12px; margin-bottom: 16px; }
+        .easy { background: #2d6a4f; color: #52b788; }
+        .medium { background: #7b4f00; color: #ffa116; }
+        .hard { background: #6b1a1a; color: #ff6b6b; }
+        .description { color: #ccc; line-height: 1.7; font-size: 14px; }
+        .editor-toolbar { background: #0f3460; padding: 10px 16px; display: flex; gap: 10px; align-items: center; }
+        select { background: #16213e; color: #fff; border: 1px solid #333; padding: 6px 12px; border-radius: 6px; font-size: 13px; }
+        textarea { flex: 1; background: #0d1117; color: #e6edf3; font-family: 'Courier New', monospace; font-size: 14px; padding: 16px; border: none; outline: none; resize: none; line-height: 1.6; }
+        .run-btn { background: #ffa116; color: #1a1a2e; border: none; padding: 8px 20px; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 14px; }
+        .run-btn:hover { background: #ffb84d; }
+        .results-panel { background: #161b22; padding: 16px; min-height: 150px; border-top: 2px solid #0f3460; overflow-y: auto; max-height: 250px; }
+        .results-panel h3 { color: #ffa116; margin-bottom: 10px; font-size: 14px; }
+        .test-case { padding: 8px 12px; margin: 6px 0; border-radius: 6px; font-size: 13px; }
+        .pass { background: #1a3a2a; border-left: 3px solid #52b788; color: #52b788; }
+        .fail { background: #3a1a1a; border-left: 3px solid #ff6b6b; color: #ff6b6b; }
+        .score { font-size: 20px; font-weight: 700; margin-bottom: 10px; }
+        a { color: #ccc; text-decoration: none; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="left-panel">
+        <div style="margin-bottom:16px"><a href="/dashboard/">← Back to Problems</a></div>
+        <div class="question-title">{{ question.title }}</div>
+        <span class="difficulty {{ question.difficulty }}">{{ question.difficulty|title }}</span>
+        <div class="description">{{ question.problem_statement|default:question.text|linebreaks }}</div>
+    </div>
+    <div class="right-panel">
+        <div class="navbar">
+            <span class="logo">⚡ CodeAssess</span>
+        </div>
+        <div class="editor-toolbar">
+            <select id="language">
+                <option value="python">Python</option>
+                <option value="javascript">JavaScript</option>
+                <option value="c">C</option>
+                <option value="cpp">C++</option>
+                <option value="java">Java</option>
+            </select>
+            <button class="run-btn" onclick="submitCode()">▶ Run & Submit</button>
+        </div>
+        <textarea id="code" placeholder="// Write your solution here..."></textarea>
+        <div class="results-panel" id="results">
+            <h3>Results will appear here after submission</h3>
+        </div>
+    </div>
+    <script>
+        function submitCode() {
+            const code = document.getElementById('code').value;
+            const lang = document.getElementById('language').value;
+            document.getElementById('results').innerHTML = '<h3>⏳ Running...</h3>';
+            fetch('', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded',
+                          'X-CSRFToken': '{{ csrf_token }}'},
+                body: `source_code=${encodeURIComponent(code)}&language=${lang}`
+            })
+            .then(r => r.json())
+            .then(data => {
+                let html = `<div class="score" style="color:${data.score==100?'#52b788':'#ffa116'}">Score: ${data.score}%</div>`;
+                data.results.forEach((r, i) => {
+                    html += `<div class="test-case ${r.passed?'pass':'fail'}">
+                        Test ${i+1}: ${r.passed?'✅ PASS':'❌ FAIL'} &nbsp;|&nbsp;
+                        Expected: <b>${r.expected}</b> &nbsp;|&nbsp; Got: <b>${r.got}</b>
+                        ${r.error ? '<br>Error: '+r.error : ''}
+                    </div>`;
+                });
+                document.getElementById('results').innerHTML = html;
+            });
+        }
+    </script>
+</body>
+</html>

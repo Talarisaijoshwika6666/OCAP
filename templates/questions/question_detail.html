@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+{% block page_title %}// {{ question.title }}{% endblock %}
+{% block content %}
+{% if request.GET.result %}
+<div style="margin-bottom:16px;padding:14px 20px;border-radius:12px;
+  {% if request.GET.result == 'Accepted' %}
+  background:rgba(0,255,130,0.1);border:1px solid rgba(0,255,130,0.4);color:#00ff82;
+  {% else %}
+  background:rgba(255,45,120,0.1);border:1px solid rgba(255,45,120,0.4);color:#ff2d78;
+  {% endif %}
+  font-family:'Orbitron',monospace;font-size:0.9rem;font-weight:700;display:flex;align-items:center;gap:10px;">
+  {% if request.GET.result == 'Accepted' %}
+    <i class="fas fa-check-circle"></i> ACCEPTED — Great job!
+  {% else %}
+    <i class="fas fa-times-circle"></i> {{ request.GET.result }}
+  {% endif %}
+</div>
+{% endif %}
+
+<style>
+  .editor-container { display: flex; gap: 20px; height: calc(100vh - 140px); }
+  .problem-panel { width: 40%; overflow-y: auto; }
+  .code-panel { width: 60%; display: flex; flex-direction: column; gap: 12px; }
+  #code-editor { width: 100%; height: 100%; min-height: 380px; background: #0a0614; color: #f0eaff; font-family: 'JetBrains Mono', monospace; font-size: 0.88rem; padding: 16px; border: 1px solid rgba(176,38,255,0.3); border-radius: 12px; resize: none; outline: none; line-height: 1.6; }
+</style>
+
+<div class="editor-container">
+
+  <!-- Left: Problem Description -->
+  <div class="problem-panel">
+    <div class="card-glass p-4 mb-3">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+        <span style="font-family:'Orbitron',monospace;font-size:1rem;font-weight:900;color:#f0eaff;">{{ question.title }}</span>
+        {% if question.difficulty == 'Easy' %}
+          <span style="background:rgba(0,255,130,0.15);color:#00ff82;padding:3px 12px;border-radius:20px;font-size:0.72rem;font-weight:700;border:1px solid rgba(0,255,130,0.4);">● Easy</span>
+        {% elif question.difficulty == 'Medium' %}
+          <span style="background:rgba(255,193,7,0.15);color:#ffc107;padding:3px 12px;border-radius:20px;font-size:0.72rem;font-weight:700;border:1px solid rgba(255,193,7,0.4);">● Medium</span>
+        {% else %}
+          <span style="background:rgba(255,45,120,0.15);color:#ff2d78;padding:3px 12px;border-radius:20px;font-size:0.72rem;font-weight:700;border:1px solid rgba(255,45,120,0.4);">● Hard</span>
+        {% endif %}
+      </div>
+      <div style="color:rgba(240,234,255,0.7);font-size:0.88rem;line-height:1.7;">{{ question.description }}</div>
+    </div>
+
+    {% if question.sample_input %}
+    <div class="card-glass p-4 mb-3">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:#b026ff;letter-spacing:2px;margin-bottom:10px;">// SAMPLE INPUT</div>
+      <pre style="background:#0a0614;border-radius:8px;padding:12px;color:#00fff7;font-size:0.82rem;margin:0;">{{ question.sample_input }}</pre>
+    </div>
+    {% endif %}
+
+    {% if question.sample_output %}
+    <div class="card-glass p-4">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:#b026ff;letter-spacing:2px;margin-bottom:10px;">// SAMPLE OUTPUT</div>
+      <pre style="background:#0a0614;border-radius:8px;padding:12px;color:#00ff82;font-size:0.82rem;margin:0;">{{ question.sample_output }}</pre>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Right: Code Editor -->
+  <div class="code-panel">
+    <div class="card-glass p-3" style="flex:1;display:flex;flex-direction:column;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <select id="lang-select" style="background:#0a0614;border:1px solid rgba(176,38,255,0.3);border-radius:8px;color:#f0eaff;padding:4px 10px;font-family:'JetBrains Mono',monospace;font-size:0.8rem;" onchange="changeLanguage(this.value)">
+  <option value="python">Python3</option>
+  <option value="python2">Python</option>
+  <option value="javascript">JavaScript</option>
+  <option value="typescript">TypeScript</option>
+  <option value="java">Java</option>
+  <option value="cpp">C++</option>
+  <option value="c">C</option>
+  <option value="csharp">C#</option>
+  <option value="go">Go</option>
+  <option value="kotlin">Kotlin</option>
+  <option value="swift">Swift</option>
+  <option value="rust">Rust</option>
+  <option value="ruby">Ruby</option>
+  <option value="php">PHP</option>
+  <option value="dart">Dart</option>
+  <option value="scala">Scala</option>
+</select>
+        <div style="display:flex;gap:8px;">
+          <button onclick="clearEditor()" style="padding:6px 14px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:transparent;color:rgba(240,234,255,0.5);font-size:0.78rem;cursor:pointer;">Clear</button>
+          <button onclick="submitCode()" style="padding:6px 18px;border-radius:8px;border:none;background:linear-gradient(135deg,#ff2d78,#b026ff);color:#fff;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:'Orbitron',monospace;">
+            <i class="fas fa-play"></i> RUN
+          </button>
+        </div>
+      </div>
+      <textarea id="code-editor" placeholder="# Write your solution here..."></textarea>
+    </div>
+
+    <!-- Output -->
+    <div class="card-glass p-3">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:#b026ff;letter-spacing:2px;margin-bottom:10px;">// OUTPUT</div>
+      <div id="output-area" style="min-height:80px;background:#0a0614;border-radius:8px;padding:12px;font-family:'JetBrains Mono',monospace;font-size:0.82rem;color:rgba(240,234,255,0.4);">
+        // Run your code to see output here
+      </div>
+      <form method="post" id="submit-form" action="/questions/submit/{{ question.pk }}/">
+        {% csrf_token %}
+        <input type="hidden" name="code" id="hidden-code">
+        <input type="hidden" name="language" id="hidden-lang">
+        <button type="submit" style="width:100%;padding:10px;border-radius:8px;border:none;background:linear-gradient(135deg,#00fff7,#b026ff);color:#fff;font-family:'Orbitron',monospace;font-size:0.85rem;font-weight:700;cursor:pointer;">
+          <i class="fas fa-paper-plane"></i> SUBMIT SOLUTION
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+const templates = {
+  python:     "def solution():\n    pass",
+  python2:    "def solution():\n    pass",
+  javascript: "var solution = function() {\n    \n};",
+  typescript: "function solution(): void {\n    \n}",
+  java:       "class Solution {\n    public void solution() {\n        \n    }\n}",
+  cpp:        "#include <bits/stdc++.h>\nusing namespace std;\n\nclass Solution {\npublic:\n    void solution() {\n        \n    }\n};",
+  c:          "#include <stdio.h>\n\nvoid solution() {\n    \n}",
+  csharp:     "public class Solution {\n    public void Solution() {\n        \n    }\n}",
+  go:         "func solution() {\n    \n}",
+  kotlin:     "fun solution() {\n    \n}",
+  swift:      "func solution() {\n    \n}",
+  rust:       "fn solution() {\n    \n}",
+  ruby:       "def solution\n    \nend",
+  php:        "<?php\nfunction solution() {\n    \n}",
+  dart:       "void solution() {\n    \n}",
+  scala:      "object Solution {\n    def solution(): Unit = {\n        \n    }\n}",
+};
+
+function changeLanguage(lang) {
+  document.getElementById('code-editor').value = templates[lang] || '';
+}
+
+function clearEditor() {
+  document.getElementById('code-editor').value = '';
+}
+
+function submitCode() {
+  const code = document.getElementById('code-editor').value;
+  const lang = document.getElementById('lang-select').value;
+  document.getElementById('output-area').innerHTML = '<span style="color:#ffc107;">// Running...</span>';
+  fetch(`/questions/run/{{ question.pk }}/`, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'},
+    body: JSON.stringify({code: code, language: lang})
+  })
+  .then(r => r.json())
+  .then(data => {
+    document.getElementById('output-area').innerHTML = `<span style="color:#00ff82;">${data.output}</span>`;
+  });
+}
+
+document.getElementById('submit-form').addEventListener('submit', function() {
+  document.getElementById('hidden-code').value = document.getElementById('code-editor').value;
+  document.getElementById('hidden-lang').value = document.getElementById('lang-select').value;
+});
+
+changeLanguage('python');
+</script>
+{% endblock %}

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard - CodeAssess</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #1a1a2e; color: #fff; }
+        .navbar { background: #0f3460; padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; }
+        .logo { color: #ffa116; font-weight: 700; font-size: 20px; }
+        .nav-links a { color: #ccc; text-decoration: none; margin-left: 20px; font-size: 14px; }
+        .nav-links a:hover { color: #ffa116; }
+        .container { max-width: 1100px; margin: 30px auto; padding: 0 20px; }
+        .welcome { background: linear-gradient(135deg, #0f3460, #16213e); border-radius: 12px; padding: 30px; margin-bottom: 30px; border-left: 4px solid #ffa116; }
+        .welcome h1 { font-size: 26px; color: #ffa116; margin-bottom: 6px; }
+        .welcome p { color: #aaa; font-size: 14px; }
+        .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 30px; }
+        .stat-card { background: #16213e; border-radius: 10px; padding: 20px; text-align: center; border-top: 3px solid #ffa116; }
+        .stat-card .number { font-size: 32px; font-weight: 700; color: #ffa116; }
+        .stat-card .label { color: #888; font-size: 13px; margin-top: 4px; }
+        .section-title { font-size: 18px; color: #ffa116; margin-bottom: 16px; font-weight: 600; }
+        .quick-links { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 30px; }
+        .quick-card { background: #16213e; border-radius: 10px; padding: 20px; text-align: center; text-decoration: none; border: 1px solid #0f3460; transition: border-color 0.2s; }
+        .quick-card:hover { border-color: #ffa116; }
+        .quick-card .icon { font-size: 32px; margin-bottom: 10px; }
+        .quick-card .title { color: #fff; font-weight: 600; font-size: 15px; }
+        .quick-card .desc { color: #888; font-size: 12px; margin-top: 4px; }
+        .questions-grid { display: grid; gap: 12px; }
+        .q-card { background: #16213e; border-radius: 10px; padding: 18px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #0f3460; }
+        .q-card:hover { border-color: #ffa116; }
+        .q-title { font-size: 15px; font-weight: 600; color: #fff; }
+        .q-meta { color: #888; font-size: 12px; margin-top: 4px; }
+        .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+        .easy { background: #1a3a2a; color: #52b788; }
+        .medium { background: #3a2a00; color: #ffa116; }
+        .hard { background: #3a1a1a; color: #ff6b6b; }
+        .solve-btn { background: #ffa116; color: #1a1a2e; padding: 8px 18px; border-radius: 6px; text-decoration: none; font-weight: 700; font-size: 13px; }
+        .solve-btn:hover { background: #ffb84d; }
+        .empty { text-align: center; padding: 40px; color: #888; }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <span class="logo">⚡ CodeAssess</span>
+        <div class="nav-links">
+            <a href="/submissions/my-submissions/">My Submissions</a>
+            <a href="/leaderboard/">Leaderboard</a>
+            <a href="/accounts/profile/">Profile</a>
+            <a href="/accounts/logout/">Logout</a>
+        </div>
+    </div>
+    <div class="container">
+        problems_solved = submissions.filter(result__in=['AC','Accepted']).values('question').distinct().count()
+        easy_solved = submissions.filter(result__in=['AC','Accepted'], question__difficulty='Easy').values('question').distinct().count()
+        medium_solved = submissions.filter(result__in=['AC','Accepted'], question__difficulty='Medium').values('question').distinct().count()
+        hard_solved = submissions.filter(result__in=['AC','Accepted'], question__difficulty='Hard').values('question').distinct().count()
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="number">{{ questions|length }}</div>
+                <div class="label">Total Questions</div>
+            </div>
+            <div class="stat-card">
+                <div class="number">{{ total_submissions }}</div>
+                <div class="label">My Submissions</div>
+            </div>
+            <div class="stat-card">
+                <div class="number">{{ best_score }}%</div>
+                <div class="label">Best Score</div>
+            </div>
+        </div>
+        <div class="quick-links">
+            <a href="/submissions/my-submissions/" class="quick-card">
+                <div class="icon">📋</div>
+                <div class="title">My Submissions</div>
+                <div class="desc">View your history</div>
+            </a>
+            <a href="/leaderboard/" class="quick-card">
+                <div class="icon">🏆</div>
+                <div class="title">Leaderboard</div>
+                <div class="desc">See top performers</div>
+            </a>
+            <a href="/accounts/profile/" class="quick-card">
+                <div class="icon">👤</div>
+                <div class="title">My Profile</div>
+                <div class="desc">View your stats</div>
+            </a>
+        </div>
+        <div class="section-title">Available Questions</div>
+        <div class="questions-grid">
+            {% for question in questions %}
+            <div class="q-card">
+                <div>
+                    <div class="q-title">{{ question.title|default:question.text }}</div>
+                    <div class="q-meta">
+                        <span class="badge {{ question.difficulty }}">{{ question.difficulty|title }}</span>
+                        &nbsp;{{ question.question_type|upper }}
+                    </div>
+                </div>
+                <a href="/submissions/submit/{{ question.id }}/" class="solve-btn">▶ Solve</a>
+            </div>
+            {% empty %}
+            <div class="empty">No questions available yet.</div>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>
