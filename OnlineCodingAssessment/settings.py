@@ -51,7 +51,9 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'accounts.middleware.CandidateAccessMiddleware',
 ]
+
 
 ROOT_URLCONF = 'OnlineCodingAssessment.urls'
 
