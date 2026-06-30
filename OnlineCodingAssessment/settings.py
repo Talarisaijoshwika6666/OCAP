@@ -37,7 +37,6 @@ INSTALLED_APPS = [
     'results',
     'submissions',
     'testcases',
-    'recruiter',
     'quest',
     'contest',
     'discuss',
