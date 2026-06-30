@@ -15,8 +15,6 @@ def login_view(request):
             login(request, user)
             if role == 'admin' or user.is_superuser:
                 return redirect('/admin/')
-            elif role == 'recruiter':
-                return redirect('/recruiter/')
             else:
                 return redirect('/questions/')
     return render(request, 'accounts/login.html')
