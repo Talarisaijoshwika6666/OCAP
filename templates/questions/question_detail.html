@@ -1,6 +1,8 @@
 {% extends 'base.html' %}
 {% block page_title %}// {{ question.title }}{% endblock %}
 {% block content %}
+{% include 'includes/back_button.html' with fallback_url='/questions/' %}
+
 {% if request.GET.result %}
 <div style="margin-bottom:16px;padding:14px 20px;border-radius:12px;
   {% if request.GET.result == 'Accepted' %}
@@ -15,6 +17,12 @@
     <i class="fas fa-times-circle"></i> {{ request.GET.result }}
   {% endif %}
 </div>
+<script>
+  {% if request.GET.result == 'Accepted' %}
+  // Flag this question so the Problem Bank list can play the "just solved" animation next visit.
+  sessionStorage.setItem('justSolvedQuestionId', '{{ question.pk }}');
+  {% endif %}
+</script>
 {% endif %}
 
 <style>

@@ -573,12 +573,28 @@
       border-radius: 3px;
     }
 
+    /* ── BACK BUTTON ── */
+    .back-btn {
+      margin-bottom: 18px;
+    }
+    .back-btn:active {
+      transform: scale(0.96);
+    }
+    .back-btn:focus-visible {
+      outline: 2px solid var(--neon-cyan);
+      outline-offset: 3px;
+    }
+
     /* ── MOBILE ── */
     @media (max-width: 768px) {
       .sidebar { transform: translateX(-100%); }
       .sidebar.open { transform: translateX(0); }
       .main-content { margin-left: 0; }
       .page-content { padding: 16px; }
+      .back-btn {
+        padding: 10px 20px;
+        min-height: 42px;
+      }
     }
   </style>
 </head>
@@ -730,6 +746,16 @@
 <script>
   function toggleSidebar() {
     document.getElementById('sidebar').classList.toggle('open');
+  }
+
+  // Shared handler for every "← Back" button (see templates/includes/back_button.html).
+  // Uses browser history when available, otherwise falls back to a safe, page-appropriate URL.
+  function goBack(fallbackUrl) {
+    if (window.history.length > 1) {
+      window.history.back();
+    } else {
+      window.location.href = fallbackUrl || '/';
+    }
   }
 
   const observer = new IntersectionObserver((entries) => {

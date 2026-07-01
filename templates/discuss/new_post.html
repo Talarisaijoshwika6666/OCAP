@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% block content %}
 <div class="container mt-5" style="max-width:750px;">
+  {% include 'includes/back_button.html' with fallback_url='/discuss/' %}
   <h3 style="color:#f59e0b;font-weight:800;margin-bottom:30px;"><i class="fas fa-pen"></i> New Post</h3>
   <div class="card-dark p-4">
     <form method="post">
