@@ -69,6 +69,9 @@
       z-index: 1000;
       display: flex;
       flex-direction: column;
+      overflow-y: auto;
+      overflow-x: hidden;
+      height: 100vh;
       backdrop-filter: blur(24px);
       transition: transform 0.3s ease;
     }
@@ -187,31 +190,13 @@
     }
 
     .sidebar-nav {
-  flex: 1;
-  overflow-y: auto;
-  padding: 5px 0;
-  scrollbar-width: auto;
-  scrollbar-color: #b026ff rgba(255,255,255,0.05);
-  max-height: 100vh;
-}
-
-.sidebar-nav::-webkit-scrollbar {
-  width: 10px;
-}
-
-.sidebar-nav::-webkit-scrollbar-track {
-  background: rgba(255,255,255,0.05);
-}
-
-.sidebar-nav::-webkit-scrollbar-thumb {
-  background: #b026ff;
-  border-radius: 6px;
-  border: 2px solid rgba(8,5,18,0.9);
-}
-
-.sidebar-nav::-webkit-scrollbar-thumb:hover {
-  background: #ff2d78;
-}
+      flex: 1;
+      overflow-y: scroll;
+      padding: 5px 0;
+      scrollbar-width: thin;
+      max-height: calc(100vh - 80px);
+    }
+    .sidebar-nav::-webkit-scrollbar { display: none; }
 
     /* ── NAV ITEMS ── */
     .nav-item-side {
@@ -647,10 +632,18 @@
       <span class="nav-badge">LIVE</span>
     </a>
 
+    <a href="/study-plan/" class="nav-item-side {% if 'study-plan' in request.path %}active{% endif %}">
+      <div class="nav-icon"><i class="fas fa-graduation-cap"></i></div>
+      Study Plan
+    </a>
     <div class="sidebar-section">// COMPETE</div>
 <a href="/leaderboard/" class="nav-item-side {% if 'leaderboard' in request.path %}active{% endif %}">
   <div class="nav-icon"><i class="fas fa-trophy"></i></div>
   Leaderboard
+</a>
+<a href="/recruiter/" class="nav-item-side {% if 'recruiter' in request.path %}active{% endif %}">
+  <div class="nav-icon"><i class="fas fa-briefcase"></i></div>
+  Recruiter
 </a>
 
     <div class="sidebar-section">// Learn</div>
@@ -660,12 +653,24 @@
   Quest
 </a>
 
+<a href="/quest/explore/" class="nav-item-side {% if '/explore/' in request.path %}active{% endif %}">
+  <div class="nav-icon"><i class="fas fa-compass"></i></div>
+  Explore
+</a>
+
     <a href="/discuss/" class="nav-item-side {% if 'discuss' in request.path %}active{% endif %}">
       <div class="nav-icon"><i class="fas fa-comments"></i></div>
       Discuss
     </a>
 
-    
+    {% if user.is_staff %}
+    <div class="sidebar-section">// Admin</div>
+    <a href="/recruiter/" class="nav-item-side {% if 'recruiter' in request.path %}active{% endif %}">
+      <div class="nav-icon"><i class="fas fa-briefcase"></i></div>
+      Recruiter
+    </a>
+    {% endif %}
+
     <div class="sidebar-section">// Account</div>
 
     <a href="/accounts/profile/" class="nav-item-side {% if 'profile' in request.path %}active{% endif %}">
@@ -708,7 +713,7 @@
       <a href="/contest/"     class="topbar-btn" title="Contest"><i class="fas fa-flag-checkered"></i></a>
       <a href="/discuss/"     class="topbar-btn" title="Discuss"><i class="fas fa-comments"></i></a>
       <a href="/leaderboard/" class="topbar-btn" title="Leaderboard"><i class="fas fa-trophy"></i></a>
-
+      <a href="/recruiter/" class="topbar-btn" title="Recruiter"><i class="fas fa-briefcase"></i></a>
       {% if user.is_authenticated %}
       <a href="/accounts/profile/" class="topbar-user">
         <i class="fas fa-terminal"></i> {{ user.username }}
