@@ -11,8 +11,9 @@ class Question(models.Model):
     difficulty = models.CharField(max_length=10, choices=DIFFICULTY_CHOICES)
     sample_input = models.TextField(blank=True)
     sample_output = models.TextField(blank=True)
+    hint = models.TextField(blank=True, help_text="Hint shown to candidates")
+    answer = models.TextField(blank=True, help_text="Reference solution shown after 3 failed attempts")
     created_at = models.DateTimeField(auto_now_add=True)
-
     def __str__(self):
         return self.title
 

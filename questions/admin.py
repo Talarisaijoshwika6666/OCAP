@@ -8,4 +8,6 @@ class TestCaseInline(admin.TabularInline):
 @admin.register(Question)
 class QuestionAdmin(admin.ModelAdmin):
     list_display = ['title', 'difficulty']
+    fields = ['title', 'description', 'difficulty', 'sample_input', 'sample_output', 'hint', 'answer']
     inlines = [TestCaseInline]
+    
