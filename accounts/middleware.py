@@ -5,23 +5,25 @@ class CandidateAccessMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        if request.user.is_authenticated and not request.user.is_superuser and not request.user.is_staff:
-            # Block candidates from admin panel
-            if request.path.startswith('/admin/'):
-                return redirect('/')
+        user = request.user
 
-            # Block candidates from making any changes (POST/PUT/DELETE)
-            # Allow only these POST paths
-            allowed_post_paths = [
-                '/accounts/login/',
-                '/accounts/logout/',
-                '/accounts/register/',
-                '/submissions/submit/',
-                '/submissions/run/',
-            ]
-            if request.method in ['POST', 'PUT', 'DELETE', 'PATCH']:
-                if not any(request.path.startswith(p) for p in allowed_post_paths):
-                    return redirect('/')
+        if user.is_authenticated:
+            # RECRUITER — block code submission and solving
+            if user.is_staff and not user.is_superuser:
+                blocked = [
+                    '/questions/submit/',
+                    '/submissions/run/',
+                    '/submissions/submit/',
+                ]
+                if any(request.path.startswith(b) for b in blocked):
+                    return redirect('/recruiter/dashboard/')
+
+            # CANDIDATE — block recruiter and admin areas
+            if not user.is_staff and not user.is_superuser:
+                if request.path.startswith('/admin/'):
+                    return redirect('/questions/')
+                if request.path.startswith('/recruiter/'):
+                    return redirect('/questions/')
 
         response = self.get_response(request)
         return response

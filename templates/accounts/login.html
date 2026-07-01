@@ -2,194 +2,261 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>LogicLabs - Login</title>
+    <title>LogicLabs — Login</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            background: #0e0e2e;
-            font-family: 'Courier New', monospace;
+            background: #0a0a1a;
+            font-family: 'Segoe UI', sans-serif;
             min-height: 100vh;
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
             background-image:
-                linear-gradient(rgba(100,80,200,0.07) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(100,80,200,0.07) 1px, transparent 1px);
-            background-size: 40px 40px;
+                radial-gradient(ellipse at 20% 50%, rgba(120,80,255,0.08) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 20%, rgba(0,200,255,0.06) 0%, transparent 50%);
         }
-        .logo-area { text-align: center; margin-bottom: 28px; }
-        .logo-icon {
-            width: 72px; height: 72px;
-            background: linear-gradient(135deg, #4f8ef7, #a855f7);
-            border-radius: 20px;
-            display: flex; align-items: center; justify-content: center;
-            margin: 0 auto 14px;
-            font-size: 2rem;
-            box-shadow: 0 0 30px rgba(100,120,255,0.4);
+        .container {
+            width: 100%; max-width: 460px;
+            padding: 20px;
         }
-        .logo-text { font-size: 2rem; font-weight: bold; color: #fff; }
-        .logo-text span { color: #a855f7; }
-        .logo-sub { color: #555; font-size: 0.65rem; letter-spacing: 4px; margin-top: 4px; }
 
-        .panel-tabs {
-            display: flex;
-            width: 100%; max-width: 440px;
-            border-radius: 14px 14px 0 0;
-            overflow: hidden;
-            border: 1px solid #1e1e4a;
-            border-bottom: none;
-        }
-        .tab-btn {
-            flex: 1; padding: 13px;
+        /* LOGO */
+        .logo-area {
             text-align: center;
-            font-family: 'Courier New', monospace;
-            font-size: 0.78rem; font-weight: bold; letter-spacing: 2px;
-            cursor: pointer; text-decoration: none; border: none;
-            transition: all 0.25s;
-            background: #12122e; color: #555;
+            margin-bottom: 32px;
         }
-        .tab-btn.active-admin { background: linear-gradient(135deg, #a855f7, #ec4899); color: #fff; }
-        .tab-btn.active-candidate { background: linear-gradient(135deg, #3b82f6, #06b6d4); color: #fff; }
+        .logo-area img {
+            height: 60px;
+            margin-bottom: 10px;
+        }
+        .logo-text {
+            font-size: 2rem; font-weight: 800;
+            background: linear-gradient(90deg, #00c6ff, #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .logo-sub {
+            color: #444; font-size: 0.65rem;
+            letter-spacing: 4px; margin-top: 4px;
+        }
 
-        .login-box {
-            background: rgba(10,10,40,0.95);
+        /* TABS */
+        .tabs {
+            display: flex;
+            background: #111130;
+            border-radius: 50px;
+            padding: 5px;
+            margin-bottom: 28px;
             border: 1px solid #1e1e4a;
-            border-top: 2px solid transparent;
-            border-radius: 0 0 16px 16px;
-            padding: 35px 38px 30px;
-            width: 100%; max-width: 440px;
-            position: relative;
         }
-        .login-box::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; height: 2px;
-            background: linear-gradient(90deg, #ec4899, #a855f7, #3b82f6, #06b6d4);
+        .tab {
+            flex: 1; padding: 11px;
+            text-align: center;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            color: #555;
+            transition: all 0.3s;
         }
-        .form-eyebrow { font-size: 0.65rem; letter-spacing: 4px; color: #555; margin-bottom: 5px; text-align: center; }
-        .form-title { font-size: 1.25rem; color: #fff; font-weight: bold; text-align: center; margin-bottom: 24px; }
-
-        .admin-notice {
-            background: rgba(168,85,247,0.08);
-            border: 1px solid rgba(168,85,247,0.25);
-            border-radius: 8px; padding: 9px 13px;
-            color: #a855f7; font-size: 0.7rem; letter-spacing: 1px;
-            margin-bottom: 18px; text-align: center;
+        .tab.active-recruiter {
+            background: linear-gradient(135deg, #a855f7, #6366f1);
+            color: #fff;
+            box-shadow: 0 4px 20px rgba(168,85,247,0.35);
         }
-        .error-msg {
-            background: rgba(239,68,68,0.12);
-            border: 1px solid rgba(239,68,68,0.4);
-            color: #f87171; padding: 10px 14px;
-            border-radius: 8px; font-size: 0.78rem; margin-bottom: 18px;
+        .tab.active-candidate {
+            background: linear-gradient(135deg, #00c6ff, #0072ff);
+            color: #fff;
+            box-shadow: 0 4px 20px rgba(0,198,255,0.3);
         }
 
+        /* CARD */
+        .card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid #1e1e4a;
+            border-radius: 20px;
+            padding: 36px 32px 28px;
+            backdrop-filter: blur(10px);
+        }
+        .card-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 6px;
+        }
+        .card-sub {
+            color: #555;
+            font-size: 0.8rem;
+            margin-bottom: 26px;
+        }
+
+        /* ERROR */
+        .error {
+            background: rgba(239,68,68,0.1);
+            border: 1px solid rgba(239,68,68,0.3);
+            color: #f87171;
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            margin-bottom: 18px;
+        }
+
+        /* FIELDS */
         .field { margin-bottom: 18px; }
         .field label {
-            display: flex; align-items: center; gap: 7px;
-            color: #888; font-size: 0.68rem; letter-spacing: 2px; margin-bottom: 8px;
+            display: block;
+            color: #666;
+            font-size: 0.72rem;
+            letter-spacing: 1.5px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
         }
         .field input {
-            width: 100%; padding: 13px 15px;
-            background: #0a0a25;
+            width: 100%;
+            padding: 13px 16px;
+            background: #0d0d2a;
             border: 1px solid #1e1e50;
-            border-radius: 8px; color: #fff;
-            font-family: 'Courier New', monospace;
-            font-size: 0.9rem; outline: none;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 0.92rem;
+            outline: none;
             transition: border-color 0.3s, box-shadow 0.3s;
         }
         .field input:focus {
             border-color: #a855f7;
-            box-shadow: 0 0 0 3px rgba(168,85,247,0.12);
+            box-shadow: 0 0 0 3px rgba(168,85,247,0.1);
         }
-        .field input::placeholder { color: #333; }
+        .field input::placeholder { color: #2a2a4a; }
 
-        .strength-bar-wrap {
-            margin-top: 7px; height: 3px;
-            background: #1a1a3a; border-radius: 2px; overflow: hidden;
+        /* STRENGTH BAR */
+        .strength-wrap {
+            margin-top: 8px;
+            height: 4px;
+            background: #1a1a3a;
+            border-radius: 4px;
+            overflow: hidden;
         }
-        .strength-bar { height: 100%; width: 0%; border-radius: 2px; transition: width 0.3s, background 0.3s; }
-
-        .login-btn {
-            width: 100%; padding: 14px; border: none; border-radius: 8px;
-            font-family: 'Courier New', monospace;
-            font-size: 0.9rem; font-weight: bold; letter-spacing: 3px;
-            cursor: pointer; transition: opacity 0.3s, transform 0.15s; margin-top: 6px;
+        .strength-bar {
+            height: 100%; width: 0%;
+            border-radius: 4px;
+            transition: width 0.3s, background 0.3s;
         }
-        .btn-admin { background: linear-gradient(135deg, #a855f7, #ec4899); color: #fff; }
-        .btn-candidate { background: linear-gradient(135deg, #ec4899, #06b6d4); color: #fff; }
-        .login-btn:hover { opacity: 0.88; transform: translateY(-1px); }
 
-        .form-footer { text-align: center; margin-top: 20px; color: #444; font-size: 0.78rem; }
-        .form-footer a { color: #a855f7; text-decoration: none; font-weight: bold; }
+        /* BUTTON */
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: opacity 0.3s, transform 0.2s;
+        }
+        .btn-recruiter {
+            background: linear-gradient(135deg, #a855f7, #6366f1);
+            color: #fff;
+        }
+        .btn-candidate {
+            background: linear-gradient(135deg, #00c6ff, #0072ff);
+            color: #fff;
+        }
+        .btn:hover { opacity: 0.88; transform: translateY(-1px); }
+
+        /* FOOTER */
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            color: #444;
+            font-size: 0.8rem;
+        }
+        .footer a {
+            color: #00c6ff;
+            text-decoration: none;
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
+<div class="container">
 
-<div class="logo-area">
-    <div class="logo-icon">🧠</div>
-    <div class="logo-text">Logic<span>Labs</span></div>
-    <div class="logo-sub">CODE • THINK • SOLVE • INNOVATE</div>
-</div>
-
-<div class="panel-tabs">
-    <a href="?panel=admin"
-       class="tab-btn {% if panel == 'admin' %}active-admin{% endif %}">
-        ⚡ ADMIN LOGIN
-    </a>
-    <a href="?panel=candidate"
-       class="tab-btn {% if panel == 'candidate' %}active-candidate{% endif %}">
-        👤 CANDIDATE LOGIN
-    </a>
-</div>
-
-<div class="login-box">
-
-    {% if panel == 'admin' %}
-        <div class="admin-notice">⚠ RESTRICTED — Authorized personnel only</div>
-        <div class="form-eyebrow">// ADMIN PANEL</div>
-        <div class="form-title">Admin Sign In</div>
-    {% else %}
-        <div class="form-eyebrow">// WELCOME BACK</div>
-        <div class="form-title">Sign in to continue</div>
-    {% endif %}
-
-    {% if error %}<div class="error-msg">⚠ {{ error }}</div>{% endif %}
-
-    <form method="POST">
-        {% csrf_token %}
-        <input type="hidden" name="panel" value="{{ panel|default:'admin' }}">
-
-        <div class="field">
-            <label>👤 USERNAME</label>
-            <input type="text" name="username" placeholder="Enter username" required>
-        </div>
-
-        <div class="field">
-            <label>🔒 PASSWORD</label>
-            <input type="password" name="password" id="passwordInput"
-                   placeholder="••••••••••" required
-                   {% if panel == 'candidate' %}minlength="8"{% endif %}
-                   oninput="updateStrength(this)">
-            {% if panel == 'candidate' %}
-            <div class="strength-bar-wrap">
-                <div class="strength-bar" id="strengthBar"></div>
-            </div>
-            {% endif %}
-        </div>
-
-        {% if panel == 'admin' %}
-            <button type="submit" class="login-btn btn-admin">⚡ LOGIN</button>
-        {% else %}
-            <button type="submit" class="login-btn btn-candidate">⇒ LOGIN</button>
-        {% endif %}
-    </form>
-
-    {% if panel == 'candidate' %}
-    <div class="form-footer">
-        No account? <a href="/accounts/register/">Sign Up Free</a>
+    <!-- LOGO -->
+    <div class="logo-area">
+        <div class="logo-text">LogicLabs</div>
+        <div class="logo-sub">CODE · THINK · SOLVE · INNOVATE</div>
     </div>
-    {% endif %}
+
+    <!-- TABS -->
+    <div class="tabs">
+        <a href="?panel=recruiter"
+           class="tab {% if panel == 'recruiter' %}active-recruiter{% endif %}">
+            🔍 Recruiter
+        </a>
+        <a href="?panel=candidate"
+           class="tab {% if panel == 'candidate' %}active-candidate{% endif %}">
+            👤 Candidate
+        </a>
+    </div>
+
+    <!-- CARD -->
+    <div class="card">
+        {% if panel == 'recruiter' %}
+            <div class="card-title">Recruiter Login</div>
+            <div class="card-sub">Access candidate insights & reports</div>
+        {% else %}
+            <div class="card-title">Welcome Back!</div>
+            <div class="card-sub">Sign in to continue coding</div>
+        {% endif %}
+
+        {% if error %}
+        <div class="error">⚠ {{ error }}</div>
+        {% endif %}
+
+        <form method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="panel" value="{{ panel|default:'recruiter' }}">
+
+            <div class="field">
+                <label>Username</label>
+                <input type="text" name="username"
+                       placeholder="Enter username" required>
+            </div>
+
+            <div class="field">
+                <label>Password</label>
+                <input type="password" name="password" id="pwInput"
+                       placeholder="••••••••"
+                       {% if panel == 'candidate' %}minlength="8"{% endif %}
+                       required
+                       oninput="updateStrength(this)">
+                {% if panel == 'candidate' %}
+                <div class="strength-wrap">
+                    <div class="strength-bar" id="strengthBar"></div>
+                </div>
+                {% endif %}
+            </div>
+
+            {% if panel == 'recruiter' %}
+                <button type="submit" class="btn btn-recruiter">
+                    LOGIN AS RECRUITER
+                </button>
+            {% else %}
+                <button type="submit" class="btn btn-candidate">
+                    LOGIN AS CANDIDATE
+                </button>
+            {% endif %}
+        </form>
+
+        {% if panel == 'candidate' %}
+        <div class="footer">
+            No account? <a href="/accounts/register/">Sign Up Free</a>
+        </div>
+        {% endif %}
+    </div>
 
 </div>
 
@@ -203,7 +270,8 @@ function updateStrength(input) {
     if (/[0-9]/.test(v)) score++;
     if (/[^A-Za-z0-9]/.test(v)) score++;
     bar.style.width = (score / 4 * 100) + '%';
-    bar.style.background = ['#ef4444','#ef4444','#f97316','#eab308','#22c55e'][score];
+    var colors = ['#ef4444','#ef4444','#f97316','#eab308','#22c55e'];
+    bar.style.background = colors[score];
 }
 </script>
 </body>
