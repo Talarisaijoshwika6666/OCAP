@@ -1,122 +1,165 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 {% block page_title %}// Login{% endblock %}
 {% block content %}
 
 <style>
-  /* Hide sidebar and adjust layout for login page */
-  .sidebar { display: none !important; }
-  .main-content { margin-left: 0 !important; }
-  .topbar { display: none !important; }
-  .page-content {
-    padding: 0 !important;
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
+    .sidebar { display: none !important; }
+    .main-content { margin-left: 0 !important; }
+    .topbar { display: none !important; }
+    .page-content {
+        padding: 0 !important;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #0a0a1a;
+    }
 </style>
 
 <div style="width:100%;max-width:420px;margin:0 auto;padding:20px;">
 
-  <!-- Logo -->
-  <div style="text-align:center;margin-bottom:36px;">
-    <!-- Brain Logo matching LogicLabs brand -->
-    <div style="display:inline-flex;flex-direction:column;align-items:center;gap:12px;">
-      <div style="position:relative;width:80px;height:80px;">
-        <!-- Outer glow ring -->
-        <div style="position:absolute;inset:-4px;border-radius:20px;background:linear-gradient(135deg,#00d4ff,#b026ff,#ff2d78);opacity:0.4;filter:blur(8px);"></div>
-        <!-- Logo box -->
-        <div style="position:relative;width:80px;height:80px;border-radius:18px;background:linear-gradient(135deg,#00d4ff 0%,#b026ff 50%,#ff2d78 100%);display:flex;align-items:center;justify-content:center;box-shadow:0 0 30px rgba(176,38,255,0.5),0 0 60px rgba(0,212,255,0.3);">
-          <!-- Brain circuit SVG -->
-          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <!-- Left brain half -->
-            <path d="M24 8 C18 8 10 12 10 20 C10 26 13 29 13 33 C13 37 16 40 20 40 C22 40 24 39 24 39" stroke="white" stroke-width="2" fill="none" stroke-linecap="round"/>
-            <!-- Right brain half -->
-            <path d="M24 8 C30 8 38 12 38 20 C38 26 35 29 35 33 C35 37 32 40 28 40 C26 40 24 39 24 39" stroke="white" stroke-width="2" fill="none" stroke-linecap="round"/>
-            <!-- Circuit nodes left -->
-            <circle cx="14" cy="20" r="2" fill="#00fff7"/>
-            <circle cx="12" cy="28" r="1.5" fill="#00fff7"/>
-            <circle cx="17" cy="35" r="1.5" fill="#00fff7"/>
-            <!-- Circuit nodes right -->
-            <circle cx="34" cy="20" r="2" fill="#ff2d78"/>
-            <circle cx="36" cy="28" r="1.5" fill="#ff2d78"/>
-            <circle cx="31" cy="35" r="1.5" fill="#ff2d78"/>
-            <!-- Center divider -->
-            <line x1="24" y1="8" x2="24" y2="40" stroke="rgba(255,255,255,0.3)" stroke-width="1" stroke-dasharray="3,3"/>
-            <!-- Code symbol -->
-            <text x="24" y="26" text-anchor="middle" fill="white" font-size="8" font-weight="bold" font-family="monospace"></></text>
-          </svg>
+    <!-- Logo -->
+    <div style="text-align:center;margin-bottom:36px;">
+        <div style="display:inline-flex;flex-direction:column;align-items:center;gap:12px;">
+            <div style="position:relative;width:80px;height:80px;">
+                <div style="position:absolute;inset:-4px;border-radius:20px;background:linear-gradient(135deg,#b026ff,#00fff7);opacity:0.3;filter:blur(8px);"></div>
+                <div style="position:relative;width:80px;height:80px;border-radius:18px;background:linear-gradient(135deg,#1a0533,#0a1628);border:1px solid rgba(176,38,255,0.4);display:flex;align-items:center;justify-content:center;">
+                    <svg width="46" height="46" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M24 8C18 8 10 12 10 20C10 26 13 29 13 33C13 37 16 40 20 40C22 40 24 39 24 39C24 39 26 40 28 40C32 40 35 37 35 33C35 29 38 26 38 20C38 12 30 8 24 8Z" stroke="#b026ff" stroke-width="1.5" fill="rgba(176,38,255,0.1)"/>
+                        <circle cx="14" cy="20" r="2" fill="#00fff7"/>
+                        <circle cx="12" cy="28" r="1.5" fill="#00fff7"/>
+                        <circle cx="17" cy="35" r="1.5" fill="#00fff7"/>
+                        <circle cx="34" cy="20" r="2" fill="#ff2d78"/>
+                        <circle cx="36" cy="28" r="1.5" fill="#ff2d78"/>
+                        <circle cx="31" cy="35" r="1.5" fill="#ff2d78"/>
+                        <line x1="24" y1="8" x2="24" y2="40" stroke="rgba(255,255,255,0.3)" stroke-width="1" stroke-dasharray="2,3"/>
+                        <text x="24" y="26" text-anchor="middle" fill="white" font-size="8" font-weight="bold" font-family="monospace">&lt;/&gt;</text>
+                    </svg>
+                </div>
+            </div>
+            <div style="font-family:'Orbitron',monospace;font-size:1.6rem;font-weight:900;letter-spacing:2px;line-height:1;">
+                <span style="color:#e0e0ff;">Logic</span><span style="background:linear-gradient(90deg,#00d4ff,#b026ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Labs</span>
+            </div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:0.55rem;letter-spacing:3px;text-transform:uppercase;color:rgba(176,38,255,0.7);">
+                Code &bull; Think &bull; Solve &bull; Innovate
+            </div>
         </div>
-      </div>
+    </div>
 
-      <div>
-        <div style="font-family:'Orbitron',monospace;font-size:1.6rem;font-weight:900;letter-spacing:2px;line-height:1;">
-          <span style="color:#e0e0ff;">Logic</span><span style="background:linear-gradient(90deg,#00d4ff,#b026ff,#ff2d78);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Labs</span>
+    <!-- Card -->
+    <div style="background:rgba(12,8,28,0.85);border:1px solid rgba(176,38,255,0.25);border-radius:20px;padding:32px;position:relative;overflow:hidden;backdrop-filter:blur(20px);">
+        <!-- Top accent line -->
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#b026ff,#00fff7,#ff2d78,transparent);"></div>
+
+        <!-- Role Toggle -->
+        <div style="display:flex;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:4px;margin-bottom:24px;">
+            <button id="btn-recruiter" onclick="switchPanel('recruiter')" type="button"
+                style="flex:1;padding:9px 0;border:none;background:transparent;color:#6b7280;font-size:13px;font-weight:600;letter-spacing:1px;text-transform:uppercase;cursor:pointer;border-radius:9px;transition:all 0.25s;">
+                🏢 Recruiter
+            </button>
+            <button id="btn-candidate" onclick="switchPanel('candidate')" type="button"
+                style="flex:1;padding:9px 0;border:none;background:transparent;color:#6b7280;font-size:13px;font-weight:600;letter-spacing:1px;text-transform:uppercase;cursor:pointer;border-radius:9px;transition:all 0.25s;">
+                👤 Candidate
+            </button>
         </div>
-        <div style="font-family:'JetBrains Mono',monospace;font-size:0.58rem;letter-spacing:3px;text-transform:uppercase;margin-top:6px;background:linear-gradient(90deg,#00fff7,#ff2d78,#b026ff,#00fff7);background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:tagline-scroll 4s linear infinite;">
-          Code • Think • Solve • Innovate
+
+        <div style="text-align:center;margin-bottom:20px;">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:0.7rem;letter-spacing:3px;color:#b026ff;">// WELCOME BACK</div>
+            <div style="font-family:'Orbitron',monospace;font-size:1rem;font-weight:700;color:#fff;margin-top:4px;">Sign in to continue</div>
         </div>
-      </div>
+
+        {% if error %}
+        <div style="background:rgba(255,45,120,0.1);border:1px solid rgba(255,45,120,0.3);color:#ff2d78;font-size:13px;padding:10px 14px;border-radius:8px;margin-bottom:16px;text-align:center;">
+            {{ error }}
+        </div>
+        {% endif %}
+
+        {% if form.errors %}
+        <div style="background:rgba(255,45,120,0.1);border:1px solid rgba(255,45,120,0.3);border-radius:10px;padding:10px 14px;margin-bottom:16px;">
+            <i class="fas fa-exclamation-triangle" style="margin-right:8px;color:#ff2d78;"></i>Invalid username or password
+        </div>
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="panel" id="panel-input" value="recruiter">
+
+            <!-- Username -->
+            <div style="margin-bottom:18px;">
+                <label style="display:block;color:rgba(240,234,255,0.6);font-size:0.75rem;font-family:'JetBrains Mono',monospace;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;">
+                    <i class="fas fa-user" style="color:#b026ff;margin-right:6px;"></i>USERNAME
+                </label>
+                <input type="text" name="username" placeholder="Enter your username"
+                    style="width:100%;background:rgba(176,38,255,0.06);border:1px solid rgba(176,38,255,0.2);border-radius:10px;padding:12px 14px;color:#fff;font-size:14px;outline:none;"
+                    onfocus="this.style.borderColor='rgba(255,45,120,0.5)';this.style.boxShadow='0 0 15px rgba(255,45,120,0.1)'"
+                    onblur="this.style.borderColor='rgba(176,38,255,0.2)';this.style.boxShadow='none'">
+            </div>
+
+            <!-- Password -->
+            <div style="margin-bottom:28px;">
+                <label style="display:block;color:rgba(240,234,255,0.6);font-size:0.75rem;font-family:'JetBrains Mono',monospace;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;">
+                    <i class="fas fa-lock" style="color:#b026ff;margin-right:6px;"></i>PASSWORD
+                </label>
+                <input type="password" name="password" placeholder="Enter your password"
+                    style="width:100%;background:rgba(176,38,255,0.06);border:1px solid rgba(176,38,255,0.2);border-radius:10px;padding:12px 14px;color:#fff;font-size:14px;outline:none;"
+                    onfocus="this.style.borderColor='rgba(255,45,120,0.5)';this.style.boxShadow='0 0 15px rgba(255,45,120,0.1)'"
+                    onblur="this.style.borderColor='rgba(176,38,255,0.2)';this.style.boxShadow='none'">
+            </div>
+
+            <!-- Login Button -->
+            <button type="submit"
+                style="width:100%;background:linear-gradient(135deg,#ff2d78,#b026ff,#00fff7);border:none;border-radius:10px;padding:13px;color:#fff;font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;"
+                onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 0 35px rgba(255,45,120,0.4)'"
+                onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='none'">
+                <i class="fas fa-sign-in-alt" style="margin-right:8px;"></i>LOGIN
+            </button>
+        </form>
+
+        <!-- Candidate footer -->
+        <div id="candidate-footer" style="display:none;text-align:center;margin-top:22px;color:rgba(240,234,255,0.4);font-size:0.82rem;">
+            No account?
+            <a href="/accounts/register/" style="color:#00fff7;font-weight:600;text-decoration:none;"
+                onmouseover="this.style.color='#ff2d78'"
+                onmouseout="this.style.color='#00fff7'">Sign Up Free</a>
+        </div>
+
+        <!-- Recruiter footer -->
+        <div id="recruiter-footer" style="display:none;text-align:center;margin-top:22px;color:rgba(240,234,255,0.4);font-size:0.75rem;">
+            Recruiter access is restricted. Contact admin for credentials.
+        </div>
+
     </div>
-  </div>
-
-  <!-- Login Card -->
-  <div style="background:rgba(12,8,28,0.85);border:1px solid rgba(176,38,255,0.25);border-radius:20px;padding:36px 32px;backdrop-filter:blur(24px);position:relative;overflow:hidden;">
-    <!-- Top accent line -->
-    <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#ff2d78,#b026ff,#00fff7,transparent);"></div>
-
-    <div style="text-align:center;margin-bottom:28px;">
-      <div style="font-family:'JetBrains Mono',monospace;font-size:0.7rem;letter-spacing:3px;color:#b026ff;margin-bottom:6px;">// WELCOME BACK</div>
-      <div style="font-family:'Orbitron',monospace;font-size:1rem;font-weight:700;color:#f0eaff;">Sign in to continue</div>
-    </div>
-
-    {% if form.errors %}
-    <div style="background:rgba(255,45,120,0.1);border:1px solid rgba(255,45,120,0.3);border-radius:10px;padding:12px 16px;margin-bottom:20px;color:#ff2d78;font-size:0.82rem;font-family:'JetBrains Mono',monospace;">
-      <i class="fas fa-exclamation-triangle" style="margin-right:8px;"></i>Invalid username or password
-    </div>
-    {% endif %}
-
-    <form method="post">
-      {% csrf_token %}
-
-      <!-- Username -->
-      <div style="margin-bottom:18px;">
-        <label style="display:block;color:rgba(240,234,255,0.6);font-size:0.75rem;font-family:'JetBrains Mono',monospace;letter-spacing:1px;margin-bottom:8px;">
-          <i class="fas fa-user" style="color:#b026ff;margin-right:6px;"></i>USERNAME
-        </label>
-        <input type="text" name="username" value="{{ form.username.value|default:'' }}" placeholder="enter your username"
-          style="width:100%;background:rgba(176,38,255,0.06);border:1px solid rgba(176,38,255,0.2);border-radius:10px;padding:12px 16px;color:#f0eaff;font-family:'JetBrains Mono',monospace;font-size:0.88rem;outline:none;transition:all 0.2s;"
-          onfocus="this.style.borderColor='rgba(255,45,120,0.5)';this.style.boxShadow='0 0 15px rgba(176,38,255,0.15)'"
-          onblur="this.style.borderColor='rgba(176,38,255,0.2)';this.style.boxShadow='none'">
-      </div>
-
-      <!-- Password -->
-      <div style="margin-bottom:28px;">
-        <label style="display:block;color:rgba(240,234,255,0.6);font-size:0.75rem;font-family:'JetBrains Mono',monospace;letter-spacing:1px;margin-bottom:8px;">
-          <i class="fas fa-lock" style="color:#b026ff;margin-right:6px;"></i>PASSWORD
-        </label>
-        <input type="password" name="password" placeholder="enter your password"
-          style="width:100%;background:rgba(176,38,255,0.06);border:1px solid rgba(176,38,255,0.2);border-radius:10px;padding:12px 16px;color:#f0eaff;font-family:'JetBrains Mono',monospace;font-size:0.88rem;outline:none;transition:all 0.2s;"
-          onfocus="this.style.borderColor='rgba(255,45,120,0.5)';this.style.boxShadow='0 0 15px rgba(176,38,255,0.15)'"
-          onblur="this.style.borderColor='rgba(176,38,255,0.2)';this.style.boxShadow='none'">
-      </div>
-
-      <!-- Login Button -->
-      <button type="submit"
-        style="width:100%;background:linear-gradient(135deg,#ff2d78,#b026ff,#00fff7);border:none;border-radius:10px;padding:13px;font-family:'Orbitron',monospace;font-size:0.88rem;font-weight:700;color:#fff;cursor:pointer;transition:all 0.3s;box-shadow:0 0 20px rgba(176,38,255,0.3);letter-spacing:1px;"
-        onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 0 35px rgba(255,45,120,0.5)'"
-        onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 0 20px rgba(176,38,255,0.3)'">
-        <i class="fas fa-sign-in-alt" style="margin-right:8px;"></i>LOGIN
-      </button>
-    </form>
-
-    <div style="text-align:center;margin-top:22px;color:rgba(240,234,255,0.4);font-size:0.82rem;">
-      No account?
-      <a href="/accounts/register/" style="color:#00fff7;font-weight:600;text-decoration:none;font-family:'JetBrains Mono',monospace;"
-         onmouseover="this.style.color='#ff2d78'"
-         onmouseout="this.style.color='#00fff7'">Sign Up Free</a>
-    </div>
-  </div>
 </div>
+
+<script>
+function switchPanel(panel) {
+    document.getElementById('panel-input').value = panel;
+
+    var rBtn = document.getElementById('btn-recruiter');
+    var cBtn = document.getElementById('btn-candidate');
+
+    if (panel === 'recruiter') {
+        rBtn.style.background = 'linear-gradient(135deg,#7c3aed,#06b6d4)';
+        rBtn.style.color = '#fff';
+        rBtn.style.boxShadow = '0 4px 15px rgba(124,58,237,0.4)';
+        cBtn.style.background = 'transparent';
+        cBtn.style.color = '#6b7280';
+        cBtn.style.boxShadow = 'none';
+        document.getElementById('candidate-footer').style.display = 'none';
+        document.getElementById('recruiter-footer').style.display = 'block';
+    } else {
+        cBtn.style.background = 'linear-gradient(135deg,#7c3aed,#06b6d4)';
+        cBtn.style.color = '#fff';
+        cBtn.style.boxShadow = '0 4px 15px rgba(124,58,237,0.4)';
+        rBtn.style.background = 'transparent';
+        rBtn.style.color = '#6b7280';
+        rBtn.style.boxShadow = 'none';
+        document.getElementById('candidate-footer').style.display = 'block';
+        document.getElementById('recruiter-footer').style.display = 'none';
+    }
+}
+
+switchPanel('{{ panel|default:"recruiter" }}');
+</script>
 
 {% endblock %}

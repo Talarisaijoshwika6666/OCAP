@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'quest',
     'contest',
     'discuss',
+    'recruiter',
 ]
 
 MIDDLEWARE = [
