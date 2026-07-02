@@ -27,6 +27,7 @@ wheels/
 db.sqlite3
 __pycache__/
 *.pyc
+
 share/python-wheels/
 *.egg-info/
 .installed.cfg
