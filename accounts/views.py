@@ -39,7 +39,10 @@ def login_view(request):
             user = authenticate(request, username=username, password=password)
             if user:
                 login(request, user)
-                return redirect('/questions/')
+                next_url = request.GET.get('next') or request.POST.get('next') or '/dashboard/'
+                if next_url == '/':
+                    next_url = '/dashboard/'
+                return redirect(next_url)
             else:
                 return render(request, 'accounts/login.html', {
                     'error': 'Invalid username or password.',
@@ -48,10 +51,9 @@ def login_view(request):
 
     return render(request, 'accounts/login.html', {'panel': panel})
 
-
 def logout_view(request):
     logout(request)
-    return redirect('/accounts/login/')
+    return redirect('/')
 
 
 def register_view(request):

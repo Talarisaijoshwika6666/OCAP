@@ -12,7 +12,7 @@
       </div>
       <div>
         <div style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;letter-spacing:3px;color:#00d4ff;margin-bottom:6px;">// AI ASSISTANT</div>
-        <h2 style="font-family:'Orbitron',monospace;font-size:1.5rem;font-weight:900;color:#f0eaff;margin:0;">Welcome, {{ user.username }}<span style="color:#ff2d78;">_</span></h2>
+        <h2 style="font-family:'Orbitron',monospace;font-size:1.5rem;font-weight:900;color:#f0eaff;margin:0;">Welcome, {{ user.username|default:"Guest" }}<span style="color:#ff2d78;">_</span></h2>
         <p style="color:rgba(240,234,255,0.5);margin:6px 0 0;font-size:0.85rem;">Your AI mentor recommends focusing on <span style="color:#00fff7;font-weight:600;">Binary Search</span> this week.</p>
       </div>
     </div>
