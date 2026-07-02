@@ -52,6 +52,7 @@ class Question(models.Model):
     option_b = models.CharField(max_length=255, blank=True, null=True)
     option_c = models.CharField(max_length=255, blank=True, null=True)
     option_d = models.CharField(max_length=255, blank=True, null=True)
+    time_limit = models.PositiveIntegerField(default=60, help_text="Time limit in minutes for this question")
     created_at = models.DateTimeField(auto_now_add=True, null=True)
 
     def __str__(self):

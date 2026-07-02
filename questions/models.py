@@ -13,6 +13,7 @@ class Question(models.Model):
     sample_output = models.TextField(blank=True)
     hint = models.TextField(blank=True, help_text="Hint shown to candidates")
     answer = models.TextField(blank=True, help_text="Reference solution shown after 3 failed attempts")
+    time_limit = models.PositiveIntegerField(default=60, help_text="Time limit in minutes for this question")
     created_at = models.DateTimeField(auto_now_add=True)
     def __str__(self):
         return self.title
