@@ -10,9 +10,15 @@ def handler404(request, exception):
 def handler500(request):
     return render(request, '500.html', status=500)
 
+from django.views.decorators.cache import never_cache
 
-@login_required
+@never_cache
 def home_view(request):
+    return render(request, 'landing.html')
+
+@never_cache
+@login_required(login_url='/accounts/login/')
+def dashboard_view(request):
     from questions.models import Question
     from submissions.models import Submission
 
