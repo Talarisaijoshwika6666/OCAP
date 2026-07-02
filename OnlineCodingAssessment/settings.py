@@ -16,7 +16,7 @@ DEBUG = True  # keep as is for now
 handler404 = 'OnlineCodingAssessment.views.handler404'
 handler500 = 'OnlineCodingAssessment.views.handler500'
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 INSTALLED_APPS = [
