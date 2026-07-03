@@ -18,4 +18,5 @@ urlpatterns = [
     path('home/', home_view, name='home_alt'),
     path('dashboard/', dashboard_view, name='dashboard'),
     path('quest/', include('quest.urls')),
+    path('candidates/', include('candidates.urls')),
 ]

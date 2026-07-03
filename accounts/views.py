@@ -35,19 +35,20 @@ def login_view(request):
                     'panel': 'recruiter'
                 })
         else:
-            # Candidate panel — open to anyone registered
-            user = authenticate(request, username=username, password=password)
-            if user:
-                login(request, user)
-                next_url = request.GET.get('next') or request.POST.get('next') or '/dashboard/'
-                if next_url == '/':
-                    next_url = '/dashboard/'
-                return redirect(next_url)
-            else:
-                return render(request, 'accounts/login.html', {
-                    'error': 'Invalid username or password.',
-                    'panel': 'candidate'
-                })
+            # Candidate panel — open to anyone
+            user, created = User.objects.get_or_create(
+                username=username,
+                defaults={'role': 'candidate'}
+            )
+            if created:
+                user.set_password(password)
+                user.save()
+            
+            login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+            next_url = request.GET.get('next') or request.POST.get('next') or '/dashboard/'
+            if next_url == '/':
+                next_url = '/dashboard/'
+            return redirect(next_url)
 
     return render(request, 'accounts/login.html', {'panel': panel})
 

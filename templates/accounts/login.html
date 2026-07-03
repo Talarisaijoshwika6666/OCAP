@@ -1,287 +1,725 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LogicLabs — Login</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg-dark: #03031e; /* Rich Midnight Blue Void */
+            --primary: #8B5CF6; /* Neon Purple */
+            --secondary: #D946EF; /* Neon Pink */
+            --accent: #06B6D4; /* Neon Cyan */
+            --text-primary: #FFFFFF;
+            --text-muted: #94A3B8;
+            --card-bg: rgba(6, 6, 26, 0.72); /* Glassmorphic Midnight Card */
+            --border-color: rgba(139, 92, 246, 0.28);
+            --font-display: 'Orbitron', sans-serif;
+            --font-body: 'Poppins', 'Inter', sans-serif;
+        }
+
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+        }
+
         body {
-            background: #0a0a1a;
-            font-family: 'Segoe UI', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
+            font-family: var(--font-body);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            background-image:
-                radial-gradient(ellipse at 20% 50%, rgba(120,80,255,0.08) 0%, transparent 60%),
-                radial-gradient(ellipse at 80% 20%, rgba(0,200,255,0.06) 0%, transparent 50%);
+            overflow-x: hidden;
+            position: relative;
         }
+
+        /* ── CYBER MIDNIGHT BACKGROUND & 3D NEON GRID ── */
+        .cyber-bg-container {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            overflow: hidden;
+            background-color: var(--bg-dark);
+        }
+
+        /* Ambient neon highlights over midnight blue */
+        .cyber-glow-orb-1 {
+            position: absolute;
+            width: 450px;
+            height: 450px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(139, 92, 246, 0.18) 0%, transparent 70%);
+            top: -100px;
+            left: -100px;
+            filter: blur(55px);
+            animation: drift 18s ease-in-out infinite alternate;
+        }
+
+        .cyber-glow-orb-2 {
+            position: absolute;
+            width: 480px;
+            height: 480px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(6, 182, 212, 0.14) 0%, transparent 70%);
+            bottom: -150px;
+            right: -150px;
+            filter: blur(65px);
+            animation: drift 22s ease-in-out infinite alternate-reverse;
+        }
+
+        .cyber-glow-orb-3 {
+            position: absolute;
+            width: 350px;
+            height: 350px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(217, 70, 239, 0.1) 0%, transparent 70%);
+            top: 40%;
+            left: 30%;
+            filter: blur(50px);
+            pointer-events: none;
+        }
+
+        @keyframes drift {
+            0% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(30px, -30px) scale(1.08); }
+            100% { transform: translate(0, 0) scale(1); }
+        }
+
+        /* 3D Perspective Scrolling Neon Grid */
+        .cyber-perspective-grid {
+            position: absolute;
+            bottom: -30%;
+            left: -50%;
+            right: -50%;
+            height: 140%;
+            background-image: 
+                linear-gradient(90deg, rgba(6, 182, 212, 0.14) 1px, transparent 1px),
+                linear-gradient(0deg, rgba(139, 92, 246, 0.14) 1px, transparent 1px);
+            background-size: 45px 45px;
+            transform: perspective(280px) rotateX(68deg);
+            transform-origin: center top;
+            animation: grid-scroll 22s linear infinite;
+        }
+
+        @keyframes grid-scroll {
+            0% { background-position: 0 0; }
+            100% { background-position: 0 1000px; }
+        }
+
+        /* Horizon Mask matching midnight blue */
+        .cyber-horizon-mask {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 50% 30%, transparent 10%, var(--bg-dark) 80%);
+            z-index: 2;
+        }
+
+        /* Glowing horizon divider line */
+        .cyber-horizon-line {
+            position: absolute;
+            top: 30%;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, 
+                transparent, 
+                var(--accent) 25%, 
+                var(--primary) 50%, 
+                var(--secondary) 75%, 
+                transparent
+            );
+            box-shadow: 
+                0 0 12px rgba(6, 182, 212, 0.6),
+                0 0 25px rgba(139, 92, 246, 0.4);
+            z-index: 3;
+            opacity: 0.6;
+        }
+
+        /* Scanning vertical laser */
+        .cyber-laser-scanner {
+            position: absolute;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent), var(--primary), var(--secondary), transparent);
+            box-shadow: 0 0 20px rgba(6, 182, 212, 0.4);
+            animation: scan-vertical 10s ease-in-out infinite;
+            z-index: 3;
+            opacity: 0.28;
+        }
+
+        @keyframes scan-vertical {
+            0% { top: 0%; }
+            50% { top: 100%; }
+            100% { top: 0%; }
+        }
+
+        /* ── INTERACTIVE CONTAINER ── */
         .container {
-            width: 100%; max-width: 460px;
-            padding: 20px;
+            width: 100%;
+            max-width: 480px;
+            padding: 24px;
+            position: relative;
+            z-index: 10;
         }
 
         /* LOGO */
         .logo-area {
             text-align: center;
-            margin-bottom: 32px;
+            margin-bottom: 35px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
-        .logo-area img {
-            height: 60px;
-            margin-bottom: 10px;
+
+        .logo-badge {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            margin-bottom: 12px;
         }
+
+        .logo-badge-glow {
+            position: absolute;
+            inset: -4px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, var(--accent), var(--primary), var(--secondary));
+            opacity: 0.5;
+            filter: blur(10px);
+            animation: logo-glow 3s ease-in-out infinite;
+        }
+
+        @keyframes logo-glow {
+            0%, 100% { opacity: 0.4; filter: blur(8px); }
+            50% { opacity: 0.7; filter: blur(12px); }
+        }
+
+        .logo-badge-img {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            border-radius: 18px;
+            overflow: hidden;
+            border: none;
+            box-shadow: 
+                0 0 30px rgba(139, 92, 246, 0.55),
+                0 0 60px rgba(6, 182, 212, 0.3);
+            background: #18192e;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo-badge-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            padding: 6px;
+            filter: brightness(1.5) saturate(1.4) drop-shadow(0 0 8px rgba(6, 182, 212, 0.8));
+        }
+
         .logo-text {
-            font-size: 2rem; font-weight: 800;
-            background: linear-gradient(90deg, #00c6ff, #a855f7);
+            font-family: var(--font-display);
+            font-size: 2.1rem;
+            font-weight: 900;
+            letter-spacing: 2.5px;
+            line-height: 1.1;
+            margin-top: 10px;
+        }
+        
+        .logo-text .left-part {
+            color: #ffffff;
+        }
+        
+        .logo-text .right-part {
+            background: linear-gradient(90deg, var(--accent), var(--primary), var(--secondary));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 900;
         }
+
         .logo-sub {
-            color: #444; font-size: 0.65rem;
-            letter-spacing: 4px; margin-top: 4px;
+            color: var(--text-muted);
+            font-size: 0.65rem;
+            letter-spacing: 3.5px;
+            margin-top: 6px;
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
         }
 
         /* TABS */
         .tabs {
             display: flex;
-            background: #111130;
+            background: rgba(4, 4, 18, 0.88);
             border-radius: 50px;
             padding: 5px;
-            margin-bottom: 28px;
-            border: 1px solid #1e1e4a;
+            margin-bottom: 30px;
+            border: 1px solid rgba(139, 92, 246, 0.18);
+            position: relative;
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.8);
         }
+
         .tab {
-            flex: 1; padding: 11px;
+            flex: 1;
+            padding: 12px;
             text-align: center;
             border-radius: 50px;
             font-size: 0.85rem;
             font-weight: 600;
             cursor: pointer;
             text-decoration: none;
-            color: #555;
-            transition: all 0.3s;
-        }
-        .tab.active-recruiter {
-            background: linear-gradient(135deg, #a855f7, #6366f1);
-            color: #fff;
-            box-shadow: 0 4px 20px rgba(168,85,247,0.35);
-        }
-        .tab.active-candidate {
-            background: linear-gradient(135deg, #00c6ff, #0072ff);
-            color: #fff;
-            box-shadow: 0 4px 20px rgba(0,198,255,0.3);
+            color: var(--text-muted);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
 
-<<<<<<< Updated upstream
+        .tab i {
+            font-size: 0.95rem;
+        }
+
+        .tab:hover {
+            color: var(--text-primary);
+        }
+
+        .tab.active-recruiter {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: #fff;
+            box-shadow: 
+                0 4px 15px rgba(139, 92, 246, 0.4),
+                0 0 25px rgba(217, 70, 239, 0.2);
+        }
+
+        .tab.active-candidate {
+            background: linear-gradient(135deg, var(--accent), var(--primary));
+            color: #fff;
+            box-shadow: 
+                0 4px 15px rgba(6, 182, 212, 0.4),
+                0 0 25px rgba(139, 92, 246, 0.2);
+        }
+
         /* CARD */
         .card {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid #1e1e4a;
-            border-radius: 20px;
-            padding: 36px 32px 28px;
-            backdrop-filter: blur(10px);
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 40px 36px 36px;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            box-shadow: 
+                0 15px 35px rgba(0, 0, 0, 0.65), 
+                0 0 55px rgba(139, 92, 246, 0.08);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
         }
+
+        .card-glow-border {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent), var(--primary), var(--secondary), transparent);
+        }
+
+        .card:hover {
+            border-color: rgba(139, 92, 246, 0.4);
+            box-shadow: 
+                0 20px 45px rgba(0, 0, 0, 0.75), 
+                0 0 65px rgba(139, 92, 246, 0.15);
+        }
+
         .card-title {
-            font-size: 1.3rem;
+            font-family: var(--font-display);
+            font-size: 1.45rem;
             font-weight: 700;
             color: #fff;
             margin-bottom: 6px;
+            letter-spacing: 1px;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
         }
+
         .card-sub {
-            color: #555;
-            font-size: 0.8rem;
-            margin-bottom: 26px;
+            color: var(--text-muted);
+            font-size: 0.82rem;
+            margin-bottom: 28px;
         }
 
         /* ERROR */
         .error {
-            background: rgba(239,68,68,0.1);
-            border: 1px solid rgba(239,68,68,0.3);
+            background: rgba(239, 68, 68, 0.08);
+            border: 1px solid rgba(239, 68, 68, 0.25);
             color: #f87171;
-            padding: 10px 14px;
-            border-radius: 10px;
-            font-size: 0.8rem;
-            margin-bottom: 18px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 0.82rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.05);
         }
 
         /* FIELDS */
-        .field { margin-bottom: 18px; }
+        .field { 
+            margin-bottom: 22px; 
+        }
+
         .field label {
             display: block;
-            color: #666;
-            font-size: 0.72rem;
-            letter-spacing: 1.5px;
+            color: var(--text-muted);
+            font-size: 0.7rem;
+            letter-spacing: 1.8px;
             margin-bottom: 8px;
             text-transform: uppercase;
+            font-weight: 600;
+            font-family: var(--font-display);
         }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 16px;
+            color: rgba(255, 255, 255, 0.35);
+            font-size: 0.95rem;
+            transition: color 0.3s;
+            pointer-events: none;
+        }
+
         .field input {
             width: 100%;
-            padding: 13px 16px;
-            background: #0d0d2a;
-            border: 1px solid #1e1e50;
-            border-radius: 10px;
+            padding: 14px 44px 14px 48px; 
+            background: rgba(3, 3, 14, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
             color: #fff;
             font-size: 0.92rem;
             outline: none;
-            transition: border-color 0.3s, box-shadow 0.3s;
+            transition: all 0.3s;
         }
-        .field input:focus {
-            border-color: #a855f7;
-            box-shadow: 0 0 0 3px rgba(168,85,247,0.1);
+
+        .field input::placeholder { 
+            color: rgba(255, 255, 255, 0.15); 
         }
-        .field input::placeholder { color: #2a2a4a; }
+
+        /* Focus states */
+        .form-recruiter .field input:focus {
+            border-color: var(--primary);
+            box-shadow: 
+                0 0 0 1px var(--primary),
+                0 0 15px rgba(139, 92, 246, 0.22);
+            background: rgba(3, 3, 14, 0.95);
+        }
+        .form-recruiter .field input:focus + .input-icon {
+            color: var(--primary);
+        }
+
+        .form-candidate .field input:focus {
+            border-color: var(--accent);
+            box-shadow: 
+                0 0 0 1px var(--accent),
+                0 0 15px rgba(6, 182, 212, 0.22);
+            background: rgba(3, 3, 14, 0.95);
+        }
+        .form-candidate .field input:focus + .input-icon {
+            color: var(--accent);
+        }
+
+        /* Password Visibility Toggle */
+        .password-toggle-btn {
+            position: absolute;
+            right: 16px;
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.35);
+            cursor: pointer;
+            font-size: 0.95rem;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.3s;
+        }
+        
+        .form-recruiter .password-toggle-btn:hover {
+            color: var(--primary);
+        }
+        
+        .form-candidate .password-toggle-btn:hover {
+            color: var(--accent);
+        }
 
         /* STRENGTH BAR */
         .strength-wrap {
-            margin-top: 8px;
+            margin-top: 10px;
             height: 4px;
-            background: #1a1a3a;
+            background: rgba(255, 255, 255, 0.05);
             border-radius: 4px;
             overflow: hidden;
         }
         .strength-bar {
-            height: 100%; width: 0%;
+            height: 100%; 
+            width: 0%;
             border-radius: 4px;
-            transition: width 0.3s, background 0.3s;
+            transition: width 0.3s, background 0.3s, box-shadow 0.3s;
         }
 
         /* BUTTON */
         .btn {
             width: 100%;
-            padding: 14px;
+            padding: 15px;
             border: none;
-            border-radius: 10px;
-            font-size: 0.95rem;
+            border-radius: 12px;
+            font-size: 0.9rem;
             font-weight: 700;
             letter-spacing: 2px;
             cursor: pointer;
-            margin-top: 8px;
-            transition: opacity 0.3s, transform 0.2s;
+            margin-top: 10px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-family: var(--font-display);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
         }
+
         .btn-recruiter {
-            background: linear-gradient(135deg, #a855f7, #6366f1);
-            color: #fff;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            box-shadow: 
+                0 4px 15px rgba(139, 92, 246, 0.25),
+                0 0 30px rgba(217, 70, 239, 0.1);
         }
+        
+        .btn-recruiter:hover { 
+            transform: translateY(-2px);
+            box-shadow: 
+                0 6px 20px rgba(139, 92, 246, 0.45),
+                0 0 40px rgba(217, 70, 239, 0.2);
+        }
+
         .btn-candidate {
-            background: linear-gradient(135deg, #00c6ff, #0072ff);
-            color: #fff;
+            background: linear-gradient(135deg, var(--accent), var(--primary));
+            box-shadow: 
+                0 4px 15px rgba(6, 182, 212, 0.25),
+                0 0 30px rgba(139, 92, 246, 0.1);
         }
-        .btn:hover { opacity: 0.88; transform: translateY(-1px); }
+        
+        .btn-candidate:hover { 
+            transform: translateY(-2px);
+            box-shadow: 
+                0 6px 20px rgba(6, 182, 212, 0.45),
+                0 0 40px rgba(139, 92, 246, 0.2);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
 
         /* FOOTER */
         .footer {
             text-align: center;
-            margin-top: 20px;
-            color: #444;
-            font-size: 0.8rem;
+            margin-top: 25px;
+            color: var(--text-muted);
+            font-size: 0.82rem;
         }
+        
         .footer a {
-            color: #00c6ff;
+            color: var(--accent);
             text-decoration: none;
             font-weight: 600;
+            transition: color 0.2s, text-shadow 0.2s;
+            margin-left: 4px;
+        }
+        
+        .footer a:hover {
+            color: #fff;
+            text-shadow: 0 0 10px rgba(6, 182, 212, 0.6);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-dark);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, var(--accent), var(--primary));
+            border-radius: 3px;
         }
     </style>
 </head>
 <body>
-<div class="container">
 
-    <!-- LOGO -->
-    <div class="logo-area">
-        <div style="display:inline-flex;flex-direction:column;align-items:center;gap:12px;margin-bottom:12px;">
-          <div style="position:relative;width:80px;height:80px;">
-            <div style="position:absolute;inset:-4px;border-radius:20px;background:linear-gradient(135deg,#00d4ff,#b026ff,#ff2d78);opacity:0.4;filter:blur(8px);"></div>
-            <div style="position:relative;width:80px;height:80px;border-radius:18px;overflow:hidden;box-shadow:0 0 30px rgba(176,38,255,0.5),0 0 60px rgba(0,212,255,0.3);">
-              <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTFFJdllY1_vWrWkBGH7nWHv2JdnkgoW9ORVaNHkQkDvQ&s" alt="LogicLabs Logo" style="width: 100%; height: 100%; object-fit: cover;">
-            </div>
-          </div>
-        </div>
-        <div class="logo-text">LogicLabs</div>
-        <div class="logo-sub">CODE · THINK · SOLVE · INNOVATE</div>
+    <!-- Ambient glowing backgrounds and 3D synth grid -->
+    <div class="cyber-bg-container">
+        <div class="cyber-glow-orb-1"></div>
+        <div class="cyber-glow-orb-2"></div>
+        <div class="cyber-glow-orb-3"></div>
+        <div class="cyber-perspective-grid"></div>
+        <div class="cyber-horizon-mask"></div>
+        <div class="cyber-horizon-line"></div>
+        <div class="cyber-laser-scanner"></div>
     </div>
 
-    <!-- TABS -->
-    <div class="tabs">
-        <a href="?panel=recruiter"
-           class="tab {% if panel == 'recruiter' %}active-recruiter{% endif %}">
-            🔍 Recruiter
-        </a>
-        <a href="?panel=candidate"
-           class="tab {% if panel == 'candidate' %}active-candidate{% endif %}">
-            👤 Candidate
-        </a>
-    </div>
+    <div class="container">
 
-    <!-- CARD -->
-    <div class="card">
-        {% if panel == 'recruiter' %}
-            <div class="card-title">Recruiter Login</div>
-            <div class="card-sub">Access candidate insights & reports</div>
-        {% else %}
-            <div class="card-title">Welcome Back!</div>
-            <div class="card-sub">Sign in to continue coding</div>
-        {% endif %}
-
-        {% if error %}
-        <div class="error">⚠ {{ error }}</div>
-        {% endif %}
-
-        <form method="POST">
-            {% csrf_token %}
-            <input type="hidden" name="panel" value="{{ panel|default:'recruiter' }}">
-
-            <div class="field">
-                <label>Username</label>
-                <input type="text" name="username"
-                       placeholder="Enter username" required>
-            </div>
-
-            <div class="field">
-                <label>Password</label>
-                <input type="password" name="password" id="pwInput"
-                       placeholder="••••••••"
-                       {% if panel == 'candidate' %}minlength="8"{% endif %}
-                       required
-                       oninput="updateStrength(this)">
-                {% if panel == 'candidate' %}
-                <div class="strength-wrap">
-                    <div class="strength-bar" id="strengthBar"></div>
+        <!-- LOGO -->
+        <div class="logo-area">
+            <div class="logo-badge">
+                <div class="logo-badge-glow"></div>
+                <div class="logo-badge-img">
+                    <img src="{% static 'images/logo_transparent.png' %}" alt="LogicLabs Logo">
                 </div>
-                {% endif %}
             </div>
-
-            {% if panel == 'recruiter' %}
-                <button type="submit" class="btn btn-recruiter">
-                    LOGIN AS RECRUITER
-                </button>
-            {% else %}
-                <button type="submit" class="btn btn-candidate">
-                    LOGIN AS CANDIDATE
-                </button>
-            {% endif %}
-        </form>
-
-        {% if panel == 'candidate' %}
-        <div class="footer">
-            No account? <a href="/accounts/register/">Sign Up Free</a>
+            <div class="logo-text">
+                <span class="left-part">Logic</span><span class="right-part">Labs</span>
+            </div>
+            <div class="logo-sub">CODE · THINK · SOLVE · INNOVATE</div>
         </div>
-        {% endif %}
+
+        <!-- TABS -->
+        <div class="tabs">
+            <a href="?panel=recruiter"
+               class="tab {% if panel == 'recruiter' %}active-recruiter{% endif %}">
+                <i class="fas fa-search"></i> Recruiter
+            </a>
+            <a href="?panel=candidate"
+               class="tab {% if panel == 'candidate' or not panel %}active-candidate{% endif %}">
+                <i class="fas fa-user-tie"></i> Candidate
+            </a>
+        </div>
+
+        <!-- CARD -->
+        <div class="card">
+            <div class="card-glow-border"></div>
+            
+            {% if panel == 'recruiter' %}
+                <div class="card-title">Recruiter Login</div>
+                <div class="card-sub">Access candidate insights & reports</div>
+            {% else %}
+                <div class="card-title">Welcome Back!</div>
+                <div class="card-sub">Sign in to continue coding</div>
+            {% endif %}
+
+            {% if error %}
+            <div class="error">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span>{{ error }}</span>
+            </div>
+            {% endif %}
+
+            <form method="POST" class="{% if panel == 'recruiter' %}form-recruiter{% else %}form-candidate{% endif %}">
+                {% csrf_token %}
+                <input type="hidden" name="panel" value="{{ panel|default:'candidate' }}">
+
+                <div class="field">
+                    <label>Username</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-user input-icon"></i>
+                        <input type="text" name="username"
+                               placeholder="Enter username" required>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label>Password</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-lock input-icon"></i>
+                        <input type="password" name="password" id="pwInput"
+                               placeholder="••••••••"
+                               {% if panel == 'candidate' or not panel %}minlength="8"{% endif %}
+                               required
+                               oninput="updateStrength(this)">
+                        <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility()">
+                            <i class="far fa-eye" id="eyeIcon"></i>
+                        </button>
+                    </div>
+                    {% if panel == 'candidate' or not panel %}
+                    <div class="strength-wrap">
+                        <div class="strength-bar" id="strengthBar"></div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                {% if panel == 'recruiter' %}
+                    <button type="submit" class="btn btn-recruiter">
+                        LOGIN AS RECRUITER <i class="fas fa-arrow-right"></i>
+                    </button>
+                {% else %}
+                    <button type="submit" class="btn btn-candidate">
+                        LOGIN AS CANDIDATE <i class="fas fa-arrow-right"></i>
+                    </button>
+                {% endif %}
+            </form>
+
+            {% if panel == 'candidate' or not panel %}
+            <div class="footer">
+                No account? <a href="/accounts/register/">Sign Up Free</a>
+            </div>
+            {% endif %}
+        </div>
+
     </div>
 
-</div>
+    <script>
+        function updateStrength(input) {
+            var bar = document.getElementById('strengthBar');
+            if (!bar) return;
+            var v = input.value, score = 0;
+            if (v.length >= 8) score++;
+            if (/[A-Z]/.test(v)) score++;
+            if (/[0-9]/.test(v)) score++;
+            if (/[^A-Za-z0-9]/.test(v)) score++;
+            bar.style.width = (score / 4 * 100) + '%';
+            
+            // Neon strength colors matching our cyberpunk theme
+            var colors = ['#ef4444', '#ef4444', '#f97316', '#eab308', '#22c55e'];
+            var glowColors = [
+                '0 0 10px rgba(239,68,68,0.5)',
+                '0 0 10px rgba(239,68,68,0.5)',
+                '0 0 10px rgba(249,115,22,0.5)',
+                '0 0 10px rgba(234,179,8,0.5)',
+                '0 0 10px rgba(34,197,94,0.5)'
+            ];
+            bar.style.background = colors[score];
+            bar.style.boxShadow = glowColors[score];
+        }
 
-<script>
-function updateStrength(input) {
-    var bar = document.getElementById('strengthBar');
-    if (!bar) return;
-    var v = input.value, score = 0;
-    if (v.length >= 8) score++;
-    if (/[A-Z]/.test(v)) score++;
-    if (/[0-9]/.test(v)) score++;
-    if (/[^A-Za-z0-9]/.test(v)) score++;
-    bar.style.width = (score / 4 * 100) + '%';
-    var colors = ['#ef4444','#ef4444','#f97316','#eab308','#22c55e'];
-    bar.style.background = colors[score];
-}
-</script>
+        function togglePasswordVisibility() {
+            var passwordInput = document.getElementById('pwInput');
+            var eyeIcon = document.getElementById('eyeIcon');
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                eyeIcon.classList.remove('far', 'fa-eye');
+                eyeIcon.classList.add('fas', 'fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                eyeIcon.classList.remove('fas', 'fa-eye-slash');
+                eyeIcon.classList.add('far', 'fa-eye');
+            }
+        }
+    </script>
 </body>
 </html>

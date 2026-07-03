@@ -359,27 +359,10 @@
 
     <!-- Stats -->
     <div class="stats-grid">
-        <div class="stat-card">
-            <div class="stat-icon">👥</div>
-            <div class="stat-label">Total Candidates</div>
-            <div class="stat-value">--</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-icon">💻</div>
-            <div class="stat-label">Problems Listed</div>
-            <div class="stat-value">--</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-icon">📋</div>
-            <div class="stat-label">Total Submissions</div>
-            <div class="stat-value">--</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-icon">🏆</div>
-            <div class="stat-label">Active Contests</div>
-            <div class="stat-value">--</div>
-        </div>
-    </div>
+        <div class="stat-value">{{ total_candidates }}</div>
+<div class="stat-value">{{ total_questions }}</div>
+<div class="stat-value">{{ total_submissions }}</div>
+<div class="stat-value">{{ active_contests|default:"--" }}</div>
 
     <!-- Problem Bank Table -->
     <div class="table-card">
@@ -398,12 +381,21 @@
                 </tr>
             </thead>
             <tbody>
-                <tr>
-                    <td colspan="6" style="text-align:center; color:#4b5563; padding:32px;">
-                        Problem data will load here once connected to views.
-                    </td>
-                </tr>
-            </tbody>
+{% for q in questions %}
+    <tr>
+        <td>{{ forloop.counter }}</td>
+        <td>{{ q.title }}</td>
+        <td><span class="badge-{{ q.difficulty|lower }}">{{ q.difficulty }}</span></td>
+        <td>{{ q.submission_count|default:"0" }}</td>
+        <td>{{ q.last_submitted|default:"—" }}</td>
+        <td><a href="#" class="btn-view">View</a></td>
+    </tr>
+{% empty %}
+    <tr>
+        <td colspan="6" style="text-align:center; color:#4b5563; padding:32px;">No problems added yet.</td>
+    </tr>
+{% endfor %}
+</tbody>
         </table>
     </div>
 </div>
