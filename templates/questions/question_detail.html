@@ -1,19 +1,23 @@
 {% extends 'base.html' %}
 {% block page_title %}// {{ question.title }}{% endblock %}
 {% block content %}
-{% if request.GET.result %}
+
+{% if request.GET.result and request.GET.result != 'Accepted' %}
 <div style="margin-bottom:16px;padding:14px 20px;border-radius:12px;
-  {% if request.GET.result == 'Accepted' %}
-  background:rgba(0,255,130,0.1);border:1px solid rgba(0,255,130,0.4);color:#00ff82;
-  {% else %}
   background:rgba(255,45,120,0.1);border:1px solid rgba(255,45,120,0.4);color:#ff2d78;
-  {% endif %}
   font-family:'Orbitron',monospace;font-size:0.9rem;font-weight:700;display:flex;align-items:center;gap:10px;">
-  {% if request.GET.result == 'Accepted' %}
-    <i class="fas fa-check-circle"></i> ACCEPTED — Great job!
-  {% else %}
-    <i class="fas fa-times-circle"></i> {{ request.GET.result }}
-  {% endif %}
+  <i class="fas fa-times-circle"></i> {{ request.GET.result }}
+</div>
+{% endif %}
+
+{% if request.GET.result == 'Accepted' %}
+<div id="congrats-overlay" style="position:fixed;inset:0;background:rgba(10,6,20,0.85);z-index:9999;display:flex;align-items:center;justify-content:center;">
+  <div style="background:#13091f;border:1px solid rgba(0,255,130,0.4);border-radius:16px;padding:40px 50px;text-align:center;box-shadow:0 0 40px rgba(0,255,130,0.2);">
+    <i class="fas fa-check-circle" style="font-size:3rem;color:#00ff82;"></i>
+    <h2 style="color:#00ff82;font-family:'Orbitron',monospace;margin-top:16px;">ACCEPTED — Great job!</h2>
+    <p style="color:rgba(240,234,255,0.7);font-family:'JetBrains Mono',monospace;">Congrats! You completed the problem.</p>
+    <p style="color:rgba(240,234,255,0.4);font-size:0.8rem;margin-top:12px;">Redirecting to your submissions in 3 seconds...</p>
+  </div>
 </div>
 {% endif %}
 
@@ -29,16 +33,41 @@
   <!-- Left: Problem Description -->
   <div class="problem-panel">
     <div class="card-glass p-4 mb-3">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
-        <span style="font-family:'Orbitron',monospace;font-size:1rem;font-weight:900;color:#f0eaff;">{{ question.title }}</span>
-        {% if question.difficulty == 'Easy' %}
-          <span style="background:rgba(0,255,130,0.15);color:#00ff82;padding:3px 12px;border-radius:20px;font-size:0.72rem;font-weight:700;border:1px solid rgba(0,255,130,0.4);">● Easy</span>
-        {% elif question.difficulty == 'Medium' %}
-          <span style="background:rgba(255,193,7,0.15);color:#ffc107;padding:3px 12px;border-radius:20px;font-size:0.72rem;font-weight:700;border:1px solid rgba(255,193,7,0.4);">● Medium</span>
-        {% else %}
-          <span style="background:rgba(255,45,120,0.15);color:#ff2d78;padding:3px 12px;border-radius:20px;font-size:0.72rem;font-weight:700;border:1px solid rgba(255,45,120,0.4);">● Hard</span>
-        {% endif %}
+
+      <!-- Title row: title + difficulty + Hint/Answer buttons -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:10px;flex-wrap:wrap;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-family:'Orbitron',monospace;font-size:1rem;font-weight:900;color:#f0eaff;">{{ question.title }}</span>
+          {% if question.difficulty == 'Easy' %}
+            <span style="background:rgba(0,255,130,0.15);color:#00ff82;padding:3px 12px;border-radius:20px;font-size:0.72rem;font-weight:700;border:1px solid rgba(0,255,130,0.4);">● Easy</span>
+          {% elif question.difficulty == 'Medium' %}
+            <span style="background:rgba(255,193,7,0.15);color:#ffc107;padding:3px 12px;border-radius:20px;font-size:0.72rem;font-weight:700;border:1px solid rgba(255,193,7,0.4);">● Medium</span>
+          {% else %}
+            <span style="background:rgba(255,45,120,0.15);color:#ff2d78;padding:3px 12px;border-radius:20px;font-size:0.72rem;font-weight:700;border:1px solid rgba(255,45,120,0.4);">● Hard</span>
+          {% endif %}
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button onclick="showHint()" style="padding:5px 12px;border-radius:8px;border:1px solid rgba(255,193,7,0.4);background:rgba(255,193,7,0.1);color:#ffc107;font-size:0.72rem;font-weight:700;cursor:pointer;">
+            <i class="fas fa-lightbulb"></i> Hint
+          </button>
+          <button id="answer-btn" onclick="showAnswer()" disabled
+            style="padding:5px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.05);color:rgba(240,234,255,0.3);font-size:0.72rem;font-weight:700;cursor:not-allowed;display:flex;align-items:center;gap:6px;">
+            <i class="fas fa-lock"></i> Answer <span id="attempt-counter" style="font-size:0.68rem;opacity:0.7;">(0/3)</span>
+          </button>
+        </div>
       </div>
+
+      <!-- Hint box (hidden by default) -->
+      <div id="hint-box" style="display:none;margin-bottom:12px;padding:12px 16px;border-radius:10px;background:rgba(255,193,7,0.08);border:1px solid rgba(255,193,7,0.3);color:#ffc107;font-size:0.85rem;line-height:1.6;">
+        <i class="fas fa-lightbulb"></i> {{ question.hint|default:"No hint available for this question." }}
+      </div>
+
+      <!-- Answer box (hidden by default, unlocked after 3 wrong submits) -->
+      <div id="answer-box" style="display:none;margin-bottom:12px;padding:12px 16px;border-radius:10px;background:rgba(0,255,130,0.08);border:1px solid rgba(0,255,130,0.3);color:#00ff82;font-size:0.85rem;">
+        <div style="margin-bottom:8px;font-weight:700;font-family:'Orbitron',monospace;font-size:0.75rem;letter-spacing:1px;"><i class="fas fa-key"></i> ANSWER</div>
+        <pre style="white-space:pre-wrap;margin:0;font-family:'JetBrains Mono',monospace;font-size:0.82rem;">{{ question.answer|default:"No answer available." }}</pre>
+      </div>
+
       <div style="color:rgba(240,234,255,0.7);font-size:0.88rem;line-height:1.7;">{{ question.description }}</div>
     </div>
 
@@ -60,25 +89,33 @@
   <!-- Right: Code Editor -->
   <div class="code-panel">
     <div class="card-glass p-3" style="flex:1;display:flex;flex-direction:column;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:12px;flex-wrap:wrap;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div id="timerBox" style="background:#0a0614;border:1px solid rgba(176,38,255,0.3);border-radius:8px;padding:6px 14px;color:#00fff7;font-family:'JetBrains Mono',monospace;font-size:0.85rem;font-weight:700;">
+            <i class="fas fa-clock"></i> <span id="timerDisplay">60:00</span>
+          </div>
+          <button onclick="resetEverything()" style="padding:6px 14px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:transparent;color:rgba(240,234,255,0.5);font-size:0.78rem;cursor:pointer;">
+            <i class="fas fa-undo"></i> Reset
+          </button>
+        </div>
         <select id="lang-select" style="background:#0a0614;border:1px solid rgba(176,38,255,0.3);border-radius:8px;color:#f0eaff;padding:4px 10px;font-family:'JetBrains Mono',monospace;font-size:0.8rem;" onchange="changeLanguage(this.value)">
-  <option value="python">Python3</option>
-  <option value="python2">Python</option>
-  <option value="javascript">JavaScript</option>
-  <option value="typescript">TypeScript</option>
-  <option value="java">Java</option>
-  <option value="cpp">C++</option>
-  <option value="c">C</option>
-  <option value="csharp">C#</option>
-  <option value="go">Go</option>
-  <option value="kotlin">Kotlin</option>
-  <option value="swift">Swift</option>
-  <option value="rust">Rust</option>
-  <option value="ruby">Ruby</option>
-  <option value="php">PHP</option>
-  <option value="dart">Dart</option>
-  <option value="scala">Scala</option>
-</select>
+          <option value="python">Python3</option>
+          <option value="python2">Python</option>
+          <option value="javascript">JavaScript</option>
+          <option value="typescript">TypeScript</option>
+          <option value="java">Java</option>
+          <option value="cpp">C++</option>
+          <option value="c">C</option>
+          <option value="csharp">C#</option>
+          <option value="go">Go</option>
+          <option value="kotlin">Kotlin</option>
+          <option value="swift">Swift</option>
+          <option value="rust">Rust</option>
+          <option value="ruby">Ruby</option>
+          <option value="php">PHP</option>
+          <option value="dart">Dart</option>
+          <option value="scala">Scala</option>
+        </select>
         <div style="display:flex;gap:8px;">
           <button onclick="clearEditor()" style="padding:6px 14px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:transparent;color:rgba(240,234,255,0.5);font-size:0.78rem;cursor:pointer;">Clear</button>
           <button onclick="submitCode()" style="padding:6px 18px;border-radius:8px;border:none;background:linear-gradient(135deg,#ff2d78,#b026ff);color:#fff;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:'Orbitron',monospace;">
@@ -95,7 +132,7 @@
       <div id="output-area" style="min-height:80px;background:#0a0614;border-radius:8px;padding:12px;font-family:'JetBrains Mono',monospace;font-size:0.82rem;color:rgba(240,234,255,0.4);">
         // Run your code to see output here
       </div>
-      <form method="post" id="submit-form" action="/questions/submit/{{ question.pk }}/">
+      <form method="post" id="submit-form" action="/questions/submit/{{ question.pk }}/" style="margin-top:10px;">
         {% csrf_token %}
         <input type="hidden" name="code" id="hidden-code">
         <input type="hidden" name="language" id="hidden-lang">
@@ -150,11 +187,122 @@ function submitCode() {
   });
 }
 
+// ── Submit form: stop timer + fill hidden fields ──
 document.getElementById('submit-form').addEventListener('submit', function() {
+  clearInterval(timerInterval);
   document.getElementById('hidden-code').value = document.getElementById('code-editor').value;
   document.getElementById('hidden-lang').value = document.getElementById('lang-select').value;
 });
 
+// ── Wrong-attempt counter (per question, persisted in localStorage) ──
+const wrongKey = 'wrong_q{{ question.pk }}';
+const MAX_ATTEMPTS = 3;
+
+function getCount() {
+  return parseInt(localStorage.getItem(wrongKey) || '0', 10);
+}
+
+function updateCounter(count) {
+  document.getElementById('attempt-counter').textContent = `(${Math.min(count, MAX_ATTEMPTS)}/${MAX_ATTEMPTS})`;
+}
+
+function unlockAnswer() {
+  const btn = document.getElementById('answer-btn');
+  btn.disabled = false;
+  btn.style.cursor = 'pointer';
+  btn.style.color = '#00ff82';
+  btn.style.borderColor = 'rgba(0,255,130,0.4)';
+  btn.style.background = 'rgba(0,255,130,0.1)';
+  btn.innerHTML = '<i class="fas fa-unlock"></i> Answer <span style="font-size:0.68rem;opacity:0.7;">(3/3)</span>';
+}
+
+function showHint() {
+  const box = document.getElementById('hint-box');
+  box.style.display = box.style.display === 'none' ? 'block' : 'none';
+}
+
+function showAnswer() {
+  if (document.getElementById('answer-btn').disabled) return;
+  const box = document.getElementById('answer-box');
+  box.style.display = box.style.display === 'none' ? 'block' : 'none';
+}
+
+// ── On page load: handle result from last submission ──
+(function() {
+  let count = getCount();
+
+  {% if request.GET.result and request.GET.result != 'Accepted' %}
+    // Wrong submit just happened — increment
+    count = count + 1;
+    localStorage.setItem(wrongKey, count);
+  {% elif request.GET.result == 'Accepted' %}
+    // Solved — reset counter
+    count = 0;
+    localStorage.removeItem(wrongKey);
+  {% endif %}
+
+  updateCounter(count);
+  if (count >= MAX_ATTEMPTS) {
+    unlockAnswer();
+  }
+})();
+
+// ── Timer ──
 changeLanguage('python');
+
+let totalSeconds = {{ question.time_limit }} * 60;
+let warned = false;
+let timerInterval;
+
+function formatTime(s) {
+  const m = Math.floor(s / 60);
+  const sec = s % 60;
+  return String(m).padStart(2, '0') + ':' + String(sec).padStart(2, '0');
+}
+
+function tickTimer() {
+  totalSeconds--;
+  document.getElementById('timerDisplay').textContent = formatTime(totalSeconds);
+  if (totalSeconds <= 60 && !warned) {
+    warned = true;
+    const box = document.getElementById('timerBox');
+    box.style.borderColor = '#ff2d78';
+    box.style.color = '#ff2d78';
+    alert('⚠ Time is running out! Less than 1 minute left.');
+  }
+  if (totalSeconds <= 0) {
+    clearInterval(timerInterval);
+    document.getElementById('timerDisplay').textContent = '00:00';
+    document.getElementById('hidden-code').value = document.getElementById('code-editor').value;
+    document.getElementById('hidden-lang').value = document.getElementById('lang-select').value;
+    document.getElementById('submit-form').submit();
+  }
+}
+
+function resetEverything() {
+  if (!confirm('Reset everything? Your code, output, and timer will all restart.')) return;
+  const lang = document.getElementById('lang-select').value;
+  document.getElementById('code-editor').value = templates[lang] || '';
+  document.getElementById('output-area').innerHTML = '// Run your code to see output here';
+  clearInterval(timerInterval);
+  totalSeconds = 60 * 60;
+  warned = false;
+  document.getElementById('timerDisplay').textContent = formatTime(totalSeconds);
+  const box = document.getElementById('timerBox');
+  box.style.borderColor = 'rgba(176,38,255,0.3)';
+  box.style.color = '#00fff7';
+  timerInterval = setInterval(tickTimer, 1000);
+}
+
+timerInterval = setInterval(tickTimer, 1000);
 </script>
+
+{% if request.GET.result == 'Accepted' %}
+<script>
+  setTimeout(function() {
+    window.location.href = '/submissions/my-submissions/';
+  }, 3000);
+</script>
+{% endif %}
+
 {% endblock %}

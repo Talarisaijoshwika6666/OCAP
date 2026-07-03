@@ -16,7 +16,7 @@ DEBUG = True  # keep as is for now
 handler404 = 'OnlineCodingAssessment.views.handler404'
 handler500 = 'OnlineCodingAssessment.views.handler500'
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 INSTALLED_APPS = [
@@ -37,7 +37,7 @@ INSTALLED_APPS = [
     'results',
     'submissions',
     'testcases',
-    'recruiter',
+    'recruiter.apps.RecruiterConfig',
     'quest',
     'contest',
     'discuss',
@@ -51,7 +51,9 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'accounts.middleware.CandidateAccessMiddleware',
 ]
+
 
 ROOT_URLCONF = 'OnlineCodingAssessment.urls'
 
