@@ -60,8 +60,8 @@ def register_view(request):
     if request.method == 'POST':
         username         = request.POST.get('username', '').strip()
         email            = request.POST.get('email', '').strip()
-        password         = request.POST.get('password', '')
-        confirm_password = request.POST.get('confirm_password', '')
+        password         = request.POST.get('password1', '')
+        confirm_password = request.POST.get('password2', '')
 
         if not username or not email or not password:
             return render(request, 'accounts/register.html', {
