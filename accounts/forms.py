@@ -1,8 +1,9 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 import re
-from .models import User
+from .models import User, UserSettings
 
 class UserRegistrationForm(forms.ModelForm):
     password = forms.CharField(
@@ -118,3 +119,89 @@ class UserProfileForm(forms.ModelForm):
             'mobile': forms.TextInput(attrs={'class': 'form-control'}),
             'profile_picture': forms.FileInput(attrs={'class': 'form-control'}),
         }
+
+# ─────────────────────────────────────────────────────────
+# Settings module forms
+# ─────────────────────────────────────────────────────────
+
+class SettingsPasswordChangeForm(forms.Form):
+    """Change-password form for the Settings > Account tab.
+    Validates against the real authenticated user's hashed password."""
+    current_password = forms.CharField(widget=forms.PasswordInput(attrs={
+        'class': 'form-control', 'placeholder': 'Enter current password'
+    }))
+    new_password = forms.CharField(widget=forms.PasswordInput(attrs={
+        'class': 'form-control', 'placeholder': 'Enter new password'
+    }))
+    confirm_password = forms.CharField(widget=forms.PasswordInput(attrs={
+        'class': 'form-control', 'placeholder': 'Confirm new password'
+    }))
+
+    def __init__(self, user, *args, **kwargs):
+        self.user = user
+        super().__init__(*args, **kwargs)
+
+    def clean_current_password(self):
+        current = self.cleaned_data.get('current_password')
+        if not self.user.check_password(current):
+            raise ValidationError('Current password is incorrect.')
+        return current
+
+    def clean_new_password(self):
+        new_password = self.cleaned_data.get('new_password')
+        validate_password(new_password, user=self.user)
+        return new_password
+
+    def clean(self):
+        cleaned = super().clean()
+        new_password = cleaned.get('new_password')
+        confirm_password = cleaned.get('confirm_password')
+        if new_password and confirm_password and new_password != confirm_password:
+            raise ValidationError('New passwords do not match.')
+        return cleaned
+
+    def save(self):
+        self.user.set_password(self.cleaned_data['new_password'])
+        self.user.save()
+        return self.user
+
+
+class NotificationsSettingsForm(forms.ModelForm):
+    class Meta:
+        model = UserSettings
+        fields = [
+            'email_notifications', 'contest_notifications',
+            'course_update_notifications', 'submission_result_notifications',
+            'team_member_notifications', 'spam_filtering',
+        ]
+        widgets = {name: forms.CheckboxInput() for name in fields}
+
+
+class AppearanceSettingsForm(forms.ModelForm):
+    class Meta:
+        model = UserSettings
+        fields = ['theme']
+
+
+class EditorPreferencesForm(forms.ModelForm):
+    class Meta:
+        model = UserSettings
+        fields = [
+            'default_language', 'font_size', 'show_line_numbers',
+            'word_wrap', 'auto_complete', 'auto_save',
+        ]
+
+    def clean_font_size(self):
+        size = self.cleaned_data.get('font_size')
+        if size is None or size < 10 or size > 24:
+            raise ValidationError('Font size must be between 10 and 24.')
+        return size
+
+
+class PrivacySettingsForm(forms.ModelForm):
+    class Meta:
+        model = UserSettings
+        fields = [
+            'public_profile', 'show_solved_problems',
+            'show_contest_ranking', 'show_activity',
+        ]

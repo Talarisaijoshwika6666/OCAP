@@ -1,7 +1,14 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth import authenticate, login, logout, get_user_model
+from django.contrib.auth import authenticate, login, logout, get_user_model, update_session_auth_hash
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 from django.db.models import Sum
 from submissions.models import Submission
+from .models import UserSettings
+from .forms import (
+    UserProfileForm, SettingsPasswordChangeForm, NotificationsSettingsForm,
+    AppearanceSettingsForm, EditorPreferencesForm, PrivacySettingsForm,
+)
 
 User = get_user_model()
 
@@ -115,4 +122,100 @@ def profile_view(request, username=None):
         'total_submissions': total_submissions,
         'total_score':       total_score,
         'problems_solved':   problems_solved,
+    })
+
+@login_required(login_url='/accounts/login/')
+def settings_view(request):
+    """Single-page Settings module: Account, Notifications, Appearance,
+    Editor Preferences, Privacy, About. Each tab posts back to this same
+    view with a hidden `section` field so we know which form to process."""
+    user = request.user
+    user_settings, _ = UserSettings.objects.get_or_create(user=user)
+    active_tab = request.GET.get('tab', 'account')
+
+    if request.method == 'POST':
+        section = request.POST.get('section')
+        active_tab = section or active_tab
+
+        if section == 'profile':
+            profile_form = UserProfileForm(
+                request.POST, request.FILES, instance=user)
+            if profile_form.is_valid():
+                profile_form.save()
+                messages.success(request, 'Profile updated successfully.')
+            else:
+                for field_errors in profile_form.errors.values():
+                    for err in field_errors:
+                        messages.error(request, err)
+            active_tab = 'account'
+
+        elif section == 'password':
+            password_form = SettingsPasswordChangeForm(user, request.POST)
+            if password_form.is_valid():
+                password_form.save()
+                update_session_auth_hash(request, user)
+                messages.success(request, 'Password updated successfully.')
+            else:
+                for field_errors in password_form.errors.values():
+                    for err in field_errors:
+                        messages.error(request, err)
+            active_tab = 'account'
+
+        elif section == 'notifications':
+            form = NotificationsSettingsForm(
+                request.POST, instance=user_settings)
+            # Unchecked checkboxes are absent from POST, so make sure the
+            # ModelForm sees them as False instead of falling back to a
+            # stale instance value.
+            for field in form.fields:
+                if field not in request.POST:
+                    request.POST = request.POST.copy()
+                    request.POST[field] = False
+            form = NotificationsSettingsForm(
+                request.POST, instance=user_settings)
+            if form.is_valid():
+                form.save()
+                messages.success(request, 'Notification preferences saved.')
+            active_tab = 'notifications'
+
+        elif section == 'appearance':
+            form = AppearanceSettingsForm(request.POST, instance=user_settings)
+            if form.is_valid():
+                form.save()
+                messages.success(request, 'Appearance updated.')
+            active_tab = 'appearance'
+
+        elif section == 'editor':
+            post_data = request.POST.copy()
+            for field in ['show_line_numbers', 'word_wrap', 'auto_complete', 'auto_save']:
+                if field not in post_data:
+                    post_data[field] = False
+            form = EditorPreferencesForm(post_data, instance=user_settings)
+            if form.is_valid():
+                form.save()
+                messages.success(request, 'Editor preferences saved.')
+            else:
+                for field_errors in form.errors.values():
+                    for err in field_errors:
+                        messages.error(request, err)
+            active_tab = 'editor'
+
+        elif section == 'privacy':
+            post_data = request.POST.copy()
+            for field in ['public_profile', 'show_solved_problems',
+                          'show_contest_ranking', 'show_activity']:
+                if field not in post_data:
+                    post_data[field] = False
+            form = PrivacySettingsForm(post_data, instance=user_settings)
+            if form.is_valid():
+                form.save()
+                messages.success(request, 'Privacy settings saved.')
+            active_tab = 'privacy'
+
+        return redirect(f'/accounts/settings/?tab={active_tab}')
+
+    return render(request, 'accounts/settings.html', {
+        'user_settings': user_settings,
+        'active_tab': active_tab,
+        'password_form': SettingsPasswordChangeForm(user),
     })

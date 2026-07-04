@@ -20,3 +20,60 @@ class User(AbstractUser):
 
     def get_full_name(self):
         return self.full_name or self.username
+
+
+class UserSettings(models.Model):
+    """Stores per-user preferences for the Settings module (notifications,
+    appearance, editor preferences and privacy). One row per user."""
+
+    THEME_CHOICES = (
+        ('dark', 'Dark'),
+        ('light', 'Light'),
+    )
+
+    LANGUAGE_CHOICES = (
+        ('python', 'Python'),
+        ('cpp', 'C++'),
+        ('java', 'Java'),
+        ('javascript', 'JavaScript'),
+        ('c', 'C'),
+    )
+
+    user = models.OneToOneField(
+        User, on_delete=models.CASCADE, related_name='settings')
+
+    # ── Notifications ──
+    email_notifications = models.BooleanField(default=True)
+    contest_notifications = models.BooleanField(default=True)
+    course_update_notifications = models.BooleanField(default=True)
+    submission_result_notifications = models.BooleanField(default=True)
+    team_member_notifications = models.BooleanField(default=True)
+    spam_filtering = models.BooleanField(default=True)
+
+    # ── Appearance ──
+    theme = models.CharField(
+        max_length=10, choices=THEME_CHOICES, default='dark')
+
+    # ── Editor Preferences (saved for future editor integration) ──
+    default_language = models.CharField(
+        max_length=20, choices=LANGUAGE_CHOICES, default='python')
+    font_size = models.PositiveSmallIntegerField(default=14)
+    show_line_numbers = models.BooleanField(default=True)
+    word_wrap = models.BooleanField(default=True)
+    auto_complete = models.BooleanField(default=True)
+    auto_save = models.BooleanField(default=False)
+
+    # ── Privacy ──
+    public_profile = models.BooleanField(default=True)
+    show_solved_problems = models.BooleanField(default=True)
+    show_contest_ranking = models.BooleanField(default=True)
+    show_activity = models.BooleanField(default=True)
+
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'User Settings'
+        verbose_name_plural = 'User Settings'
+
+    def __str__(self):
+        return f"Settings for {self.user.username}"

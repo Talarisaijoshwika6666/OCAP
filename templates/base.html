@@ -1,6 +1,6 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="{{ active_theme|default:'dark' }}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -21,7 +21,34 @@
       --font-display: 'Orbitron', monospace;
       --font-body: 'Inter', sans-serif;
       --font-code: 'JetBrains Mono', monospace;
+
+      /* Chrome surfaces (sidebar / topbar / cards) — theme-aware */
+      --surface-1: rgba(8, 5, 18, 0.92);
+      --surface-1-soft: rgba(8, 5, 18, 0.8);
+      --surface-card: rgba(12, 8, 28, 0.75);
+      --surface-border: rgba(176, 38, 255, 0.18);
+      --glow-opacity: 1;
     }
+
+    /* ── LIGHT THEME ── */
+    [data-theme="light"] {
+      --bg-void: #f4f2fb;
+      --neon-pink: #d6006f;
+      --neon-cyan: #0090a8;
+      --neon-purple: #7a1fcc;
+      --neon-magenta: #b0006a;
+      --text-primary: #1c1530;
+      --text-dim: rgba(28,21,48,0.55);
+
+      --surface-1: rgba(255, 255, 255, 0.9);
+      --surface-1-soft: rgba(255, 255, 255, 0.85);
+      --surface-card: rgba(255, 255, 255, 0.8);
+      --surface-border: rgba(122, 31, 204, 0.18);
+      --glow-opacity: 0.5;
+    }
+
+    [data-theme="light"] .bg-layer { opacity: var(--glow-opacity); }
+    [data-theme="light"] ::-webkit-scrollbar-track { background: #eae7f5; }
 
     *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
 
@@ -33,6 +60,7 @@
       overflow-x: hidden;
       display: flex;
       position: relative;
+      transition: background 0.3s ease, color 0.3s ease;
     }
 
     /* ── BACKGROUND: dark with pink+cyan+purple glow like Image 1 ── */
@@ -63,8 +91,8 @@
     .sidebar {
       width: var(--sidebar-w);
       min-height: 100vh;
-      background: rgba(8, 5, 18, 0.92);
-      border-right: 1px solid rgba(176,38,255,0.2);
+      background: var(--surface-1);
+      border-right: 1px solid var(--surface-border);
       position: fixed;
       left: 0; top: 0;
       z-index: 1000;
@@ -319,8 +347,8 @@
 
     /* ── TOP BAR ── */
     .topbar {
-      background: rgba(8,5,18,0.8);
-      border-bottom: 1px solid rgba(176,38,255,0.15);
+      background: var(--surface-1-soft);
+      border-bottom: 1px solid var(--surface-border);
       backdrop-filter: blur(20px);
       padding: 0 28px;
       height: 60px;
@@ -399,8 +427,8 @@
 
     /* ── GLASS CARDS ── */
     .card-glass {
-      background: rgba(12,8,28,0.75);
-      border: 1px solid rgba(176,38,255,0.18);
+      background: var(--surface-card);
+      border: 1px solid var(--surface-border);
       border-radius: 16px;
       backdrop-filter: blur(20px);
       transition: all 0.3s ease;
@@ -430,8 +458,8 @@
 
     /* ── STAT CARDS ── */
     .stat-card {
-      background: rgba(12,8,28,0.75);
-      border: 1px solid rgba(176,38,255,0.18);
+      background: var(--surface-card);
+      border: 1px solid var(--surface-border);
       border-radius: 16px;
       padding: 22px;
       backdrop-filter: blur(20px);
@@ -494,6 +522,32 @@
       box-shadow: 0 0 30px rgba(255,45,120,0.5), 0 8px 25px rgba(176,38,255,0.4);
       color: #fff !important;
     }
+
+    /* ── TOAST ALERTS (django messages) ── */
+    .toast-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 22px;
+    }
+    .toast-alert {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 18px;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      background: var(--surface-card);
+      border: 1px solid rgba(0,255,130,0.35);
+      color: var(--text-primary);
+      animation: fadeInUp 0.35s ease forwards;
+    }
+    .toast-alert i { color: #00ff82; }
+    .toast-alert.toast-error {
+      border-color: rgba(255,45,120,0.4);
+    }
+    .toast-alert.toast-error i { color: var(--neon-pink); }
 
     /* ── BADGES ── */
     .badge-easy {
@@ -654,9 +708,14 @@
 
     <div class="sidebar-section">// Account</div>
 
-    <a href="/accounts/profile/" class="nav-item-side {% if 'profile' in request.path %}active{% endif %}">
+    <a href="/accounts/profile/" class="nav-item-side {% if request.path == '/accounts/profile/' or '/profile/' in request.path %}active{% endif %}">
       <div class="nav-icon"><i class="fas fa-user"></i></div>
       Profile
+    </a>
+
+    <a href="/accounts/settings/" class="nav-item-side {% if 'settings' in request.path %}active{% endif %}">
+      <div class="nav-icon"><i class="fas fa-gear"></i></div>
+      Settings
     </a>
 
     <a href="/accounts/logout/" class="nav-item-side" style="color:rgba(255,45,120,0.6);">
@@ -706,6 +765,16 @@
   </div>
 
   <div class="page-content">
+    {% if messages %}
+      <div class="toast-stack" id="toastStack">
+        {% for message in messages %}
+          <div class="toast-alert {% if message.tags %}toast-{{ message.tags }}{% endif %}">
+            <i class="fas {% if message.tags == 'error' %}fa-circle-exclamation{% else %}fa-circle-check{% endif %}"></i>
+            <span>{{ message }}</span>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
     {% block content %}{% endblock %}
   </div>
 </div>
@@ -731,6 +800,15 @@
       const w = bar.getAttribute('data-width') || '0';
       setTimeout(() => { bar.style.width = w + '%'; }, 400);
     });
+
+    const toastStack = document.getElementById('toastStack');
+    if (toastStack) {
+      setTimeout(() => {
+        toastStack.style.transition = 'opacity 0.4s ease';
+        toastStack.style.opacity = '0';
+        setTimeout(() => toastStack.remove(), 400);
+      }, 3500);
+    }
   });
 </script>
 {% block extra_js %}{% endblock %}
