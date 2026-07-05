@@ -1,8 +1,14 @@
 from django import forms
-from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
+from django.core.files.images import get_image_dimensions
 import re
+
+try:
+    from PIL import Image as PILImage
+except ImportError:  # pragma: no cover - Pillow may be unavailable in some environments
+    PILImage = None
+
 from .models import User, UserSettings
 
 class UserRegistrationForm(forms.ModelForm):
@@ -109,16 +115,74 @@ class UserLoginForm(forms.Form):
 
 
 class UserProfileForm(forms.ModelForm):
-    """Profile update form"""
+    """Profile update form for the settings module."""
+
     class Meta:
         model = User
-        fields = ['full_name', 'email', 'mobile', 'profile_picture']
+        fields = [
+            'username', 'first_name', 'last_name', 'full_name', 'email',
+            'mobile', 'profile_picture', 'bio', 'organization'
+        ]
         widgets = {
-            'full_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'email': forms.EmailInput(attrs={'class': 'form-control'}),
-            'mobile': forms.TextInput(attrs={'class': 'form-control'}),
-            'profile_picture': forms.FileInput(attrs={'class': 'form-control'}),
+            'username': forms.TextInput(attrs={'class': 'form-control', 'maxlength': '150'}),
+            'first_name': forms.TextInput(attrs={'class': 'form-control', 'maxlength': '150'}),
+            'last_name': forms.TextInput(attrs={'class': 'form-control', 'maxlength': '150'}),
+            'full_name': forms.TextInput(attrs={'class': 'form-control', 'maxlength': '150'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control', 'maxlength': '254'}),
+            'mobile': forms.TextInput(attrs={'class': 'form-control', 'maxlength': '15'}),
+            'profile_picture': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
+            'bio': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'maxlength': '500'}),
+            'organization': forms.TextInput(attrs={'class': 'form-control', 'maxlength': '200'}),
         }
+
+    def clean_username(self):
+        username = self.cleaned_data.get('username')
+        if not username:
+            raise ValidationError('Username is required.')
+        if User.objects.filter(username__iexact=username).exclude(pk=self.instance.pk).exists():
+            raise ValidationError('This username is already taken.')
+        return username
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if not email:
+            raise ValidationError('Email is required.')
+        if User.objects.filter(email__iexact=email).exclude(pk=self.instance.pk).exists():
+            raise ValidationError('This email is already registered.')
+        return email
+
+    def clean_profile_picture(self):
+        picture = self.cleaned_data.get('profile_picture')
+        if not picture:
+            return picture
+        if picture.size > 2 * 1024 * 1024:
+            raise ValidationError('Profile picture must be 2MB or smaller.')
+
+        allowed_extensions = {'.jpg', '.jpeg', '.png', '.webp', '.gif'}
+        extension = picture.name.lower().rsplit('.', 1)[-1] if '.' in picture.name else ''
+        if extension not in {'jpg', 'jpeg', 'png', 'webp', 'gif'}:
+            raise ValidationError('Please upload a valid image file.')
+
+        try:
+            if PILImage is not None:
+                picture.seek(0)
+                with PILImage.open(picture) as img:
+                    img.verify()
+                picture.seek(0)
+            else:
+                get_image_dimensions(picture)
+        except Exception:
+            raise ValidationError('Please upload a valid image file.')
+        return picture
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        if not instance.full_name:
+            full_name = ' '.join(part for part in [instance.first_name, instance.last_name] if part).strip()
+            instance.full_name = full_name
+        if commit:
+            instance.save()
+        return instance
 
 # ─────────────────────────────────────────────────────────
 # Settings module forms

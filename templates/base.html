@@ -322,6 +322,12 @@
       font-family: var(--font-display);
       box-shadow: 0 0 12px rgba(255,45,120,0.4);
       flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .user-avatar img {
+      width: 100%; height: 100%; object-fit: cover;
+      display: block;
     }
 
     .user-name { color: var(--text-primary); font-size:0.82rem; font-weight:600; }
@@ -729,9 +735,15 @@
   {% if user.is_authenticated %}
   <div class="sidebar-bottom">
     <div class="user-card-side">
-      <div class="user-avatar">{{ user.username|slice:":1"|upper }}</div>
+      <div class="user-avatar" id="sidebarUserAvatar">
+        {% if user.profile_picture %}
+        <img id="sidebarUserAvatarImg" src="{{ user.profile_picture.url }}" alt="{{ user.username }}">
+        {% else %}
+        <span id="sidebarUserInitial">{{ user.username|slice:":1"|upper }}</span>
+        {% endif %}
+      </div>
       <div>
-        <div class="user-name">{{ user.username }}</div>
+        <div class="user-name" id="sidebarUsername">{{ user.username }}</div>
         <div class="user-role">{% if user.is_staff %}// admin{% else %}// coder{% endif %}</div>
       </div>
       <i class="fas fa-ellipsis-v ms-auto" style="color:rgba(176,38,255,0.4);"></i>
@@ -755,8 +767,8 @@
       <a href="/leaderboard/" class="topbar-btn" title="Leaderboard"><i class="fas fa-trophy"></i></a>
       <a href="/recruiter/" class="topbar-btn" title="Recruiter"><i class="fas fa-briefcase"></i></a>
       {% if user.is_authenticated %}
-      <a href="/accounts/profile/" class="topbar-user">
-        <i class="fas fa-terminal"></i> {{ user.username }}
+      <a href="/accounts/profile/" class="topbar-user" id="topbarUserLink">
+        <i class="fas fa-terminal"></i> <span id="topbarUsername">{{ user.username }}</span>
       </a>
       {% else %}
       <a href="/accounts/login/" class="btn-gradient" style="padding:7px 18px;font-size:0.8rem;">Login</a>
@@ -765,16 +777,16 @@
   </div>
 
   <div class="page-content">
-    {% if messages %}
-      <div class="toast-stack" id="toastStack">
+    <div class="toast-stack" id="toastStack">
+      {% if messages %}
         {% for message in messages %}
           <div class="toast-alert {% if message.tags %}toast-{{ message.tags }}{% endif %}">
             <i class="fas {% if message.tags == 'error' %}fa-circle-exclamation{% else %}fa-circle-check{% endif %}"></i>
             <span>{{ message }}</span>
           </div>
         {% endfor %}
-      </div>
-    {% endif %}
+      {% endif %}
+    </div>
     {% block content %}{% endblock %}
   </div>
 </div>

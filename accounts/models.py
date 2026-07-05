@@ -1,5 +1,8 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
 
 class User(AbstractUser):
     ROLE_CHOICES = (
@@ -12,6 +15,8 @@ class User(AbstractUser):
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='candidate')
     mobile = models.CharField(max_length=15, blank=True, null=True)
     profile_picture = models.ImageField(upload_to='profiles/', blank=True, null=True)
+    bio = models.TextField(blank=True)
+    organization = models.CharField(max_length=200, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -19,7 +24,7 @@ class User(AbstractUser):
         return self.username
 
     def get_full_name(self):
-        return self.full_name or self.username
+        return self.full_name or self.first_name or self.username
 
 
 class UserSettings(models.Model):
@@ -77,3 +82,9 @@ class UserSettings(models.Model):
 
     def __str__(self):
         return f"Settings for {self.user.username}"
+
+
+@receiver(post_save, sender=User)
+def create_user_settings(sender, instance, created, **kwargs):
+    if created:
+        UserSettings.objects.get_or_create(user=instance)
