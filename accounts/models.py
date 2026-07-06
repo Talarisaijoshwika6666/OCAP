@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.db.models.signals import post_save
@@ -10,7 +11,7 @@ class User(AbstractUser):
         ('examiner', 'Examiner'),
         ('admin', 'Admin'),
     )
-    
+
     full_name = models.CharField(max_length=150, blank=True)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='candidate')
     mobile = models.CharField(max_length=15, blank=True, null=True)
@@ -28,8 +29,7 @@ class User(AbstractUser):
 
 
 class UserSettings(models.Model):
-    """Stores per-user preferences for the Settings module (notifications,
-    appearance, editor preferences and privacy). One row per user."""
+    """Stores per-user preferences for the Settings module."""
 
     THEME_CHOICES = (
         ('dark', 'Dark'),
@@ -45,9 +45,11 @@ class UserSettings(models.Model):
     )
 
     user = models.OneToOneField(
-        User, on_delete=models.CASCADE, related_name='settings')
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='settings',
+    )
 
-    # ── Notifications ──
     email_notifications = models.BooleanField(default=True)
     contest_notifications = models.BooleanField(default=True)
     course_update_notifications = models.BooleanField(default=True)
@@ -55,20 +57,14 @@ class UserSettings(models.Model):
     team_member_notifications = models.BooleanField(default=True)
     spam_filtering = models.BooleanField(default=True)
 
-    # ── Appearance ──
-    theme = models.CharField(
-        max_length=10, choices=THEME_CHOICES, default='dark')
-
-    # ── Editor Preferences (saved for future editor integration) ──
-    default_language = models.CharField(
-        max_length=20, choices=LANGUAGE_CHOICES, default='python')
+    theme = models.CharField(max_length=10, choices=THEME_CHOICES, default='dark')
+    default_language = models.CharField(max_length=20, choices=LANGUAGE_CHOICES, default='python')
     font_size = models.PositiveSmallIntegerField(default=14)
     show_line_numbers = models.BooleanField(default=True)
     word_wrap = models.BooleanField(default=True)
     auto_complete = models.BooleanField(default=True)
     auto_save = models.BooleanField(default=False)
 
-    # ── Privacy ──
     public_profile = models.BooleanField(default=True)
     show_solved_problems = models.BooleanField(default=True)
     show_contest_ranking = models.BooleanField(default=True)
@@ -81,10 +77,22 @@ class UserSettings(models.Model):
         verbose_name_plural = 'User Settings'
 
     def __str__(self):
-        return f"Settings for {self.user.username}"
+        return f"{self.user.username}'s settings"
 
 
 @receiver(post_save, sender=User)
 def create_user_settings(sender, instance, created, **kwargs):
     if created:
         UserSettings.objects.get_or_create(user=instance)
+
+
+class ChatRateLimit(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['user', 'timestamp']),
+            models.Index(fields=['ip_address', 'timestamp']),
+        ]
