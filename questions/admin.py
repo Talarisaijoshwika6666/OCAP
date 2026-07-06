@@ -14,3 +14,6 @@ class QuestionAdmin(admin.ModelAdmin):
 class BookmarkAdmin(admin.ModelAdmin):
     list_display = ['user', 'question', 'created_at']
     list_filter = ['created_at']
+    fields = ['title', 'description', 'difficulty', 'sample_input', 'sample_output', 'hint', 'answer', 'time_limit']
+    inlines = [TestCaseInline]
+    
