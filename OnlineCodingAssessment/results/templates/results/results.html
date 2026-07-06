@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head><title>My Results</title></head>
+<body>
+<h1>My Results</h1>
+<table border="1">
+  <tr><th>Assessment</th><th>Score</th><th>Date</th></tr>
+  {% for s in submissions %}
+  <tr>
+    <td>{{ s.assessment.title }}</td>
+    <td>{{ s.score }}</td>
+    <td>{{ s.submitted_at|date:"d M Y" }}</td>
+  </tr>
+  {% endfor %}
+</table>
+<a href="{% url 'dashboard' %}">Back</a>
+</body>
+</html>

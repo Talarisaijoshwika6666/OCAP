@@ -1,0 +1,185 @@
+{% extends 'base.html' %}
+{% block page_title %}// Overview{% endblock %}
+{% block content %}
+
+<div class="anim-in" style="background:linear-gradient(135deg,rgba(0,212,255,0.1),rgba(176,38,255,0.12),rgba(255,45,120,0.08));border:1px solid rgba(0,212,255,0.25);border-radius:20px;padding:30px 32px;margin-bottom:26px;position:relative;overflow:hidden;">
+  <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#00d4ff,#b026ff,#ff2d78,transparent);"></div>
+  <div style="position:absolute;top:-30px;right:-30px;width:160px;height:160px;border-radius:50%;background:radial-gradient(circle,rgba(0,212,255,0.15),transparent 70%);"></div>
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;position:relative;z-index:1;">
+    <div style="display:flex;align-items:center;gap:16px;">
+      <div style="width:54px;height:54px;border-radius:14px;overflow:hidden;border:1px solid rgba(255,255,255,0.15);box-shadow:0 0 20px rgba(0,212,255,0.3);flex-shrink:0;background:#000;">
+        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTFFJdllY1_vWrWkBGH7nWHv2JdnkgoW9ORVaNHkQkDvQ&s" alt="LogicLabs" style="width:100%;height:100%;object-fit:cover;">
+      </div>
+      <div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;letter-spacing:3px;color:#00d4ff;margin-bottom:6px;">// AI ASSISTANT</div>
+        <h2 style="font-family:'Orbitron',monospace;font-size:1.5rem;font-weight:900;color:#f0eaff;margin:0;">Welcome, {{ user.username|default:"Guest" }}<span style="color:#ff2d78;">_</span></h2>
+        <p style="color:rgba(240,234,255,0.5);margin:6px 0 0;font-size:0.85rem;">Your AI mentor recommends focusing on <span style="color:#00fff7;font-weight:600;">Binary Search</span> this week.</p>
+      </div>
+    </div>
+    <a href="/questions/" class="btn-gradient"><i class="fas fa-bolt"></i> Resume Practice</a>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="stat-card anim-in anim-d1">
+      <div style="width:36px;height:36px;border-radius:8px;background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.25);display:flex;align-items:center;justify-content:center;margin-bottom:14px;">
+        <i class="fas fa-bullseye" style="color:#00d4ff;"></i>
+      </div>
+      <div style="font-family:'Orbitron',monospace;font-size:2rem;font-weight:900;color:#00d4ff;">{{ total_problems }}</div>
+      <div style="color:rgba(240,234,255,0.4);font-size:0.7rem;font-family:'JetBrains Mono',monospace;">// total_problems</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card anim-in anim-d2">
+      <div style="width:36px;height:36px;border-radius:8px;background:rgba(0,255,130,0.08);border:1px solid rgba(0,255,130,0.2);display:flex;align-items:center;justify-content:center;margin-bottom:14px;">
+        <i class="fas fa-check-circle" style="color:#00ff82;"></i>
+      </div>
+      <div style="font-family:'Orbitron',monospace;font-size:2rem;font-weight:900;color:#00ff82;">0</div>
+      <div style="color:rgba(240,234,255,0.4);font-size:0.7rem;font-family:'JetBrains Mono',monospace;">// accepted</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card anim-in anim-d3">
+      <div style="width:36px;height:36px;border-radius:8px;background:rgba(255,45,120,0.08);border:1px solid rgba(255,45,120,0.2);display:flex;align-items:center;justify-content:center;margin-bottom:14px;">
+        <i class="fas fa-fire" style="color:#ff2d78;"></i>
+      </div>
+      <div style="font-family:'Orbitron',monospace;font-size:2rem;font-weight:900;color:#ff2d78;">0</div>
+      <div style="color:rgba(240,234,255,0.4);font-size:0.7rem;font-family:'JetBrains Mono',monospace;">// streak</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card anim-in anim-d4">
+      <div style="width:36px;height:36px;border-radius:8px;background:rgba(176,38,255,0.08);border:1px solid rgba(176,38,255,0.2);display:flex;align-items:center;justify-content:center;margin-bottom:14px;">
+        <i class="fas fa-trophy" style="color:#b026ff;"></i>
+      </div>
+      <div style="font-family:'Orbitron',monospace;font-size:2rem;font-weight:900;color:#b026ff;">—</div>
+      <div style="color:rgba(240,234,255,0.4);font-size:0.7rem;font-family:'JetBrains Mono',monospace;">// global_rank</div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-md-8">
+    <div class="card-glass anim-in anim-d2 p-4 mb-4" style="border-color:rgba(0,212,255,0.25);position:relative;overflow:hidden;">
+      <div style="position:absolute;top:-40px;right:-40px;width:140px;height:140px;border-radius:50%;background:radial-gradient(circle,rgba(0,212,255,0.1),transparent 70%);"></div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;position:relative;z-index:1;">
+        <i class="fas fa-wand-magic-sparkles" style="color:#00d4ff;"></i>
+        <span style="font-family:'Orbitron',monospace;font-size:0.85rem;font-weight:700;color:#00d4ff;letter-spacing:1px;">AI_INSIGHTS</span>
+        <span style="margin-left:auto;background:rgba(0,255,130,0.1);color:#00ff82;padding:3px 10px;border-radius:20px;font-size:0.65rem;font-family:'JetBrains Mono',monospace;border:1px solid rgba(0,255,130,0.3);">
+          <i class="fas fa-circle" style="font-size:0.5rem;margin-right:4px;"></i>LIVE
+        </span>
+      </div>
+      <div style="display:flex;gap:14px;margin-bottom:16px;position:relative;z-index:1;">
+        <div style="width:38px;height:38px;border-radius:10px;background:rgba(0,255,130,0.08);border:1px solid rgba(0,255,130,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <i class="fas fa-arrow-trend-up" style="color:#00ff82;font-size:0.9rem;"></i>
+        </div>
+        <div>
+          <div style="color:#f0eaff;font-weight:600;font-size:0.85rem;margin-bottom:3px;">Strength detected: SQL & Databases</div>
+          <div style="color:rgba(240,234,255,0.45);font-size:0.78rem;">You're solving database problems faster than 80% of peers.</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:14px;margin-bottom:16px;position:relative;z-index:1;">
+        <div style="width:38px;height:38px;border-radius:10px;background:rgba(255,45,120,0.08);border:1px solid rgba(255,45,120,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <i class="fas fa-triangle-exclamation" style="color:#ff2d78;font-size:0.9rem;"></i>
+        </div>
+        <div>
+          <div style="color:#f0eaff;font-weight:600;font-size:0.85rem;margin-bottom:3px;">Gap found: System Design</div>
+          <div style="color:rgba(240,234,255,0.45);font-size:0.78rem;">Practicing 3 more problems this week could close this gap.</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:14px;position:relative;z-index:1;">
+        <div style="width:38px;height:38px;border-radius:10px;background:rgba(176,38,255,0.08);border:1px solid rgba(176,38,255,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <i class="fas fa-lightbulb" style="color:#b026ff;font-size:0.9rem;"></i>
+        </div>
+        <div>
+          <div style="color:#f0eaff;font-weight:600;font-size:0.85rem;margin-bottom:3px;">Suggested next problem</div>
+          <div style="color:rgba(240,234,255,0.45);font-size:0.78rem;">Based on your pace, try a Medium-difficulty array problem next.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-glass anim-in anim-d3 p-4">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
+        <i class="fas fa-timeline" style="color:#ff2d78;"></i>
+        <span style="font-family:'Orbitron',monospace;font-size:0.85rem;font-weight:700;color:#f0eaff;letter-spacing:1px;">RECENT_ACTIVITY</span>
+      </div>
+      <div style="text-align:center;padding:36px 0;color:rgba(240,234,255,0.3);">
+        <i class="fas fa-clock-rotate-left" style="font-size:2rem;display:block;margin-bottom:12px;opacity:0.2;"></i>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:0.8rem;">// no activity yet — solve your first problem to begin tracking</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4 d-flex flex-column gap-4">
+    <div class="card-glass anim-in anim-d2 p-4">
+      <div style="font-family:'Orbitron',monospace;font-size:0.78rem;font-weight:700;color:#f0eaff;letter-spacing:1px;margin-bottom:18px;">
+        <i class="fas fa-satellite-dish" style="color:#00d4ff;margin-right:8px;"></i>SKILL_RADAR
+      </div>
+      <div class="mb-3">
+        <div class="d-flex justify-content-between mb-1">
+          <span style="color:rgba(240,234,255,0.45);font-size:0.75rem;font-family:'JetBrains Mono',monospace;">data_structures</span>
+          <span style="color:#00fff7;font-size:0.75rem;font-family:'JetBrains Mono',monospace;">85%</span>
+        </div>
+        <div class="progress-neon"><div class="progress-neon-bar" style="background:linear-gradient(90deg,#00fff7,#b026ff);" data-width="85"></div></div>
+      </div>
+      <div class="mb-3">
+        <div class="d-flex justify-content-between mb-1">
+          <span style="color:rgba(240,234,255,0.45);font-size:0.75rem;font-family:'JetBrains Mono',monospace;">algorithms</span>
+          <span style="color:#b026ff;font-size:0.75rem;font-family:'JetBrains Mono',monospace;">72%</span>
+        </div>
+        <div class="progress-neon"><div class="progress-neon-bar" style="background:linear-gradient(90deg,#b026ff,#ff2d78);" data-width="72"></div></div>
+      </div>
+      <div class="mb-3">
+        <div class="d-flex justify-content-between mb-1">
+          <span style="color:rgba(240,234,255,0.45);font-size:0.75rem;font-family:'JetBrains Mono',monospace;">system_design</span>
+          <span style="color:#ff2d78;font-size:0.75rem;font-family:'JetBrains Mono',monospace;">60%</span>
+        </div>
+        <div class="progress-neon"><div class="progress-neon-bar" style="background:linear-gradient(90deg,#ff2d78,#ff6b2b);" data-width="60"></div></div>
+      </div>
+      <div>
+        <div class="d-flex justify-content-between mb-1">
+          <span style="color:rgba(240,234,255,0.45);font-size:0.75rem;font-family:'JetBrains Mono',monospace;">sql_databases</span>
+          <span style="color:#00ff82;font-size:0.75rem;font-family:'JetBrains Mono',monospace;">91%</span>
+        </div>
+        <div class="progress-neon"><div class="progress-neon-bar" style="background:linear-gradient(90deg,#00ff82,#00fff7);" data-width="91"></div></div>
+      </div>
+    </div>
+
+    <div class="card-glass anim-in anim-d3 p-4" style="border-color:rgba(176,38,255,0.3);position:relative;overflow:hidden;">
+      <div style="position:absolute;top:-20px;right:-20px;width:100px;height:100px;border-radius:50%;background:radial-gradient(circle,rgba(176,38,255,0.15),transparent 70%);"></div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;position:relative;z-index:1;">
+        <div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,#b026ff,#ff2d78);display:flex;align-items:center;justify-content:center;box-shadow:0 0 18px rgba(176,38,255,0.4);flex-shrink:0;">
+          <i class="fas fa-robot" style="color:#fff;"></i>
+        </div>
+        <div>
+          <div style="color:#b026ff;font-weight:700;font-size:0.8rem;font-family:'Orbitron',monospace;">AI MENTOR</div>
+          <div style="color:rgba(240,234,255,0.4);font-size:0.68rem;font-family:'JetBrains Mono',monospace;">// ask me anything</div>
+        </div>
+      </div>
+      <p style="color:rgba(240,234,255,0.5);font-size:0.78rem;margin-bottom:14px;position:relative;z-index:1;">"Stuck on a problem? I can break it down step by step."</p>
+      <a href="/discuss/" class="btn-neon w-100 justify-content-center" style="position:relative;z-index:1;"><i class="fas fa-comment-dots"></i> Start Chat</a>
+    </div>
+
+    <div class="card-glass anim-in anim-d4 p-4">
+      <div style="font-family:'Orbitron',monospace;font-size:0.78rem;font-weight:700;color:#f0eaff;letter-spacing:1px;margin-bottom:14px;">
+        <i class="fas fa-terminal" style="color:#00fff7;margin-right:8px;"></i>QUICK_ACCESS
+      </div>
+      <a href="/contest/" style="display:flex;align-items:center;gap:10px;color:rgba(240,234,255,0.45);text-decoration:none;padding:9px 12px;border-radius:8px;font-size:0.83rem;border:1px solid transparent;margin-bottom:2px;"
+         onmouseover="this.style.background='rgba(255,45,120,0.06)';this.style.color='#ff2d78'"
+         onmouseout="this.style.background='transparent';this.style.color='rgba(240,234,255,0.45)'">
+        <i class="fas fa-flag-checkered" style="color:#ff2d78;width:16px;"></i> Contests
+      </a>
+      <a href="/leaderboard/" style="display:flex;align-items:center;gap:10px;color:rgba(240,234,255,0.45);text-decoration:none;padding:9px 12px;border-radius:8px;font-size:0.83rem;border:1px solid transparent;margin-bottom:2px;"
+         onmouseover="this.style.background='rgba(0,255,130,0.06)';this.style.color='#00ff82'"
+         onmouseout="this.style.background='transparent';this.style.color='rgba(240,234,255,0.45)'">
+        <i class="fas fa-trophy" style="color:#00ff82;width:16px;"></i> Leaderboard
+      </a>
+      <a href="/study-plan/" style="display:flex;align-items:center;gap:10px;color:rgba(240,234,255,0.45);text-decoration:none;padding:9px 12px;border-radius:8px;font-size:0.83rem;border:1px solid transparent;">
+        <i class="fas fa-graduation-cap" style="color:#b026ff;width:16px;"></i> Study Plan
+      </a>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

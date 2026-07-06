@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+{% block page_title %}// Profile{% endblock %}
+{% block content %}
+
+<div class="row g-4">
+
+  <!-- Left: User Card -->
+  <div class="col-md-4">
+    <div class="card-glass anim-in p-4" style="text-align:center;">
+      <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#ff2d78,#b026ff,#00fff7,transparent);"></div>
+
+      <!-- Avatar -->
+      <div style="width:80px;height:80px;border-radius:20px;background:linear-gradient(135deg,#ff2d78,#b026ff);display:flex;align-items:center;justify-content:center;font-family:'Orbitron',monospace;font-size:2rem;font-weight:900;color:#fff;margin:0 auto 16px;box-shadow:0 0 25px rgba(255,45,120,0.4);">
+        {{ user.username|slice:":1"|upper }}
+      </div>
+
+      <div style="font-family:'Orbitron',monospace;font-size:1.2rem;font-weight:900;color:#f0eaff;margin-bottom:6px;">{{ user.username }}</div>
+      <div style="color:rgba(240,234,255,0.45);font-size:0.82rem;margin-bottom:6px;">{{ user.email }}</div>
+      <div style="color:rgba(240,234,255,0.3);font-size:0.75rem;font-family:'JetBrains Mono',monospace;margin-bottom:16px;">
+        <i class="fas fa-calendar" style="color:#b026ff;margin-right:6px;"></i>Joined {{ user.date_joined|date:"M Y" }}
+      </div>
+
+      <!-- Badge -->
+      <span style="background:linear-gradient(135deg,#ff2d78,#b026ff);color:#fff;padding:5px 18px;border-radius:20px;font-size:0.75rem;font-family:'Orbitron',monospace;font-weight:700;box-shadow:0 0 15px rgba(255,45,120,0.3);">
+        ⚡ {{ rank_label|default:"Coder" }}
+      </span>
+
+      <!-- Stats -->
+      <div style="margin-top:24px;border-top:1px solid rgba(176,38,255,0.15);padding-top:20px;text-align:left;">
+        <div style="font-family:'Orbitron',monospace;font-size:0.75rem;color:#b026ff;letter-spacing:2px;margin-bottom:14px;">// STATS</div>
+
+        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(176,38,255,0.08);">
+          <span style="color:rgba(240,234,255,0.5);font-size:0.82rem;">Problems Solved</span>
+          <span style="color:#00fff7;font-family:'Orbitron',monospace;font-weight:700;">{{ problems_solved|default:0 }}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(176,38,255,0.08);">
+          <span style="color:rgba(240,234,255,0.5);font-size:0.82rem;">Total Submissions</span>
+          <span style="color:#00fff7;font-family:'Orbitron',monospace;font-weight:700;">{{ total_submissions|default:0 }}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(176,38,255,0.08);">
+          <span style="color:rgba(240,234,255,0.5);font-size:0.82rem;">Total Score</span>
+          <span style="color:#00ff82;font-family:'Orbitron',monospace;font-weight:700;">{{ total_score|default:0 }} pts</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:8px 0;">
+          <span style="color:rgba(240,234,255,0.5);font-size:0.82rem;">Leaderboard Rank</span>
+          <span style="color:#ff2d78;font-family:'Orbitron',monospace;font-weight:700;">#{{ leaderboard_rank|default:"—" }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Column -->
+  <div class="col-md-8 d-flex flex-column gap-4">
+
+    <!-- Problems by Difficulty -->
+    <div class="card-glass anim-in anim-d1 p-4">
+      <div style="font-family:'Orbitron',monospace;font-size:0.8rem;font-weight:700;color:#f0eaff;letter-spacing:1px;margin-bottom:20px;">
+        <i class="fas fa-chart-pie" style="color:#b026ff;margin-right:8px;"></i>PROBLEMS_BY_DIFFICULTY
+      </div>
+      <div class="row g-3 text-center">
+        <div class="col-4">
+          <div style="font-family:'Orbitron',monospace;font-size:2rem;font-weight:900;color:#00ff82;">{{ easy_solved|default:0 }}</div>
+          <div style="color:rgba(240,234,255,0.4);font-size:0.72rem;font-family:'JetBrains Mono',monospace;margin-bottom:8px;">Easy</div>
+          <div class="progress-neon"><div class="progress-neon-bar" style="background:linear-gradient(90deg,#00ff82,#00fff7);" data-width="{% if total_easy > 0 %}{{ easy_solved|default:0|floatformat:0 }}{% else %}0{% endif %}"></div></div>
+        </div>
+        <div class="col-4">
+          <div style="font-family:'Orbitron',monospace;font-size:2rem;font-weight:900;color:#00fff7;">{{ medium_solved|default:0 }}</div>
+          <div style="color:rgba(240,234,255,0.4);font-size:0.72rem;font-family:'JetBrains Mono',monospace;margin-bottom:8px;">Medium</div>
+          <div class="progress-neon"><div class="progress-neon-bar" style="background:linear-gradient(90deg,#00fff7,#b026ff);" data-width="0"></div></div>
+        </div>
+        <div class="col-4">
+          <div style="font-family:'Orbitron',monospace;font-size:2rem;font-weight:900;color:#ff2d78;">{{ hard_solved|default:0 }}</div>
+          <div style="color:rgba(240,234,255,0.4);font-size:0.72rem;font-family:'JetBrains Mono',monospace;margin-bottom:8px;">Hard</div>
+          <div class="progress-neon"><div class="progress-neon-bar" style="background:linear-gradient(90deg,#ff2d78,#b026ff);" data-width="0"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Submissions -->
+    <div class="card-glass anim-in anim-d2">
+      <style>
+.table { background: #0c081c !important; }
+.table td { background: #0c081c !important; color: rgba(240,234,255,0.8); }
+</style>
+      <div style="padding:18px 24px;border-bottom:1px solid rgba(176,38,255,0.15);">
+        <div style="font-family:'Orbitron',monospace;font-size:0.8rem;font-weight:700;color:#f0eaff;letter-spacing:1px;">
+          <i class="fas fa-history" style="color:#00fff7;margin-right:8px;"></i>RECENT_SUBMISSIONS
+        </div>
+      </div>
+      <div class="table-responsive">
+        <table class="table mb-0" style="background:#0c081c;">
+          <thead>
+            <tr style="background:rgba(176,38,255,0.1);">
+              <th style="color:#b026ff;padding:12px 20px;border-bottom:1px solid rgba(176,38,255,0.15);font-size:0.65rem;letter-spacing:2px;font-family:'JetBrains Mono',monospace;border-top:none;">PROBLEM</th>
+              <th style="color:#b026ff;padding:12px 20px;border-bottom:1px solid rgba(176,38,255,0.15);font-size:0.65rem;letter-spacing:2px;font-family:'JetBrains Mono',monospace;border-top:none;">LANGUAGE</th>
+              <th style="color:#b026ff;padding:12px 20px;border-bottom:1px solid rgba(176,38,255,0.15);font-size:0.65rem;letter-spacing:2px;font-family:'JetBrains Mono',monospace;border-top:none;">SCORE</th>
+              <th style="color:#b026ff;padding:12px 20px;border-bottom:1px solid rgba(176,38,255,0.15);font-size:0.65rem;letter-spacing:2px;font-family:'JetBrains Mono',monospace;border-top:none;">DATE</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for sub in recent_submissions %}
+            <tr style="border-bottom:1px solid rgba(176,38,255,0.07);transition:background 0.2s;"
+                onmouseover="this.style.background='rgba(176,38,255,0.05)'"
+                onmouseout="this.style.background='transparent'">
+              <td style="padding:12px 20px;">
+                <a href="/questions/{{ sub.question.pk }}/"
+                   style="color:#00fff7;font-weight:600;text-decoration:none;font-size:0.85rem;"
+                   onmouseover="this.style.color='#ff2d78'"
+                   onmouseout="this.style.color='#00fff7'">
+                  {{ sub.question.title }}
+                </a>
+              </td>
+              <td style="padding:12px 20px;">
+                <span style="background:rgba(176,38,255,0.08);color:#b026ff;padding:3px 10px;border-radius:20px;font-size:0.7rem;font-family:'JetBrains Mono',monospace;border:1px solid rgba(176,38,255,0.2);">
+                  {{ sub.language }}
+                </span>
+              </td>
+              <td style="padding:12px 20px;">
+  {% if sub.result == 'AC' or sub.result == 'Accepted' %}
+    <span style="color:#00ff82;font-weight:700;">✓ Accepted</span>
+  {% elif sub.result == 'WA' or sub.result == 'Wrong Answer' %}
+    <span style="color:#ff2d78;font-weight:700;">✗ Wrong Answer</span>
+  {% elif sub.result == 'TLE' %}
+    <span style="color:#ffc107;font-weight:700;">Time Limit</span>
+  {% else %}
+    <span style="color:#ffc107;">{{ sub.result }}</span>
+  {% endif %}
+</td>
+              </td>
+              <td style="padding:12px 20px;color:rgba(240,234,255,0.4);font-size:0.78rem;font-family:'JetBrains Mono',monospace;">
+                {{ sub.submitted_at|date:"d M Y" }}
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="4" style="padding:40px;text-align:center;color:rgba(240,234,255,0.3);font-family:'JetBrains Mono',monospace;font-size:0.82rem;">
+                // no submissions yet
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}
