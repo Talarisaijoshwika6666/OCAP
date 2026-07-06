@@ -41,7 +41,7 @@ def submit_test(request, assessment_id):
     for question in questions:
         selected = request.POST.get(f'question_{question.id}')
         if selected:
-            is_correct = (selected == question.correct_option)
+            is_correct = (selected.lower() == question.correct_option.lower())
             if is_correct:
                 correct_answers += 1
                 total_score += question.marks

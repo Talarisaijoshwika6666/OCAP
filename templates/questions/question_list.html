@@ -109,6 +109,54 @@
   }
 </style>
 
+<!-- Recent Assessments Section -->
+<div class="card-glass anim-in" style="margin-bottom: 24px; border-color: rgba(0, 255, 247, 0.2);">
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:20px 24px;border-bottom:1px solid rgba(0,255,247,0.15);">
+    <div style="font-family:'Orbitron',monospace;font-size:0.82rem;font-weight:700;color:#f0eaff;letter-spacing:1px;">
+      <i class="fas fa-file-invoice" style="color:#00fff7;margin-right:8px;"></i>RECENT_ASSESSMENTS
+    </div>
+  </div>
+  <div style="padding: 24px;">
+    <div class="row g-3">
+      {% for a in assessments %}
+      <div class="col-md-4">
+        <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 18px; display: flex; flex-direction: column; justify-content: space-between; height: 100%; transition: all 0.2s;"
+             onmouseover="this.style.borderColor='rgba(0, 255, 247, 0.3)'; this.style.background='rgba(0, 255, 247, 0.02)';"
+             onmouseout="this.style.borderColor='rgba(255, 255, 255, 0.05)'; this.style.background='rgba(255, 255, 255, 0.02)';"
+             onclick="window.location.href='/assessments/{{ a.pk }}/take/';"
+             style="cursor: pointer;">
+          <div>
+            <h5 style="font-family:'Orbitron',monospace; font-size:0.85rem; font-weight:700; color:#fff; margin-bottom:8px;">{{ a.title }}</h5>
+            <div style="font-family:'JetBrains Mono',monospace; font-size:0.7rem; color:rgba(240,234,255,0.5); margin-bottom:14px; display:flex; gap:12px;">
+              <span><i class="far fa-clock"></i> {{ a.duration }} mins</span>
+              <span><i class="far fa-star"></i> {{ a.total_marks }} marks</span>
+            </div>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top: auto;">
+            {% if a.difficulty == 'Beginner' %}
+              <span style="background:rgba(0,255,130,0.1); color:#00ff82; padding:2px 8px; border-radius:12px; font-size:0.65rem; font-weight:700; border:1px solid rgba(0,255,130,0.2);">Beginner</span>
+            {% elif a.difficulty == 'Intermediate' %}
+              <span style="background:rgba(255,193,7,0.1); color:#ffc107; padding:2px 8px; border-radius:12px; font-size:0.65rem; font-weight:700; border:1px solid rgba(255,193,7,0.2);">Intermediate</span>
+            {% else %}
+              <span style="background:rgba(255,45,120,0.1); color:#ff2d78; padding:2px 8px; border-radius:12px; font-size:0.65rem; font-weight:700; border:1px solid rgba(255,45,120,0.2);">Advanced</span>
+            {% endif %}
+            <a href="/assessments/{{ a.pk }}/take/" style="display:inline-flex; align-items:center; gap:4px; padding:4px 12px; font-size:0.7rem; border:1px solid #00fff7; color:#00fff7; border-radius:6px; text-decoration:none; font-weight:700; background:transparent; transition: all 0.2s;"
+               onmouseover="this.style.background='#00fff7'; this.style.color='#0a0614';"
+               onmouseout="this.style.background='transparent'; this.style.color='#00fff7';">
+              Start Test <i class="fas fa-arrow-right" style="font-size:0.65rem;"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+      {% empty %}
+      <div style="text-align:center; padding:20px; color:rgba(240,234,255,0.4); width:100%;">
+        <span style="font-family:'JetBrains Mono',monospace; font-size:0.8rem;">// no assessments active</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
 <div class="card-glass anim-in">
   <div style="display:flex;justify-content:space-between;align-items:center;padding:20px 24px;border-bottom:1px solid rgba(176,38,255,0.15);">
     <div style="font-family:'Orbitron',monospace;font-size:0.82rem;font-weight:700;color:#f0eaff;letter-spacing:1px;">
@@ -178,6 +226,9 @@
                onmouseout="this.style.color='#ffffff'">
               {{ q.title }}
             </a>
+            <div style="font-size: 0.78rem; color: rgba(240,234,255,0.45); font-weight: normal; margin-top: 4px; line-height: 1.4; max-width: 600px;">
+              {{ q.description }}
+            </div>
           </td>
           <td style="padding:14px 22px;background:transparent;color:rgba(240,234,255,0.7);font-family:'JetBrains Mono',monospace;font-size:0.85rem;">{{ q.topic }}</td>
           <td style="padding:14px 22px;background:transparent;">

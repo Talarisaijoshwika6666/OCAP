@@ -37,6 +37,13 @@ def question_list(request):
 
     topics = Question.objects.order_by('topic').values_list('topic', flat=True).distinct()
 
+    from assessments.utils import ensure_assessments_exist
+    ensure_assessments_exist()
+
+    from assessments.models import Assessment
+    assessments_qs = Assessment.objects.filter(is_active=True).order_by('-id')[:6]
+    assessments = list(assessments_qs)
+
     return render(request, 'questions/question_list.html', {
         'questions': questions,
         'total_problems': Question.objects.count(),
@@ -47,6 +54,7 @@ def question_list(request):
         'bookmarked_only': bookmarked_only,
         'bookmarked_ids': bookmarked_ids,
         'solved_ids': solved_ids,
+        'assessments': assessments,
     })
 
 
