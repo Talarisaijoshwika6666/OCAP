@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}{{ assessment.name }} - Take Test{% endblock %}
+{% block title %}{{ assessment.title }} - Take Test{% endblock %}
 
 {% block content %}
 <div class="container py-4">
@@ -8,7 +8,7 @@
   <div class="card bg-primary text-white mb-4 shadow">
     <div class="card-body d-flex justify-content-between align-items-center">
       <div>
-        <h4 class="mb-1">📝 {{ assessment.name }}</h4>
+        <h4 class="mb-1">📝 {{ assessment.title }}</h4>
         <small>Total Questions: {{ questions.count }} &nbsp;|&nbsp;
                Total Marks: {% for q in questions %}{% if forloop.last %}{{ questions.count }}{% endif %}{% endfor %}</small>
       </div>

@@ -4,6 +4,7 @@
 
 {% if request.GET.result and request.GET.result != 'Accepted' %}
 {% include 'includes/back_button.html' with fallback_url='/questions/' %}
+{% endif %}
 
 {% if request.GET.result %}
 <div style="margin-bottom:16px;padding:14px 20px;border-radius:12px;
@@ -28,6 +29,7 @@
   sessionStorage.setItem('justSolvedQuestionId', '{{ question.pk }}');
   {% endif %}
 </script>
+
 {% endif %}
 
 <style>
@@ -315,3 +317,5 @@ timerInterval = setInterval(tickTimer, 1000);
 {% endif %}
 
 {% endblock %}
+
+{% block chatbot_widget %}{% endblock %}
