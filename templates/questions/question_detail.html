@@ -1,14 +1,12 @@
 {% extends 'base.html' %}
 {% block page_title %}// {{ question.title }}{% endblock %}
 {% block content %}
-<<<<<<< HEAD
 
 {% if request.GET.result and request.GET.result != 'Accepted' %}
-=======
 {% include 'includes/back_button.html' with fallback_url='/questions/' %}
+{% endif %}
 
 {% if request.GET.result %}
->>>>>>> origin/ganesh
 <div style="margin-bottom:16px;padding:14px 20px;border-radius:12px;
   background:rgba(255,45,120,0.1);border:1px solid rgba(255,45,120,0.4);color:#ff2d78;
   font-family:'Orbitron',monospace;font-size:0.9rem;font-weight:700;display:flex;align-items:center;gap:10px;">
@@ -31,6 +29,7 @@
   sessionStorage.setItem('justSolvedQuestionId', '{{ question.pk }}');
   {% endif %}
 </script>
+
 {% endif %}
 
 <style>
