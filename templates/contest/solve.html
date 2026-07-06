@@ -1,0 +1,566 @@
+{% extends 'base.html' %}
+{% block page_title %}// {{ contest.title }} :: {{ question.title }}{% endblock %}
+{% block content %}
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css">
+
+<style>
+  /* ── Outer shell: single glass card, same language as the rest of the app ── */
+  .ct-shell {
+    display:flex; flex-direction:column; height:calc(100vh - 130px); min-height:560px;
+    background: rgba(12,8,28,0.75);
+    border: 1px solid rgba(176,38,255,0.18);
+    border-radius: 16px;
+    backdrop-filter: blur(20px);
+    overflow:hidden;
+    position:relative;
+  }
+  .ct-shell::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:1px; z-index:2;
+    background: linear-gradient(90deg, transparent, rgba(255,45,120,0.5), rgba(176,38,255,0.5), rgba(0,255,247,0.4), transparent);
+  }
+
+  /* ── Top bar: title, timer pill, icon toolbar ── */
+  .ct-topbar {
+    display:flex; align-items:center; justify-content:space-between; gap:14px;
+    background:transparent; padding:16px 24px; border-bottom:1px solid rgba(176,38,255,0.15); flex-wrap:wrap;
+  }
+  .ct-title { font-family:var(--font-display); font-size:0.98rem; font-weight:900; color:var(--text-primary); letter-spacing:0.5px; }
+  .ct-title small { display:block; margin-top:5px; font-size:0.68rem; font-weight:500; color:var(--text-dim); letter-spacing:1.5px; font-family:var(--font-code); text-transform:uppercase; }
+  .ct-timer-pill {
+    background:rgba(10,6,20,0.7); color:var(--neon-cyan); font-family:var(--font-code); font-weight:700;
+    font-size:0.9rem; padding:8px 20px; border-radius:10px; white-space:nowrap; border:1px solid rgba(0,255,247,0.35);
+  }
+  .ct-timer-pill.warn { background:rgba(255,45,120,0.08); color:var(--neon-pink); border-color:rgba(255,45,120,0.5); }
+  .ct-icons { display:flex; align-items:center; gap:8px; }
+  .ct-icon-btn {
+    width:32px; height:32px; border-radius:8px; border:1px solid rgba(176,38,255,0.25); background:rgba(176,38,255,0.05);
+    color:var(--text-dim); display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:0.78rem; transition:all 0.2s;
+  }
+  .ct-icon-btn:hover { background:rgba(0,255,247,0.1); border-color:rgba(0,255,247,0.35); color:var(--neon-cyan); }
+  .ct-icon-btn.is-active { background:linear-gradient(135deg,#ff2d78,#b026ff); color:#fff; border-color:transparent; }
+
+  /* ── Body split ── */
+  .ct-body { flex:1; display:flex; min-height:0; }
+  .ct-problem-pane {
+    width:42%; background:transparent; overflow-y:auto; padding:24px 26px; color:rgba(240,234,255,0.7);
+    font-family:var(--font-body); font-size:0.9rem; line-height:1.75; border-right:1px solid rgba(176,38,255,0.15);
+  }
+  .ct-problem-pane.is-collapsed { display:none; }
+  .ct-problem-pane h4 { font-family:var(--font-display); font-size:1rem; font-weight:800; color:var(--text-primary); margin-bottom:14px; }
+  .ct-diff-badge { display:inline-block; padding:3px 13px; border-radius:20px; font-size:0.68rem; font-weight:700; margin-left:8px; vertical-align:middle; font-family:var(--font-code); border:1px solid transparent; }
+  .ct-diff-easy { background:rgba(0,255,130,0.08); color:#00ff82; border-color:rgba(0,255,130,0.3); }
+  .ct-diff-medium { background:rgba(255,193,7,0.08); color:#ffc107; border-color:rgba(255,193,7,0.3); }
+  .ct-diff-hard { background:rgba(255,45,120,0.08); color:var(--neon-pink); border-color:rgba(255,45,120,0.3); }
+
+  .ct-sample-box { margin-top:22px; background:rgba(10,6,20,0.55); border:1px solid rgba(176,38,255,0.18); border-radius:12px; overflow:hidden; }
+  .ct-sample-head {
+    display:flex; align-items:center; justify-content:space-between; padding:12px 16px; cursor:pointer;
+    background:rgba(176,38,255,0.08); font-weight:700; font-size:0.8rem; color:var(--text-primary); font-family:var(--font-code);
+  }
+  .ct-sample-head .plus { font-size:1rem; color:var(--text-dim); transition:transform 0.15s; }
+  .ct-sample-head.open .plus { transform:rotate(45deg); }
+  .ct-sample-body { display:none; padding:14px 16px; border-top:1px solid rgba(176,38,255,0.12); }
+  .ct-sample-body.open { display:block; }
+  .ct-sample-label { font-size:0.68rem; letter-spacing:2px; color:var(--neon-purple); font-weight:700; margin-bottom:6px; font-family:var(--font-code); }
+  .ct-sample-pre { background:#0a0614; border:1px solid rgba(176,38,255,0.12); border-radius:8px; padding:10px 12px; font-family:var(--font-code); font-size:0.8rem; color:#00fff7; margin:0 0 12px 0; white-space:pre-wrap; }
+
+  /* ── Code pane ── */
+  .ct-code-pane { flex:1; display:flex; min-height:0; background:rgba(10,6,20,0.35); }
+  .ct-code-pane.is-expanded { width:100% !important; }
+  .ct-explorer-rail {
+    width:34px; background:rgba(176,38,255,0.05); display:flex; flex-direction:column; align-items:center;
+    padding-top:14px; gap:10px; border-right:1px solid rgba(176,38,255,0.12);
+  }
+  .ct-explorer-rail i { color:var(--text-dim); font-size:0.85rem; }
+  .ct-explorer-rail span {
+    writing-mode:vertical-rl; transform:rotate(180deg); color:var(--text-dim); font-size:0.66rem;
+    letter-spacing:2px; font-family:var(--font-code); margin-top:6px;
+  }
+
+  .ct-code-col { flex:1; display:flex; flex-direction:column; min-width:0; }
+  .ct-code-header {
+    display:flex; align-items:center; justify-content:space-between; padding:9px 16px;
+    background:rgba(176,38,255,0.06); border-bottom:1px solid rgba(176,38,255,0.15);
+  }
+  .ct-file-tab {
+    display:flex; align-items:center; gap:8px; background:rgba(176,38,255,0.08); padding:6px 14px; border-radius:6px;
+    font-family:var(--font-code); font-size:0.76rem; color:var(--text-primary); max-width:220px;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .ct-lang-select {
+    background:#0a0614; border:1px solid rgba(176,38,255,0.3); border-radius:6px; color:var(--text-primary);
+    padding:5px 10px; font-family:var(--font-code); font-size:0.76rem;
+  }
+  .ct-mini-submit {
+    background:linear-gradient(135deg,#ff2d78,#b026ff); color:#fff; border:none; border-radius:6px; padding:6px 16px;
+    font-size:0.76rem; font-weight:700; cursor:pointer; font-family:var(--font-code);
+    box-shadow:0 0 14px rgba(176,38,255,0.3);
+  }
+  .ct-editor-wrap { flex:1; min-height:120px; }
+  .CodeMirror { height:100%; font-family:var(--font-code); font-size:0.87rem; }
+  .cm-s-dracula.CodeMirror { background:#0a0614; }
+
+  /* ── Terminal / Test cases strip ── */
+  .ct-console { border-top:1px solid rgba(176,38,255,0.15); background:rgba(10,6,20,0.55); max-height:34%; display:flex; flex-direction:column; }
+  .ct-console-tabs { display:flex; }
+  .ct-console-tab {
+    padding:10px 20px; font-family:var(--font-code); font-size:0.72rem; letter-spacing:0.5px;
+    color:var(--text-dim); cursor:pointer; border-bottom:2px solid transparent; display:flex; align-items:center; gap:6px;
+  }
+  .ct-console-tab.is-active { color:var(--neon-cyan); border-bottom-color:var(--neon-cyan); }
+  .ct-console-body { padding:14px 16px; overflow-y:auto; font-family:var(--font-code); font-size:0.8rem; color:rgba(240,234,255,0.6); }
+  .ct-run-btn {
+    background:transparent; border:1px solid var(--neon-cyan); color:var(--neon-cyan); border-radius:6px; padding:5px 14px;
+    font-size:0.74rem; font-weight:700; cursor:pointer; margin-bottom:10px; font-family:var(--font-code); transition:all 0.2s;
+  }
+  .ct-run-btn:hover { background:var(--neon-cyan); color:#000; box-shadow:0 0 16px rgba(0,255,247,0.4); }
+
+  .ct-case-chip { display:inline-flex; align-items:center; gap:6px; padding:4px 12px; border-radius:20px; font-size:0.72rem; font-weight:700; margin:3px 6px 3px 0; font-family:var(--font-code); }
+  .ct-case-chip.pass { background:rgba(0,255,130,0.12); color:#00ff82; border:1px solid rgba(0,255,130,0.4); }
+  .ct-case-chip.fail { background:rgba(255,45,120,0.12); color:var(--neon-pink); border:1px solid rgba(255,45,120,0.4); }
+
+  /* ── Bottom nav ── */
+  .ct-bottom-nav {
+    display:flex; align-items:center; justify-content:flex-end; gap:10px; padding:16px 4px;
+    background:transparent;
+  }
+  .ct-nav-btn {
+    border:1px solid rgba(255,255,255,0.15); border-radius:8px; padding:9px 20px; font-size:0.82rem; font-weight:700;
+    cursor:pointer; text-decoration:none; font-family:var(--font-code); background:transparent; color:rgba(240,234,255,0.7);
+    display:inline-flex; align-items:center; gap:8px; transition:all 0.2s;
+  }
+  .ct-nav-prev { margin-right:auto; }
+  .ct-nav-prev.is-disabled { opacity:0.3; pointer-events:none; }
+  .ct-nav-reset { border-color:rgba(255,193,7,0.4); color:#ffc107; background:rgba(255,193,7,0.06); }
+  .ct-nav-submit { border:none; color:#fff; background:linear-gradient(135deg,#00c853,#00ff82); }
+  .ct-nav-next { border:none; color:#fff; background:linear-gradient(135deg,#ff2d78,#b026ff,#00fff7); }
+  .ct-nav-next.is-disabled { opacity:0.3; pointer-events:none; }
+
+  .ct-footer-counter {
+    text-align:center; margin-top:6px; color:rgba(240,234,255,0.45); font-size:0.82rem; font-family:var(--font-code);
+  }
+
+  @media (max-width: 900px) {
+    .ct-body { flex-direction:column; }
+    .ct-problem-pane, .ct-code-pane { width:100% !important; }
+    .ct-shell { height:auto; }
+  }
+</style>
+
+<div class="ct-shell anim-in">
+
+  <!-- ── Top bar ── -->
+  <div class="ct-topbar">
+    <div class="ct-title">
+      {{ question_number }}. {{ question.title }}
+      <span class="ct-diff-badge {% if question.difficulty == 'Easy' %}ct-diff-easy{% elif question.difficulty == 'Medium' %}ct-diff-medium{% else %}ct-diff-hard{% endif %}">{{ question.difficulty }}</span>
+      <small>{{ contest.title }} &middot; Question {{ question_number }} of {{ total_questions }}</small>
+    </div>
+
+    <div id="ct-timer" class="ct-timer-pill" data-remaining="{{ contest.remaining_seconds }}">--:--:--</div>
+
+    <div class="ct-icons">
+      <div class="ct-icon-btn" id="ct-font-btn" title="Text size"><i class="fas fa-font"></i></div>
+      <div class="ct-icon-btn" title="Highlight"><i class="fas fa-highlighter"></i></div>
+      <div class="ct-icon-btn" id="ct-flag-btn" title="Mark for review"><i class="fas fa-flag"></i></div>
+      <div class="ct-icon-btn" id="ct-expand-btn" title="Fullscreen editor"><i class="fas fa-expand"></i></div>
+      <div class="ct-icon-btn" id="ct-link-btn" title="Copy link"><i class="fas fa-link"></i></div>
+    </div>
+  </div>
+
+  <!-- ── Body ── -->
+  <div class="ct-body">
+
+    <!-- Problem statement -->
+    <div class="ct-problem-pane" id="ct-problem-pane">
+      <h4>{{ question.title }}</h4>
+      <div id="ct-problem-text">{{ question.description|linebreaksbr }}</div>
+
+      <div class="ct-sample-box">
+        <div class="ct-sample-head open" id="ct-sample-toggle">
+          <span><i class="fas fa-vial" style="margin-right:8px;color:var(--neon-purple);"></i>Sample Test Cases</span>
+          <span class="plus">+</span>
+        </div>
+        <div class="ct-sample-body open" id="ct-sample-body">
+          {% if question.sample_input %}
+            <div class="ct-sample-label">INPUT</div>
+            <pre class="ct-sample-pre">{{ question.sample_input }}</pre>
+          {% endif %}
+          {% if question.sample_output %}
+            <div class="ct-sample-label">EXPECTED OUTPUT</div>
+            <pre class="ct-sample-pre">{{ question.sample_output }}</pre>
+          {% endif %}
+          {% if not question.sample_input and not question.sample_output %}
+            <div style="color:rgba(240,234,255,0.4);font-size:0.82rem;">No sample test cases provided for this question.</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Code pane -->
+    <div class="ct-code-pane" id="ct-code-pane">
+      <div class="ct-explorer-rail">
+        <i class="fas fa-folder-open"></i>
+        <span>EXPLORER</span>
+      </div>
+
+      <div class="ct-code-col">
+        <div class="ct-code-header">
+          <div class="ct-file-tab"><i class="fas fa-file-code" style="color:var(--neon-purple);"></i> <span id="ct-filename">solution.py</span></div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <select id="ct-lang" class="ct-lang-select">
+              <option value="python">Python 3</option>
+              <option value="javascript">JavaScript</option>
+              <option value="java">Java</option>
+              <option value="cpp">C++</option>
+            </select>
+            <button class="ct-mini-submit" id="ct-mini-submit-btn"><i class="fas fa-check"></i> Submit</button>
+          </div>
+        </div>
+
+        <div class="ct-editor-wrap">
+          <textarea id="ct-editor"></textarea>
+        </div>
+
+        <div class="ct-console">
+          <div class="ct-console-tabs">
+            <div class="ct-console-tab is-active" data-panel="terminal"><i class="fas fa-terminal"></i> Terminal</div>
+            <div class="ct-console-tab" data-panel="testcases"><i class="fas fa-list-check"></i> Test cases <span id="ct-score-badge"></span></div>
+          </div>
+          <div class="ct-console-body" id="ct-panel-terminal">
+            <button class="ct-run-btn" id="ct-run-btn"><i class="fas fa-play"></i> Run</button>
+            <div id="ct-terminal-output" style="color:#7f8199;">// Run your code against the sample input to see output here</div>
+          </div>
+          <div class="ct-console-body" id="ct-panel-testcases" style="display:none;color:#7f8199;">
+            // Submit your solution to see test case verdicts
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Bottom nav ── -->
+  <div class="ct-bottom-nav">
+    {% if prev_question %}
+      <a href="{% url 'contest_solve' contest.pk prev_question.pk %}" class="ct-nav-btn ct-nav-prev"><i class="fas fa-chevron-left"></i> Prev</a>
+    {% else %}
+      <a href="{% url 'contest_take_test' contest.pk %}" class="ct-nav-btn ct-nav-prev"><i class="fas fa-chevron-left"></i> Prev</a>
+    {% endif %}
+    <button class="ct-nav-btn ct-nav-reset" id="ct-reset-btn">Reset</button>
+    <button class="ct-nav-btn ct-nav-submit" id="ct-submit-btn" title="Submit the entire test"><i class="fas fa-flag-checkered"></i> Submit Test</button>
+    {% if next_question %}
+      <a href="{% url 'contest_solve' contest.pk next_question.pk %}" class="ct-nav-btn ct-nav-next">Next <i class="fas fa-chevron-right"></i></a>
+    {% else %}
+      <a href="{% url 'contest_take_test' contest.pk %}" class="ct-nav-btn ct-nav-next">Finish <i class="fas fa-chevron-right"></i></a>
+    {% endif %}
+  </div>
+</div>
+<div class="ct-footer-counter">Question {{ question_number }} of {{ total_questions }}</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/clike/clike.min.js"></script>
+
+<script>
+/* eslint-disable */
+// @ts-nocheck
+(function() {
+  const RUN_URL = "{% url 'contest_run_code' contest.pk question.pk %}";
+  const SUBMIT_URL = "{% url 'contest_submit_solution' contest.pk question.pk %}";
+  const SUBMIT_URL_TEMPLATE = "{% url 'contest_submit_solution' contest.pk 0 %}"; // .../solve/0/submit/ — 0 gets swapped per-question
+  const TAKE_TEST_URL = "{% url 'contest_take_test' contest.pk %}";
+  const RESULT_URL = "{% url 'contest_result' contest.pk %}";
+  const CSRF = "{{ csrf_token }}";
+  // @ts-ignore
+  const CONTEST_PK = Number(`{{ contest.pk }}`) || 0;
+  // @ts-ignore
+  const CURRENT_QID = Number(`{{ question.pk }}`) || 0;
+  // @ts-ignore
+  const ALL_QUESTION_IDS = (function() {
+    const raw = `{% for q in questions %}{{ q.pk }}{% if not forloop.last %},{% endif %}{% endfor %}`;
+    return raw ? raw.split(',').map(Number) : [];
+  })();
+  const STORE_KEY = "arena_code_{{ contest.pk }}_{{ question.pk }}";
+  const FLAG_KEY = "arena_flag_{{ contest.pk }}_{{ question.pk }}";
+
+  const templates = {
+    python: "def solution():\n    pass\n",
+    javascript: "function solution() {\n\n}\n",
+    java: "public class Main {\n    public static void main(String[] args) {\n\n    }\n}\n",
+    cpp: "#include <bits/stdc++.h>\nusing namespace std;\n\nint main() {\n\n    return 0;\n}\n",
+  };
+  const cmModes = { python: 'python', javascript: 'javascript', java: 'text/x-java', cpp: 'text/x-c++src' };
+  const extensions = { python: 'solution.py', javascript: 'solution.js', java: 'Main.java', cpp: 'solution.cpp' };
+
+  const langSelect = document.getElementById('ct-lang');
+  const filenameEl = document.getElementById('ct-filename');
+
+  const editor = CodeMirror.fromTextArea(document.getElementById('ct-editor'), {
+    lineNumbers: true,
+    theme: 'dracula',
+    mode: cmModes[langSelect.value],
+    indentUnit: 4,
+    tabSize: 4,
+    matchBrackets: true,
+    autofocus: true,
+  });
+
+  function loadStored() {
+    const saved = localStorage.getItem(STORE_KEY);
+    if (saved) {
+      try {
+        const obj = JSON.parse(saved);
+        langSelect.value = obj.language || 'python';
+        editor.setOption('mode', cmModes[langSelect.value]);
+        editor.setValue(obj.code || templates[langSelect.value]);
+        filenameEl.textContent = extensions[langSelect.value];
+        return;
+      } catch (e) {}
+    }
+    editor.setValue(templates[langSelect.value]);
+    filenameEl.textContent = extensions[langSelect.value];
+  }
+  loadStored();
+
+  function persist() {
+    localStorage.setItem(STORE_KEY, JSON.stringify({ language: langSelect.value, code: editor.getValue() }));
+  }
+  editor.on('change', persist);
+
+  langSelect.addEventListener('change', function() {
+    editor.setOption('mode', cmModes[langSelect.value]);
+    filenameEl.textContent = extensions[langSelect.value];
+    if (!editor.getValue().trim()) editor.setValue(templates[langSelect.value]);
+    persist();
+  });
+
+  // ── Sample test cases collapse ──
+  document.getElementById('ct-sample-toggle').addEventListener('click', function() {
+    this.classList.toggle('open');
+    document.getElementById('ct-sample-body').classList.toggle('open');
+  });
+
+  // ── Console tab switching ──
+  document.querySelectorAll('.ct-console-tab').forEach(tab => {
+    tab.addEventListener('click', function() {
+      document.querySelectorAll('.ct-console-tab').forEach(t => t.classList.remove('is-active'));
+      tab.classList.add('is-active');
+      document.getElementById('ct-panel-terminal').style.display = tab.dataset.panel === 'terminal' ? 'block' : 'none';
+      document.getElementById('ct-panel-testcases').style.display = tab.dataset.panel === 'testcases' ? 'block' : 'none';
+    });
+  });
+  function showConsoleTab(name) {
+    document.querySelector(`.ct-console-tab[data-panel="${name}"]`).click();
+  }
+
+  function escapeHtml(s) {
+    return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  // ── Run (sample I/O only, in the Terminal tab) ──
+  document.getElementById('ct-run-btn').addEventListener('click', function() {
+    showConsoleTab('terminal');
+    const out = document.getElementById('ct-terminal-output');
+    out.innerHTML = '<span style="color:#f2a33d;">// Running...</span>';
+    fetch(RUN_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+      body: JSON.stringify({ code: editor.getValue(), language: langSelect.value }),
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data.error) {
+          out.innerHTML = `<span style="color:#ff2d78;">${escapeHtml(data.error)}</span>`;
+          return;
+        }
+        let html = `<div style="color:#1fbf6c;margin-bottom:8px;">${escapeHtml(data.stdout) || '<span style="opacity:0.5;">(no stdout)</span>'}</div>`;
+        if (data.stderr) html += `<div style="color:#ff2d78;">${escapeHtml(data.stderr)}</div>`;
+        out.innerHTML = html;
+      })
+      .catch(() => { out.innerHTML = '<span style="color:#ff2d78;">// Network error while running code</span>'; });
+  });
+
+  // ── Submit current question only (the small header button) ──
+  function submitSolution() {
+    showConsoleTab('testcases');
+    const panel = document.getElementById('ct-panel-testcases');
+    panel.innerHTML = '<span style="color:#f2a33d;">// Judging your submission...</span>';
+    fetch(SUBMIT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+      body: JSON.stringify({ code: editor.getValue(), language: langSelect.value }),
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data.error) {
+          panel.innerHTML = `<span style="color:#ff2d78;">${escapeHtml(data.error)}</span>`;
+          return;
+        }
+        const badge = document.getElementById('ct-score-badge');
+        const color = data.result === 'Accepted' ? '#1fbf6c' : '#ff2d78';
+        badge.innerHTML = ` <span style="color:${color};">(${data.passed}/${data.total})</span>`;
+
+        let html = `<div style="font-weight:800;color:${color};margin-bottom:10px;">${data.result.toUpperCase()} — score ${data.score}</div>`;
+        data.cases.forEach(c => {
+          const cls = c.passed ? 'pass' : 'fail';
+          const icon = c.passed ? 'fa-check' : 'fa-times';
+          html += `<div class="ct-case-chip ${cls}"><i class="fas ${icon}"></i> ${escapeHtml(c.label)}${c.hidden ? ' (hidden)' : ''}</div>`;
+        });
+        const visibleFails = data.cases.filter(c => !c.hidden && !c.passed);
+        if (visibleFails.length) {
+          html += '<div style="margin-top:14px;">';
+          visibleFails.forEach(c => {
+            html += `<div style="margin-bottom:10px;">
+                        <div style="color:#8a8a9a;font-size:0.7rem;letter-spacing:1px;margin-bottom:4px;">${escapeHtml(c.label)} — expected vs got</div>
+                        <pre style="background:#1e1f2e;border-radius:6px;padding:8px;margin:0 0 4px 0;color:#1fbf6c;">${escapeHtml(c.expected)}</pre>
+                        <pre style="background:#1e1f2e;border-radius:6px;padding:8px;margin:0;color:#ff2d78;">${escapeHtml(c.actual)}${c.stderr ? '\n' + escapeHtml(c.stderr) : ''}</pre>
+                      </div>`;
+          });
+          html += '</div>';
+        }
+        panel.innerHTML = html;
+      })
+      .catch(() => { panel.innerHTML = '<span style="color:#ff2d78;">// Network error while submitting</span>'; });
+  }
+  document.getElementById('ct-mini-submit-btn').addEventListener('click', submitSolution);
+
+  // ── Submit the ENTIRE test (the green bottom-bar button) ──
+  // Grades every question in the contest using each question's saved code
+  // (falling back to the live editor for the question currently open),
+  // then sends the person to the results / leaderboard page.
+  function buildSubmitUrl(qid) {
+    return SUBMIT_URL_TEMPLATE.replace('/0/submit/', `/${qid}/submit/`);
+  }
+
+  function submitEntireTest() {
+    if (!confirm("Submit the entire test? This will grade every question in this contest and you won't be able to change your answers after this.")) {
+      return;
+    }
+
+    persist(); // make sure the question on screen is saved before we read it back out
+
+    const submitBtn = document.getElementById('ct-submit-btn');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting Test...';
+
+    showConsoleTab('testcases');
+    const panel = document.getElementById('ct-panel-testcases');
+    panel.innerHTML = '<span style="color:#f2a33d;">// Submitting the entire test — grading all questions...</span>';
+
+    const tasks = ALL_QUESTION_IDS.map(qid => {
+      let code, language;
+      if (qid === CURRENT_QID) {
+        code = editor.getValue();
+        language = langSelect.value;
+      } else {
+        const saved = localStorage.getItem(`arena_code_${CONTEST_PK}_${qid}`);
+        if (!saved) return Promise.resolve({ qid, skipped: true });
+        try {
+          const obj = JSON.parse(saved);
+          code = obj.code;
+          language = obj.language || 'python';
+        } catch (e) {
+          return Promise.resolve({ qid, skipped: true });
+        }
+      }
+      if (!code || !code.trim()) return Promise.resolve({ qid, skipped: true });
+
+      return fetch(buildSubmitUrl(qid), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+        body: JSON.stringify({ code, language }),
+      })
+        .then(r => r.json())
+        .then(data => ({ qid, data }))
+        .catch(() => ({ qid, error: true }));
+    });
+
+    Promise.all(tasks).then(results => {
+      const graded = results.filter(r => !r.skipped && !r.error && r.data && !r.data.error);
+      const totalScore = graded.reduce((sum, r) => sum + (r.data.score || 0), 0);
+      const avgScore = graded.length ? Math.round((totalScore / graded.length) * 10) / 10 : 0;
+
+      let html = `<div style="font-weight:800;color:#00ff82;margin-bottom:10px;">TEST SUBMITTED — ${graded.length}/${ALL_QUESTION_IDS.length} questions graded, avg score ${avgScore}</div>`;
+      html += '<div style="color:rgba(240,234,255,0.5);font-size:0.8rem;">Redirecting you to the results page…</div>';
+      panel.innerHTML = html;
+
+      setTimeout(() => { window.location.href = RESULT_URL; }, 900);
+    });
+  }
+  document.getElementById('ct-submit-btn').addEventListener('click', submitEntireTest);
+
+  // ── Reset ──
+  document.getElementById('ct-reset-btn').addEventListener('click', function() {
+    if (!confirm('Reset your code back to the starter template for this question?')) return;
+    editor.setValue(templates[langSelect.value]);
+    persist();
+    document.getElementById('ct-terminal-output').innerHTML = '// Run your code against the sample input to see output here';
+  });
+
+  // ── Toolbar icons ──
+  let fontStep = 0;
+  const fontSizes = ['0.85rem', '0.98rem', '1.1rem'];
+  document.getElementById('ct-font-btn').addEventListener('click', function() {
+    fontStep = (fontStep + 1) % fontSizes.length;
+    document.getElementById('ct-problem-text').style.fontSize = fontSizes[fontStep];
+  });
+
+  const flagBtn = document.getElementById('ct-flag-btn');
+  function paintFlag(on) {
+    flagBtn.classList.toggle('is-active', on);
+  }
+  paintFlag(localStorage.getItem(FLAG_KEY) === '1');
+  flagBtn.addEventListener('click', function() {
+    const now = localStorage.getItem(FLAG_KEY) === '1';
+    localStorage.setItem(FLAG_KEY, now ? '0' : '1');
+    paintFlag(!now);
+  });
+
+  document.getElementById('ct-expand-btn').addEventListener('click', function() {
+    const problemPane = document.getElementById('ct-problem-pane');
+    const codePane = document.getElementById('ct-code-pane');
+    const collapsed = problemPane.classList.toggle('is-collapsed');
+    codePane.classList.toggle('is-expanded', collapsed);
+    this.classList.toggle('is-active', collapsed);
+    editor.refresh();
+  });
+
+  document.getElementById('ct-link-btn').addEventListener('click', function() {
+    navigator.clipboard.writeText(window.location.href).then(() => {
+      const el = this;
+      const original = el.innerHTML;
+      el.innerHTML = '<i class="fas fa-check"></i>';
+      setTimeout(() => { el.innerHTML = original; }, 1200);
+    });
+  });
+
+  // ── Shared contest countdown ──
+  const timerEl = document.getElementById('ct-timer');
+  let remaining = parseInt(timerEl.dataset.remaining, 10) || 0;
+
+  function fmt(s) {
+    const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+    return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':' + String(sec).padStart(2, '0');
+  }
+  function tick() {
+    timerEl.textContent = fmt(remaining);
+    if (remaining <= 300) timerEl.classList.add('warn');
+    if (remaining <= 0) {
+      clearInterval(timerHandle);
+      window.location.href = RESULT_URL;
+      return;
+    }
+    remaining--;
+  }
+  tick();
+  const timerHandle = setInterval(tick, 1000);
+})();
+/* eslint-enable */
+</script>
+
+{% endblock %}
+ 
+

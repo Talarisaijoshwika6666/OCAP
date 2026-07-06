@@ -2,13 +2,350 @@
 {% block page_title %}// Contests{% endblock %}
 {% block content %}
 
+<style>
+  /* ── Carousel shell: one glass card holding the whole row + arrows ── */
+  .carousel-shell {
+    position: relative;
+    padding: 26px 58px;
+  }
+  .carousel-track {
+    display: flex;
+    align-items: stretch;
+    gap: 16px;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    scrollbar-width: none;
+  }
+  .carousel-track::-webkit-scrollbar { display: none; }
+
+  .scroll-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: rgba(12,8,28,0.95);
+    border: 1px solid rgba(0,255,247,0.35);
+    color: #00fff7;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    z-index: 5;
+    transition: all 0.25s ease;
+    box-shadow: 0 0 15px rgba(0,255,247,0.12);
+    font-size: 0.9rem;
+  }
+  .scroll-arrow:hover {
+    background: #00fff7;
+    color: #000;
+    box-shadow: 0 0 25px rgba(0,255,247,0.55);
+  }
+  .scroll-arrow.left { left: 14px; }
+  .scroll-arrow.right { right: 14px; }
+
+  /* ── Task cards inside the carousel ── */
+  .empty-state-card {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; min-width: 260px; padding: 40px 24px; margin: 0 auto;
+  }
+  .task-card {
+    position: relative;
+    flex: 0 0 280px;
+    max-width: 280px;
+    background: rgba(20,14,42,0.65);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 14px;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    transition: all 0.3s ease;
+  }
+  .task-card:hover {
+    border-color: rgba(176,38,255,0.35);
+    background: rgba(24,16,48,0.8);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 26px rgba(0,0,0,0.35);
+  }
+  .task-card .task-body { flex: 1 1 auto; }
+
+  /* ── Task title tooltip trigger ── */
+  .task-title-tooltip {
+    cursor: help;
+    display: inline-block;
+    border-bottom: 1px dashed rgba(0,255,247,0.35);
+    transition: border-color 0.2s ease, color 0.2s ease;
+  }
+  .task-title-tooltip:hover,
+  .task-title-tooltip:focus {
+    border-color: rgba(0,255,247,0.9);
+    outline: none;
+  }
+
+  /* Shared tooltip: fixed position so it escapes the carousel's overflow
+     clipping and always renders on top of the outer glass card. */
+  .task-tooltip {
+    position: fixed;
+    top: 0; left: 0;
+    z-index: 3000;
+    max-width: 270px;
+    background: rgba(10,6,22,0.98);
+    border: 1px solid rgba(0,255,247,0.4);
+    border-radius: 10px;
+    padding: 12px 14px;
+    color: rgba(240,234,255,0.85);
+    font-size: 0.78rem;
+    line-height: 1.5;
+    box-shadow: 0 0 25px rgba(0,255,247,0.2), 0 12px 30px rgba(0,0,0,0.5);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(6px);
+    transition: opacity 0.18s ease, transform 0.18s ease;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .task-tooltip::before {
+    /* top accent strip, matches the app's neon gradient theme */
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, #00fff7, #b026ff, #ff2d78);
+  }
+  .task-tooltip .tooltip-heading {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.66rem;
+    letter-spacing: 1.5px;
+    color: #00fff7;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .task-tooltip.visible { opacity: 1; visibility: visible; transform: translateY(0); }
+  .task-tooltip .tooltip-arrow {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: var(--arrow-left, 22px);
+    width: 0; height: 0;
+    border: 7px solid transparent;
+    border-top-color: rgba(0,255,247,0.4);
+  }
+  .task-tooltip .tooltip-arrow::after {
+    content: '';
+    position: absolute;
+    top: -8px; left: -6px;
+    width: 0; height: 0;
+    border: 6px solid transparent;
+    border-top-color: rgba(10,6,22,0.98);
+  }
+  .task-tooltip.flip-below .tooltip-arrow {
+    top: auto;
+    bottom: 100%;
+    border: 7px solid transparent;
+    border-bottom-color: rgba(0,255,247,0.4);
+    border-top-color: transparent;
+  }
+  .task-tooltip.flip-below .tooltip-arrow::after {
+    top: auto; bottom: -8px; left: -6px;
+    border: 6px solid transparent;
+    border-bottom-color: rgba(10,6,22,0.98);
+    border-top-color: transparent;
+  }
+
+  /* ── Card action rows: always pinned to the bottom ── */
+  .card-actions { display: flex; gap: 8px; margin-top: 16px; }
+  .card-actions .action-registered { display: none; gap: 8px; width: 100%; }
+  .task-card.is-registered .action-register { display: none !important; }
+  .task-card.is-registered .action-registered { display: flex; }
+  .card-actions a, .card-actions button { flex: 1; justify-content: center; white-space: nowrap; }
+
+  .btn-leave {
+    background: transparent;
+    color: #ff2d78 !important;
+    border: 1px solid rgba(255,45,120,0.5);
+    border-radius: 8px;
+    padding: 7px 14px;
+    font-weight: 600; font-size: 0.78rem;
+    font-family: var(--font-code);
+    cursor: pointer;
+    transition: all 0.3s;
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .btn-leave:hover { background: #ff2d78; color: #fff !important; box-shadow: 0 0 18px rgba(255,45,120,0.45); }
+
+  .badge-registered {
+    background: rgba(0,255,130,0.08);
+    color: #00ff82;
+    border: 1px solid rgba(0,255,130,0.3);
+    border-radius: 8px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    font-family: var(--font-code);
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 7px 14px;
+  }
+
+  /* ── Modals ── */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(5,3,12,0.75);
+    backdrop-filter: blur(6px);
+    display: none;
+    align-items: center; justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+  }
+  .modal-overlay.active { display: flex; }
+  .modal-box {
+    background: rgba(16,10,32,0.97);
+    border: 1px solid rgba(176,38,255,0.35);
+    border-radius: 18px;
+    padding: 34px 28px;
+    max-width: 400px; width: 100%;
+    text-align: center;
+    box-shadow: 0 0 40px rgba(176,38,255,0.25), 0 20px 60px rgba(0,0,0,0.6);
+    position: relative;
+    overflow: hidden;
+    animation: modalPop 0.25s ease;
+  }
+  .modal-box::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, transparent, #ff2d78, #b026ff, #00fff7, transparent);
+  }
+  @keyframes modalPop { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .modal-icon { font-size: 2.4rem; margin-bottom: 14px; display: block; }
+  .modal-box h3 {
+    font-family: 'Orbitron', monospace; font-size: 1.1rem; font-weight: 800;
+    color: #f0eaff; margin-bottom: 10px;
+  }
+  .modal-box p { color: rgba(240,234,255,0.65); font-size: 0.86rem; line-height: 1.55; margin-bottom: 24px; }
+  .modal-actions { display: flex; gap: 12px; justify-content: center; }
+  .modal-actions .btn-neon, .modal-actions .btn-gradient { flex: 1; justify-content: center; }
+
+  /* ── Neon past-contests table ── */
+  .neon-table-wrap {
+    background: rgba(12,8,28,0.85);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  .neon-table { width: 100%; border-collapse: collapse; background: transparent; }
+  .neon-table thead th {
+    background: linear-gradient(90deg, rgba(255,45,120,0.12), rgba(176,38,255,0.14), rgba(0,255,247,0.08));
+    color: #00fff7;
+    padding: 14px 22px;
+    font-size: 0.7rem;
+    letter-spacing: 2px;
+    font-family: 'JetBrains Mono', monospace;
+    text-align: left;
+    border-bottom: 1px solid rgba(0,255,247,0.25);
+  }
+  .neon-table tbody tr {
+    background: rgba(255,255,255,0.015);
+    border-bottom: 1px solid rgba(176,38,255,0.08);
+    transition: background 0.2s ease, box-shadow 0.2s ease;
+  }
+  .neon-table tbody tr:hover {
+    background: rgba(176,38,255,0.08);
+    box-shadow: inset 3px 0 0 #00fff7;
+  }
+  .neon-table td { padding: 15px 22px; background: transparent; }
+  .neon-table .row-index {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px; border-radius: 50%;
+    background: rgba(176,38,255,0.12);
+    border: 1px solid rgba(176,38,255,0.3);
+    color: #b026ff;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem; font-weight: 700;
+  }
+  .neon-table .contest-name { color: #f0eaff; font-weight: 700; font-size: 0.9rem; }
+  .neon-table .contest-name i { color: #b026ff; margin-right: 8px; }
+  .neon-table .contest-date { color: #00fff7; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; opacity: 0.85; }
+  .badge-finished {
+    background: rgba(0,255,130,0.1);
+    color: #00ff82;
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    border: 1px solid rgba(0,255,130,0.35);
+    font-family: var(--font-code);
+    box-shadow: 0 0 12px rgba(0,255,130,0.15);
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .badge-finished::before {
+    content: '';
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #00ff82;
+    box-shadow: 0 0 6px #00ff82;
+  }
+</style>
+
 <div class="anim-in" style="text-align:center;margin-bottom:36px;">
   <div style="font-family:'JetBrains Mono',monospace;font-size:0.68rem;letter-spacing:3px;color:#b026ff;margin-bottom:10px;">// COMPETE</div>
   <h2 style="font-family:'Orbitron',monospace;font-size:2rem;font-weight:900;color:#f0eaff;">
     <i class="fas fa-flag-checkered" style="color:#ff2d78;margin-right:10px;"></i>
     <span style="background:linear-gradient(90deg,#ff2d78,#b026ff,#00fff7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Contests</span>
   </h2>
-  <p style="color:rgba(240,234,255,0.45);margin-top:8px;">Compete, rank up, and prove your skills</p>
+  <p style="color:rgba(240,234,255,0.45);margin-top:8px;">Compete, climb the leaderboard, and prove your skills</p>
+</div>
+
+<!-- Leaderboard button -->
+<div class="anim-in" style="display:flex;justify-content:flex-end;margin-bottom:18px;">
+  <a href="{% url 'contest_leaderboard' %}" class="btn-gradient" style="font-size:0.78rem;">
+    <i class="fas fa-trophy"></i> Leaderboard
+  </a>
+</div>
+
+<!-- Live Now -->
+<div class="anim-in anim-d2" style="margin-bottom:28px;">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
+    <i class="fas fa-bolt" style="color:#ff2d78;"></i>
+    <span style="font-family:'Orbitron',monospace;font-size:0.9rem;font-weight:700;color:#ff2d78;">Live Now</span>
+  </div>
+
+  <div class="card-glass carousel-shell">
+    <button class="scroll-arrow left" onclick="scrollTrack('liveTrack',-1)" aria-label="Scroll left"><i class="fas fa-chevron-left"></i></button>
+    <div class="carousel-track" id="liveTrack">
+      {% for contest in active_contests %}
+      <div class="task-card{% if contest.pk in registered_ids %} is-registered{% endif %}" data-contest-id="{{ contest.pk }}" data-contest-name="{{ contest.title }}" data-type="live" data-real="true">
+        <div class="task-body">
+          <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px;">
+            <h5 class="task-title-tooltip" style="font-family:'Orbitron',monospace;font-weight:700;color:#f0eaff;font-size:0.95rem;margin:0;" tabindex="0" data-tooltip="{{ contest.description|default:'No additional details provided for this contest.' }}" onmouseenter="showTaskTooltip(this)" onmouseleave="hideTaskTooltip()" onfocus="showTaskTooltip(this)" onblur="hideTaskTooltip()">{{ contest.title }}</h5>
+            <span style="background:linear-gradient(135deg,#ff2d78,#b026ff);color:#fff;padding:3px 12px;border-radius:20px;font-size:0.68rem;font-family:'JetBrains Mono',monospace;flex-shrink:0;margin-left:8px;">LIVE</span>
+          </div>
+          <p style="color:rgba(240,234,255,0.45);font-size:0.82rem;margin-bottom:12px;">{{ contest.problem_count }} problems · {{ contest.time_range }}</p>
+          <div style="color:#b026ff;font-size:0.78rem;font-family:'JetBrains Mono',monospace;margin-bottom:12px;">
+            <i class="fas fa-clock" style="margin-right:6px;"></i>Ends {{ contest.end_time|date:"D d M, H:i" }}
+          </div>
+          <div style="color:#00fff7;font-size:0.85rem;font-weight:700;">
+            Time left: <span class="contest-countdown" data-remaining="{{ contest.remaining_seconds }}">--:--:--</span>
+          </div>
+        </div>
+        <div class="card-actions">
+          {% if contest.pk in registered_ids %}
+          <a href="{% url 'contest_take_test' contest.pk %}" class="btn-gradient" style="font-size:0.78rem;width:100%;text-align:center;"><i class="fas fa-laptop-code"></i> Take Test</a>
+          {% else %}
+          <span style="color:rgba(240,234,255,0.4);font-size:0.78rem;text-align:center;width:100%;">Registration closed</span>
+          {% endif %}
+        </div>
+      </div>
+      {% empty %}
+      <div class="empty-state-card">
+        <i class="fas fa-satellite-dish" style="font-size:2rem;color:rgba(176,38,255,0.4);margin-bottom:12px;"></i>
+        {% if has_unregistered_live %}
+        <p style="color:rgba(240,234,255,0.5);font-size:0.9rem;margin:0;">A contest is live right now, but you didn't register before it started.</p>
+        <p style="color:rgba(240,234,255,0.35);font-size:0.8rem;margin-top:4px;">Registration closes once a contest goes live — catch the next one from Upcoming below.</p>
+        {% else %}
+        <p style="color:rgba(240,234,255,0.5);font-size:0.9rem;margin:0;">No contests are live right now.</p>
+        <p style="color:rgba(240,234,255,0.35);font-size:0.8rem;margin-top:4px;">Check back soon, or take a look at what's upcoming below.</p>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    <button class="scroll-arrow right" onclick="scrollTrack('liveTrack',1)" aria-label="Scroll right"><i class="fas fa-chevron-right"></i></button>
+  </div>
 </div>
 
 <!-- Upcoming -->
@@ -17,55 +354,46 @@
     <i class="fas fa-clock" style="color:#00fff7;"></i>
     <span style="font-family:'Orbitron',monospace;font-size:0.9rem;font-weight:700;color:#00fff7;">Upcoming</span>
   </div>
-  <div class="row g-3">
-    {% for contest in upcoming_contests %}
-    <div class="col-md-6">
-      <div class="card-glass p-4">
-        <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px;">
-          <h5 style="font-family:'Orbitron',monospace;font-weight:700;color:#f0eaff;font-size:0.95rem;margin:0;">{{ contest.title }}</h5>
-          <span style="background:rgba(0,255,247,0.1);color:#00fff7;padding:3px 12px;border-radius:20px;font-size:0.68rem;font-family:'JetBrains Mono',monospace;border:1px solid rgba(0,255,247,0.3);">Upcoming</span>
-        </div>
-        <p style="color:rgba(240,234,255,0.45);font-size:0.82rem;margin-bottom:12px;">{{ contest.problem_count }} 4 problems · 90 minutes · All levels</p>
-        <div style="color:#b026ff;font-size:0.78rem;font-family:'JetBrains Mono',monospace;margin-bottom:16px;">
-          <i class="fas fa-calendar" style="margin-right:6px;"></i>{{ contest.start_time|date:"D d M, H:i" }}
-        </div>
-        <a href="/contest/register/{{ contest.pk }}/" class="btn-neon" style="font-size:0.78rem;">Register</a>
-      </div>
-    </div>
-    {% empty %}
-    <div class="col-12">
-      <div class="card-glass p-4" style="text-align:center;">
-        <div class="row g-3">
-          <div class="col-md-6">
-            <div class="card-glass p-4">
-              <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px;">
-                <h5 style="font-family:'Orbitron',monospace;font-weight:700;color:#f0eaff;font-size:0.95rem;margin:0;">LogicLabs Weekly #42</h5>
-                <span style="background:rgba(0,255,247,0.1);color:#00fff7;padding:3px 12px;border-radius:20px;font-size:0.68rem;font-family:'JetBrains Mono',monospace;border:1px solid rgba(0,255,247,0.3);">Upcoming</span>
-              </div>
-              <p style="color:rgba(240,234,255,0.45);font-size:0.82rem;margin-bottom:12px;">4 problems · 90 minutes · All levels</p>
-              <div style="color:#b026ff;font-size:0.78rem;font-family:'JetBrains Mono',monospace;margin-bottom:16px;">
-                <i class="fas fa-calendar" style="margin-right:6px;"></i>Every Sunday 8:00 PM IST
-              </div>
-              <a href="/contest/register/1/" class="btn-neon" style="font-size:0.78rem;">Register</a>
-            </div>
+
+  <div class="card-glass carousel-shell">
+    <button class="scroll-arrow left" onclick="scrollTrack('upcomingTrack',-1)" aria-label="Scroll left"><i class="fas fa-chevron-left"></i></button>
+    <div class="carousel-track" id="upcomingTrack">
+      {% for contest in upcoming_contests %}
+      <div class="task-card{% if contest.pk in registered_ids %} is-registered{% endif %}" data-contest-id="{{ contest.pk }}" data-contest-name="{{ contest.title }}" data-type="upcoming" data-real="true">
+        <div class="task-body">
+          <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px;">
+            <h5 class="task-title-tooltip" style="font-family:'Orbitron',monospace;font-weight:700;color:#f0eaff;font-size:0.95rem;margin:0;" tabindex="0" data-tooltip="{{ contest.description|default:'No additional details provided for this contest.' }}" onmouseenter="showTaskTooltip(this)" onmouseleave="hideTaskTooltip()" onfocus="showTaskTooltip(this)" onblur="hideTaskTooltip()">{{ contest.title }}</h5>
+            <span style="background:rgba(0,255,247,0.1);color:#00fff7;padding:3px 12px;border-radius:20px;font-size:0.68rem;font-family:'JetBrains Mono',monospace;border:1px solid rgba(0,255,247,0.3);flex-shrink:0;margin-left:8px;">Upcoming</span>
           </div>
-          <div class="col-md-6">
-            <div class="card-glass p-4">
-              <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px;">
-                <h5 style="font-family:'Orbitron',monospace;font-weight:700;color:#f0eaff;font-size:0.95rem;margin:0;">LogicLabs Biweekly #21</h5>
-                <span style="background:rgba(0,255,247,0.1);color:#00fff7;padding:3px 12px;border-radius:20px;font-size:0.68rem;font-family:'JetBrains Mono',monospace;border:1px solid rgba(0,255,247,0.3);">Upcoming</span>
-              </div>
-              <p style="color:rgba(240,234,255,0.45);font-size:0.82rem;margin-bottom:12px;">4 problems · 90 minutes · Intermediate+</p>
-              <div style="color:#b026ff;font-size:0.78rem;font-family:'JetBrains Mono',monospace;margin-bottom:16px;">
-                <i class="fas fa-calendar" style="margin-right:6px;"></i>Every other Saturday 8:00 PM IST
-              </div>
-              <a href="/contest/register/{{ contest.pk }}/" class="btn-neon" style="font-size:0.78rem;"z>Register</a>
-            </div>
+          <p style="color:rgba(240,234,255,0.45);font-size:0.82rem;margin-bottom:12px;">{{ contest.problem_count }} problems · 90 minutes · All levels</p>
+          <div style="color:#b026ff;font-size:0.78rem;font-family:'JetBrains Mono',monospace;margin-bottom:12px;">
+            <i class="fas fa-calendar" style="margin-right:6px;"></i>{{ contest.start_time|date:"D d M, H:i" }}
+          </div>
+          <div style="color:#00fff7;font-size:0.85rem;font-weight:700;">
+            Starts in: <span class="contest-countdown" data-remaining="{{ contest.remaining_seconds }}">--:--:--</span>
+          </div>
+        </div>
+        <div class="card-actions">
+          {% if user.is_authenticated %}
+          <a href="{% url 'contest_detail' contest.pk %}" class="btn-neon action-register" style="font-size:0.78rem;width:100%;">Register</a>
+          {% else %}
+          <a href="/accounts/login/" class="btn-neon action-register" style="font-size:0.78rem;width:100%;">Login to Register</a>
+          {% endif %}
+          <div class="action-registered">
+            <span class="badge-registered"><i class="fas fa-check-circle"></i> Registered</span>
+            <button class="btn-leave" onclick="handleLeaveClick(event,this)"><i class="fas fa-sign-out-alt"></i> Leave</button>
           </div>
         </div>
       </div>
+      {% empty %}
+      <div class="empty-state-card">
+        <i class="fas fa-calendar-xmark" style="font-size:2rem;color:rgba(0,255,247,0.4);margin-bottom:12px;"></i>
+        <p style="color:rgba(240,234,255,0.5);font-size:0.9rem;margin:0;">No upcoming contests scheduled yet.</p>
+        <p style="color:rgba(240,234,255,0.35);font-size:0.8rem;margin-top:4px;">New contests will show up here once they're created.</p>
+      </div>
+      {% endfor %}
     </div>
-    {% endfor %}
+    <button class="scroll-arrow right" onclick="scrollTrack('upcomingTrack',1)" aria-label="Scroll right"><i class="fas fa-chevron-right"></i></button>
   </div>
 </div>
 
@@ -75,29 +403,63 @@
     <i class="fas fa-history" style="color:#b026ff;"></i>
     <span style="font-family:'Orbitron',monospace;font-size:0.9rem;font-weight:700;color:#b026ff;">Past Contests</span>
   </div>
-  <div class="card-glass" style="background:rgba(12,8,28,0.85);">
-    <div class="table-responsive">
-      <table class="table mb-0" style="background:#0c081c;">
+  <div class="card-glass" style="padding:0;">
+    <div class="table-responsive neon-table-wrap">
+      <table class="neon-table">
         <thead>
-  <tr style="background:rgba(176,38,255,0.1);">
-    <th style="color:#b026ff;padding:13px 22px;font-size:0.7rem;letter-spacing:2px;font-family:'JetBrains Mono',monospace;border-bottom:1px solid rgba(176,38,255,0.2);border-top:none;background:rgba(176,38,255,0.1);">CONTEST</th>
-    <th style="color:#b026ff;padding:13px 22px;font-size:0.7rem;letter-spacing:2px;font-family:'JetBrains Mono',monospace;border-bottom:1px solid rgba(176,38,255,0.2);border-top:none;background:rgba(176,38,255,0.1);">DATE</th>
-    <th style="color:#b026ff;padding:13px 22px;font-size:0.7rem;letter-spacing:2px;font-family:'JetBrains Mono',monospace;border-bottom:1px solid rgba(176,38,255,0.2);border-top:none;background:rgba(176,38,255,0.1);">STATUS</th>
-  </tr>
-</thead>
-        <tbody style="background:#0c081c;">
+          <tr>
+            <th>#</th>
+            <th>CONTEST</th>
+            <th>DATE</th>
+            <th>STATUS</th>
+            <th>ACTION</th>
+          </tr>
+        </thead>
+        <tbody>
           {% for contest in past_contests %}
-          <tr style="border-bottom:1px solid rgba(176,38,255,0.07);background:#0c081c;" onmouseover="this.style.background='rgba(176,38,255,0.05)'" onmouseout="this.style.background='#0c081c'">
-            <td style="padding:14px 22px;color:#f0eaff;font-weight:600;">{{ contest.title }}</td>
-            <td style="padding:14px 22px;color:rgba(240,234,255,0.45);font-family:'JetBrains Mono',monospace;font-size:0.8rem;">{{ contest.date }}</td>
-            <td style="padding:14px 22px;"><span class="badge-easy">Finished</span></td>
+          <tr>
+            <td><span class="row-index">{{ forloop.counter }}</span></td>
+            <td><span class="contest-name"><i class="fas fa-flag-checkered"></i>{{ contest.title }}</span></td>
+            <td><span class="contest-date">{{ contest.date }}</span></td>
+            <td><span class="badge-finished">Finished</span></td>
+            <td>
+              {% if contest.pk in my_submitted_ids %}
+              <a href="{% url 'contest_result' contest.pk %}" class="btn-neon" style="font-size:0.72rem;padding:6px 14px;"><i class="fas fa-eye"></i> View</a>
+              {% else %}
+              <span style="color:rgba(240,234,255,0.3);font-size:0.78rem;font-family:'JetBrains Mono',monospace;">Not attempted</span>
+              {% endif %}
+            </td>
           </tr>
           {% empty %}
-          <tr style="background:#0c081c;">
-  <td colspan="3" style="padding:40px;text-align:center;color:rgba(240,234,255,0.3);background:#0c081c;font-family:'JetBrains Mono',monospace;font-size:0.85rem;">
-    // no past contests yet
-  </td>
-</tr>
+          <!-- demo tasks -->
+          <tr>
+            <td><span class="row-index">1</span></td>
+            <td><span class="contest-name"><i class="fas fa-flag-checkered"></i>LogicLabs Weekly #41</span></td>
+            <td><span class="contest-date">Sun 21 Jun, 20:00</span></td>
+            <td><span class="badge-finished">Finished</span></td>
+            <td><a href="#" class="btn-neon" style="font-size:0.72rem;padding:6px 14px;"><i class="fas fa-eye"></i> View</a></td>
+          </tr>
+          <tr>
+            <td><span class="row-index">2</span></td>
+            <td><span class="contest-name"><i class="fas fa-flag-checkered"></i>LogicLabs Biweekly #20</span></td>
+            <td><span class="contest-date">Sat 13 Jun, 20:00</span></td>
+            <td><span class="badge-finished">Finished</span></td>
+            <td><a href="#" class="btn-neon" style="font-size:0.72rem;padding:6px 14px;"><i class="fas fa-eye"></i> View</a></td>
+          </tr>
+          <tr>
+            <td><span class="row-index">3</span></td>
+            <td><span class="contest-name"><i class="fas fa-flag-checkered"></i>LogicLabs Weekly #40</span></td>
+            <td><span class="contest-date">Sun 14 Jun, 20:00</span></td>
+            <td><span class="badge-finished">Finished</span></td>
+            <td><a href="#" class="btn-neon" style="font-size:0.72rem;padding:6px 14px;"><i class="fas fa-eye"></i> View</a></td>
+          </tr>
+          <tr>
+            <td><span class="row-index">4</span></td>
+            <td><span class="contest-name"><i class="fas fa-flag-checkered"></i>LogicLabs Biweekly #19</span></td>
+            <td><span class="contest-date">Sat 30 May, 20:00</span></td>
+            <td><span class="badge-finished">Finished</span></td>
+            <td><a href="#" class="btn-neon" style="font-size:0.72rem;padding:6px 14px;"><i class="fas fa-eye"></i> View</a></td>
+          </tr>
           {% endfor %}
         </tbody>
       </table>
@@ -105,4 +467,295 @@
   </div>
 </div>
 
+<!-- Confirm modal -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal-box">
+    <i class="fas fa-flag-checkered modal-icon" style="color:#00fff7;"></i>
+    <h3 id="confirmModalTitle">Confirm Registration</h3>
+    <p id="confirmModalText">Register for this contest?</p>
+    <div class="modal-actions">
+      <button class="btn-neon" onclick="closeModal('confirmModal')">Cancel</button>
+      <button class="btn-gradient" id="confirmModalActionBtn" onclick="runPendingAction()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- Message modal -->
+<div class="modal-overlay" id="messageModal">
+  <div class="modal-box">
+    <i class="fas fa-check-circle modal-icon" id="messageModalIcon" style="color:#00ff82;"></i>
+    <h3 id="messageModalTitle">Success!</h3>
+    <p id="messageModalText"></p>
+    <div class="modal-actions">
+      <button class="btn-gradient" style="width:100%;" onclick="closeModal('messageModal')">Got it</button>
+    </div>
+  </div>
+</div>
+
+<!-- Shared task tooltip (positioned via JS, always renders above the glass cards) -->
+<div class="task-tooltip" id="taskTooltip"></div>
+
 {% endblock %}
+
+{% block extra_js %}
+<script>
+  /* ── Countdown timers ── */
+  function formatCountdown(seconds) {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  }
+  /* When an upcoming contest's start time (or a live contest's end time)
+     arrives, the card's section membership is decided server-side on
+     the next request. Rather than leaving a frozen 00:00:00 timer, we
+     schedule a single automatic reload so the contest hops from
+     Upcoming -> Live, or Live -> Past, on its own. */
+  let contestReloadTimer = null;
+  function scheduleContestReload() {
+    if (contestReloadTimer) return;
+    contestReloadTimer = setTimeout(() => window.location.reload(), 1200);
+  }
+
+  function updateContestTimers() {
+    document.querySelectorAll('.contest-countdown').forEach(el => {
+      const remaining = parseInt(el.dataset.remaining, 10);
+      if (Number.isNaN(remaining)) return;
+      const next = Math.max(0, remaining - 1);
+      el.dataset.remaining = next;
+      el.innerText = formatCountdown(next);
+
+      if (next <= 0) {
+        const card = el.closest('.task-card');
+        const isRealContest = card && card.dataset.real === 'true';
+        if (isRealContest) scheduleContestReload();
+      }
+    });
+  }
+
+  /* ── Carousel scroll ── */
+  function scrollTrack(id, dir) {
+    const track = document.getElementById(id);
+    if (!track) return;
+    track.scrollBy({ left: dir * 300, behavior: 'smooth' });
+  }
+
+  /* ── CSRF helper (standard Django AJAX pattern) ── */
+  function getCookie(name) {
+    const match = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+    return match ? match.pop() : '';
+  }
+  const CSRF_TOKEN = getCookie('csrftoken');
+
+  /* ── Registration state ──
+     Real contests (numeric id) are persisted server-side via fetch().
+     Demo cards (id starts with "demo-") only exist for preview purposes,
+     so they're simulated with localStorage. ── */
+  const REGISTERED_KEY = 'logiclabs_registered_contests';
+  const isDemo = (id) => String(id).startsWith('demo-');
+
+  function getRegistered() {
+    try { return JSON.parse(localStorage.getItem(REGISTERED_KEY)) || []; }
+    catch (e) { return []; }
+  }
+  function setRegistered(list) {
+    localStorage.setItem(REGISTERED_KEY, JSON.stringify(list));
+  }
+  function applyRegisteredState() {
+    // Real cards already carry the correct .is-registered class from the server
+    // (see the `is-registered` class rendered server-side). Only demo cards need
+    // their state restored from localStorage on load.
+    const registered = getRegistered();
+    document.querySelectorAll('.task-card').forEach(card => {
+      const id = card.dataset.contestId;
+      if (isDemo(id)) {
+        card.classList.toggle('is-registered', registered.includes(id));
+      }
+    });
+  }
+
+  /* ── Modal helpers ── */
+  let pendingAction = null;
+
+  function openModal(id) { document.getElementById(id).classList.add('active'); }
+  function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+  function showConfirm(title, text, confirmLabel, onConfirm) {
+    document.getElementById('confirmModalTitle').innerText = title;
+    document.getElementById('confirmModalText').innerText = text;
+    document.getElementById('confirmModalActionBtn').innerText = confirmLabel;
+    pendingAction = onConfirm;
+    openModal('confirmModal');
+  }
+  function runPendingAction() {
+    closeModal('confirmModal');
+    if (typeof pendingAction === 'function') pendingAction();
+    pendingAction = null;
+  }
+  function showMessage(title, text, iconClass, iconColor) {
+    document.getElementById('messageModalTitle').innerText = title;
+    document.getElementById('messageModalText').innerText = text;
+    const icon = document.getElementById('messageModalIcon');
+    icon.className = 'fas ' + iconClass + ' modal-icon';
+    icon.style.color = iconColor;
+    openModal('messageModal');
+  }
+
+  /* ── Register / Leave handlers ── */
+  function handleRegisterClick(event, el) {
+    event.preventDefault();
+    const card = el.closest('.task-card');
+    const id = card.dataset.contestId;
+    const name = card.dataset.contestName;
+
+    showConfirm(
+      'Confirm Registration',
+      `Register for "${name}"?`,
+      'Confirm',
+      function () {
+        if (isDemo(id)) {
+          const list = getRegistered();
+          if (!list.includes(id)) { list.push(id); setRegistered(list); }
+          card.classList.add('is-registered');
+          showMessage(
+            'Registered!',
+            "🎉 Congratulations, you've successfully registered. You can leave the contest before it starts.",
+            'fa-check-circle', '#00ff82'
+          );
+          return;
+        }
+
+        fetch(`/contest/register/${id}/`, {
+          method: 'POST',
+          headers: { 'X-CSRFToken': CSRF_TOKEN, 'X-Requested-With': 'XMLHttpRequest' },
+        })
+          .then(async res => {
+            if (!res.ok) {
+              const data = await res.json().catch(() => ({}));
+              throw new Error(data.error || 'Registration failed');
+            }
+            card.classList.add('is-registered');
+            showMessage(
+              'Registered!',
+              "🎉 Congratulations, you've successfully registered. You can leave the contest before it starts.",
+              'fa-check-circle', '#00ff82'
+            );
+          })
+          .catch((err) => {
+            showMessage('Something went wrong', err.message || 'Could not register right now. Please try again, or log in if you\'re not signed in.', 'fa-triangle-exclamation', '#ff2d78');
+          });
+      }
+    );
+    return false;
+  }
+
+  function handleLeaveClick(event, el) {
+    event.preventDefault();
+    const card = el.closest('.task-card');
+    const id = card.dataset.contestId;
+    const name = card.dataset.contestName;
+
+    showConfirm(
+      'Leave Contest',
+      `Are you sure you want to leave "${name}"?`,
+      'Leave',
+      function () {
+        if (isDemo(id)) {
+          const list = getRegistered().filter(x => x !== id);
+          setRegistered(list);
+          card.classList.remove('is-registered');
+          showMessage('Left Contest', `You've left "${name}". You can register again anytime.`, 'fa-info-circle', '#00fff7');
+          return;
+        }
+
+        fetch(`/contest/leave/${id}/`, {
+          method: 'POST',
+          headers: { 'X-CSRFToken': CSRF_TOKEN, 'X-Requested-With': 'XMLHttpRequest' },
+        })
+          .then(res => {
+            if (!res.ok) throw new Error('Leave failed');
+            card.classList.remove('is-registered');
+            showMessage('Left Contest', `You've left "${name}". You can register again anytime.`, 'fa-info-circle', '#00fff7');
+          })
+          .catch(() => {
+            showMessage('Something went wrong', 'Could not leave the contest right now. Please try again.', 'fa-triangle-exclamation', '#ff2d78');
+          });
+      }
+    );
+    return false;
+  }
+
+  function handleTakeTestClick(event, el) {
+    const card = el.closest('.task-card');
+    const id = card.dataset.contestId;
+
+    if (isDemo(id)) {
+      event.preventDefault();
+      showMessage(
+        'Demo Preview',
+        'This is a sample card for preview purposes only and isn\'t linked to a real test. Real contests will let you take the test here once created.',
+        'fa-info-circle', '#00fff7'
+      );
+      return false;
+    }
+
+    // Real contest: let the link navigate normally to the take-test page.
+    return true;
+  }
+
+  /* ── Task info tooltip ── */
+  const taskTooltip = document.getElementById('taskTooltip');
+  let tooltipHideTimer = null;
+
+  function showTaskTooltip(el) {
+    if (!taskTooltip) return;
+    clearTimeout(tooltipHideTimer);
+    const text = el.getAttribute('data-tooltip') || 'No additional details available.';
+    const safeText = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    taskTooltip.innerHTML =
+      '<div class="tooltip-heading"><i class="fas fa-circle-info"></i> Task Details</div>' +
+      '<div class="tooltip-text">' + safeText + '</div>' +
+      '<div class="tooltip-arrow"></div>';
+    taskTooltip.classList.remove('flip-below');
+    taskTooltip.classList.add('visible');
+    requestAnimationFrame(() => positionTaskTooltip(el));
+  }
+
+  function positionTaskTooltip(el) {
+    const titleRect = el.getBoundingClientRect();
+    const tipRect = taskTooltip.getBoundingClientRect();
+    const margin = 12;
+    const arrowOffset = 22; // distance of the arrow from the tooltip's left edge
+
+    // Anchor the tooltip's top-left corner near the title's top-left corner
+    let left = titleRect.left - arrowOffset;
+    left = Math.max(margin, Math.min(left, window.innerWidth - tipRect.width - margin));
+
+    let top = titleRect.top - tipRect.height - 14; // above the card by default
+    if (top < margin) {
+      top = titleRect.bottom + 14; // flip below if there's no room above the viewport
+      taskTooltip.classList.add('flip-below');
+    } else {
+      taskTooltip.classList.remove('flip-below');
+    }
+
+    taskTooltip.style.left = `${left}px`;
+    taskTooltip.style.top = `${top}px`;
+    taskTooltip.style.setProperty('--arrow-left', `${Math.max(18, titleRect.left - left + 6)}px`);
+  }
+
+  function hideTaskTooltip() {
+    tooltipHideTimer = setTimeout(() => taskTooltip.classList.remove('visible'), 60);
+  }
+
+  window.addEventListener('scroll', () => taskTooltip.classList.remove('visible'), { passive: true });
+  window.addEventListener('resize', () => taskTooltip.classList.remove('visible'));
+
+  window.addEventListener('load', () => {
+    applyRegisteredState();
+    updateContestTimers();
+    setInterval(updateContestTimers, 1000);
+  });
+</script>
+{% endblock %}
+ 

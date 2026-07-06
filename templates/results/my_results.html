@@ -1,55 +1,79 @@
 {% extends 'base.html' %}
-{% block title %}My Results{% endblock %}
-
+{% block page_title %}// My Results{% endblock %}
 {% block content %}
-<div class="container py-4">
-  <h3 class="mb-4">📊 My Results</h3>
-
-  {% if results %}
+ 
+<div class="card-glass anim-in">
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:18px 24px;border-bottom:1px solid rgba(176,38,255,0.15);flex-wrap:wrap;gap:12px;">
+    <div style="font-family:'Orbitron',monospace;font-size:0.85rem;font-weight:800;color:#f0eaff;letter-spacing:1px;">
+      <i class="fas fa-list-ul" style="color:#b026ff;margin-right:8px;"></i>MY_RESULTS
+    </div>
+    <div style="display:flex;gap:10px;">
+      <a href="?status=passed" style="text-decoration:none;padding:5px 16px;border-radius:20px;font-size:0.75rem;font-weight:700;
+        {% if status == 'passed' %}background:rgba(0,255,130,0.18);color:#00ff82;border:1px solid rgba(0,255,130,0.5);
+        {% else %}background:rgba(0,255,130,0.08);color:#00ff82;border:1px solid rgba(0,255,130,0.25);{% endif %}">
+        <i class="fas fa-check"></i> Passed
+      </a>
+      <a href="?status=failed" style="text-decoration:none;padding:5px 16px;border-radius:20px;font-size:0.75rem;font-weight:700;
+        {% if status == 'failed' %}background:rgba(255,45,120,0.18);color:#ff2d78;border:1px solid rgba(255,45,120,0.5);
+        {% else %}background:rgba(255,45,120,0.08);color:#ff2d78;border:1px solid rgba(255,45,120,0.25);{% endif %}">
+        <i class="fas fa-times"></i> Failed
+      </a>
+      {% if status != 'all' %}
+      <a href="?" style="text-decoration:none;padding:5px 16px;border-radius:20px;font-size:0.75rem;font-weight:700;background:rgba(255,255,255,0.05);color:rgba(240,234,255,0.5);border:1px solid rgba(255,255,255,0.12);">
+        Clear
+      </a>
+      {% endif %}
+    </div>
+  </div>
+ 
   <div class="table-responsive">
-    <table class="table table-bordered table-hover shadow-sm">
-      <thead class="table-primary">
-        <tr>
-          <th>#</th>
-          <th>Assessment</th>
-          <th>Score</th>
-          <th>Percentage</th>
-          <th>Status</th>
-          <th>Date</th>
-          <th>Action</th>
+    <table class="table mb-0" style="background:#0c081c;">
+      <thead>
+        <tr style="background:rgba(176,38,255,0.1);">
+          <th style="color:#b026ff;padding:13px 22px;border-bottom:1px solid rgba(176,38,255,0.2);font-size:0.7rem;letter-spacing:2px;font-family:'JetBrains Mono',monospace;border-top:none;background:rgba(176,38,255,0.1);">#</th>
+          <th style="color:#b026ff;padding:13px 22px;border-bottom:1px solid rgba(176,38,255,0.2);font-size:0.7rem;letter-spacing:2px;font-family:'JetBrains Mono',monospace;border-top:none;background:rgba(176,38,255,0.1);">ASSESSMENT</th>
+          <th style="color:#b026ff;padding:13px 22px;border-bottom:1px solid rgba(176,38,255,0.2);font-size:0.7rem;letter-spacing:2px;font-family:'JetBrains Mono',monospace;border-top:none;background:rgba(176,38,255,0.1);">SCORE</th>
+          <th style="color:#b026ff;padding:13px 22px;border-bottom:1px solid rgba(176,38,255,0.2);font-size:0.7rem;letter-spacing:2px;font-family:'JetBrains Mono',monospace;border-top:none;background:rgba(176,38,255,0.1);">PERCENTAGE</th>
+          <th style="color:#b026ff;padding:13px 22px;border-bottom:1px solid rgba(176,38,255,0.2);font-size:0.7rem;letter-spacing:2px;font-family:'JetBrains Mono',monospace;border-top:none;background:rgba(176,38,255,0.1);">STATUS</th>
+          <th style="color:#b026ff;padding:13px 22px;border-bottom:1px solid rgba(176,38,255,0.2);font-size:0.7rem;letter-spacing:2px;font-family:'JetBrains Mono',monospace;border-top:none;background:rgba(176,38,255,0.1);">DATE</th>
+          <th style="color:#b026ff;padding:13px 22px;border-bottom:1px solid rgba(176,38,255,0.2);font-size:0.7rem;letter-spacing:2px;font-family:'JetBrains Mono',monospace;border-top:none;background:rgba(176,38,255,0.1);">ACTION</th>
         </tr>
       </thead>
       <tbody>
         {% for result in results %}
-        <tr>
-          <td>{{ forloop.counter }}</td>
-          <td>{{ result.assessment }}</td>
-          <td>{{ result.score }} / {{ result.total_marks }}</td>
-          <td>{{ result.percentage }}%</td>
-          <td>
+        <tr style="border-bottom:1px solid rgba(176,38,255,0.1);background:#0c081c;"
+            onmouseover="this.style.background='rgba(176,38,255,0.08)'"
+            onmouseout="this.style.background='#0c081c'">
+          <td style="padding:14px 22px;color:rgba(176,38,255,0.6);font-family:'JetBrains Mono',monospace;font-size:0.8rem;background:transparent;">{{ forloop.counter }}</td>
+          <td style="padding:14px 22px;background:transparent;color:#f0eaff;font-weight:700;font-size:0.9rem;">{{ result.assessment.title }}</td>
+          <td style="padding:14px 22px;background:transparent;color:rgba(240,234,255,0.75);font-family:'JetBrains Mono',monospace;font-size:0.85rem;">{{ result.score }} / {{ result.total_marks }}</td>
+          <td style="padding:14px 22px;background:transparent;color:rgba(240,234,255,0.75);font-family:'JetBrains Mono',monospace;font-size:0.85rem;">{{ result.percentage }}%</td>
+          <td style="padding:14px 22px;background:transparent;">
             {% if result.passed %}
-              <span class="badge bg-success">✅ Passed</span>
+              <span style="color:#00ff82;background:rgba(0,255,130,0.1);border:1px solid rgba(0,255,130,0.35);padding:4px 14px;border-radius:20px;font-size:0.75rem;font-weight:700;"><i class="fas fa-check"></i> Passed</span>
             {% else %}
-              <span class="badge bg-danger">❌ Failed</span>
+              <span style="color:#ff2d78;background:rgba(255,45,120,0.1);border:1px solid rgba(255,45,120,0.35);padding:4px 14px;border-radius:20px;font-size:0.75rem;font-weight:700;"><i class="fas fa-times"></i> Failed</span>
             {% endif %}
           </td>
-          <td>{{ result.submitted_at|date:"d M Y, H:i" }}</td>
-          <td>
-            <a href="{% url 'result_detail' result.id %}" class="btn btn-sm btn-outline-primary">
-              View
-            </a>
+          <td style="padding:14px 22px;background:transparent;color:rgba(240,234,255,0.5);font-family:'JetBrains Mono',monospace;font-size:0.8rem;">{{ result.submitted_at|date:"d M Y, H:i" }}</td>
+          <td style="padding:14px 22px;background:transparent;">
+            <a href="{% url 'result_detail' result.id %}" class="btn-neon" style="padding:5px 16px;font-size:0.75rem;"><i class="fas fa-eye"></i> View</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" style="padding:50px;text-align:center;color:rgba(240,234,255,0.4);background:transparent;">
+            <i class="fas fa-file-alt" style="font-size:2rem;display:block;margin-bottom:12px;opacity:0.3;"></i>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:0.8rem;">// no results yet — go take an assessment</span>
+            <div style="margin-top:16px;"><a href="{% url 'assessments' %}" class="btn-gradient">Take an Assessment</a></div>
           </td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
-  {% else %}
-    <div class="text-center py-5 text-muted">
-      <h5>No results yet.</h5>
-      <a href="/assessments/" class="btn btn-primary mt-2">📝 Take an Assessment</a>
-    </div>
-  {% endif %}
-
 </div>
+ 
 {% endblock %}
+ 
+ 

@@ -7,6 +7,8 @@ from recruiter import views as recruiter_views
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include('accounts.urls')),
+    path('assessments/', include('assessments.urls')),
+    path('results/', include('results.urls')),
     path('questions/', include('questions.urls')),
     path('submissions/', include('submissions.urls')),
     path('leaderboard/', include('leaderboard.urls')),
@@ -20,3 +22,4 @@ urlpatterns = [
     path('quest/', include('quest.urls')),
     path('candidates/', include('candidates.urls')),
 ]
+ 

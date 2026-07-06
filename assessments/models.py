@@ -53,10 +53,25 @@ class Question(models.Model):
     option_c = models.CharField(max_length=255, blank=True, null=True)
     option_d = models.CharField(max_length=255, blank=True, null=True)
     time_limit = models.PositiveIntegerField(default=60, help_text="Time limit in minutes for this question")
+    marks = models.PositiveIntegerField(default=10)
     created_at = models.DateTimeField(auto_now_add=True, null=True)
 
     def __str__(self):
         return self.title or self.text
+
+    def get_options(self):
+        """Return list of (label, text) tuples for non-empty options, for MCQ rendering."""
+        opts = [
+            ('A', self.option_a),
+            ('B', self.option_b),
+            ('C', self.option_c),
+            ('D', self.option_d),
+        ]
+        return [(label, text) for label, text in opts if text]
+
+    @property
+    def sample_test_cases(self):
+        return self.test_cases.filter(is_sample=True)
 
 
 # 3. TestCase third (needs Question)

@@ -1,0 +1,223 @@
+{% extends 'base.html' %}
+{% block page_title %}// {{ contest.title }}{% endblock %}
+{% block content %}
+
+<style>
+  .cd-section {
+    margin-bottom: 22px;
+  }
+  .cd-section-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'Orbitron', monospace;
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: #f0eaff;
+    margin-bottom: 14px;
+  }
+  .cd-section-title i { color: #b026ff; }
+
+  .cd-lang-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .cd-lang-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(176,38,255,0.25);
+    border-radius: 10px;
+    padding: 10px 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #f0eaff;
+  }
+  .cd-lang-chip i { font-size: 1.05rem; }
+
+  .cd-notes { list-style: none; padding: 0; margin: 0; counter-reset: cd-counter; }
+  .cd-notes li {
+    counter-increment: cd-counter;
+    position: relative;
+    padding: 10px 0 10px 34px;
+    color: rgba(240,234,255,0.7);
+    font-size: 0.86rem;
+    line-height: 1.55;
+    border-bottom: 1px solid rgba(176,38,255,0.08);
+  }
+  .cd-notes li:last-child { border-bottom: none; }
+  .cd-notes li::before {
+    content: counter(cd-counter);
+    position: absolute;
+    left: 0; top: 9px;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: rgba(0,255,247,0.1);
+    border: 1px solid rgba(0,255,247,0.35);
+    color: #00fff7;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .cd-stat-row { display: flex; flex-wrap: wrap; gap: 22px; margin-top: 14px; }
+  .cd-stat { display: flex; align-items: center; gap: 8px; color: rgba(240,234,255,0.55); font-size: 0.82rem; font-family: 'JetBrains Mono', monospace; }
+  .cd-stat i { color: #00fff7; }
+
+  .cd-register-bar {
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;
+    padding: 22px 26px;
+  }
+</style>
+
+<div class="anim-in" style="margin-bottom:24px;">
+  <a href="/contest/" class="btn-neon" style="font-size:0.78rem;display:inline-flex;align-items:center;gap:8px;">
+    <i class="fas fa-arrow-left"></i> Back to Contests
+  </a>
+</div>
+
+<!-- Header -->
+<div class="card-glass p-4 anim-in" style="margin-bottom:22px;">
+  <div style="display:flex;justify-content:space-between;align-items:start;flex-wrap:wrap;gap:16px;">
+    <div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap;">
+        {% if contest.status == 'live' %}
+          <span style="background:linear-gradient(135deg,#ff2d78,#b026ff);color:#fff;padding:3px 12px;border-radius:20px;font-size:0.68rem;font-family:'JetBrains Mono',monospace;font-weight:700;"><i class="fas fa-bolt"></i> LIVE</span>
+        {% elif contest.status == 'upcoming' %}
+          <span style="background:rgba(0,255,247,0.1);color:#00fff7;padding:3px 12px;border-radius:20px;font-size:0.68rem;font-family:'JetBrains Mono',monospace;border:1px solid rgba(0,255,247,0.3);">Upcoming</span>
+        {% else %}
+          <span class="badge-finished">Finished</span>
+        {% endif %}
+        <h2 style="font-family:'Orbitron',monospace;font-size:1.5rem;font-weight:900;color:#f0eaff;margin:0;">{{ contest.title }}</h2>
+      </div>
+      <p style="color:rgba(240,234,255,0.5);font-size:0.88rem;max-width:640px;margin:0;">
+        Welcome to <strong style="color:#f0eaff;">{{ contest.title }}</strong>, hosted on LogicLabs. Register below to
+        secure your spot — once the contest goes live you'll get access to the arena and can start submitting solutions.
+      </p>
+      <div class="cd-stat-row">
+        <span class="cd-stat"><i class="fas fa-calendar"></i> {{ contest.start_time|date:"D d M Y, H:i" }}</span>
+        <span class="cd-stat"><i class="fas fa-hourglass-half"></i> {{ contest.duration_minutes }} minutes</span>
+        <span class="cd-stat"><i class="fas fa-list-ol"></i> {{ contest.problem_count }} problem{{ contest.problem_count|pluralize }}</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- About this contest -->
+<div class="card-glass p-4 anim-in anim-d1 cd-section">
+  <div class="cd-section-title"><i class="fas fa-circle-info"></i> About This Contest</div>
+  <p style="color:rgba(240,234,255,0.65);font-size:0.86rem;line-height:1.6;">
+    {{ contest.description|default:"This is a timed coding contest. Solve every problem you can before the clock runs out — your score is based on how many test cases your submissions pass, and your rank is determined by total score and how quickly you got there." }}
+  </p>
+</div>
+
+<!-- Languages supported -->
+<div class="card-glass p-4 anim-in anim-d1 cd-section">
+  <div class="cd-section-title"><i class="fas fa-code"></i> Languages You Can Use to Solve Problems</div>
+  <div class="cd-lang-grid">
+    {% for lang in languages %}
+    <div class="cd-lang-chip"><i class="{{ lang.icon }}" style="color:{{ lang.color }};"></i> {{ lang.name }}</div>
+    {% endfor %}
+  </div>
+  <p style="color:rgba(240,234,255,0.4);font-size:0.78rem;margin-top:12px;margin-bottom:0;">
+    You can switch languages freely between problems and between attempts on the same problem.
+  </p>
+</div>
+
+<!-- Contest guidelines -->
+<div class="card-glass p-4 anim-in anim-d2 cd-section">
+  <div class="cd-section-title"><i class="fas fa-thumbtack"></i> Contest Guidelines</div>
+  <ul class="cd-notes">
+    <li>You can register any time before the contest starts, and leave again if your plans change.</li>
+    <li>Each problem is scored out of 100 based on the percentage of test cases your submission passes.</li>
+    <li>Some test cases are hidden — you'll see pass/fail for them, but not their input or expected output.</li>
+    <li>Your rank is based on total score first, then how quickly you reached that score.</li>
+    <li>Write your own solutions — code generation tools or outside assistance aren't in the spirit of the contest.</li>
+  </ul>
+</div>
+
+<!-- Register bar -->
+<div class="card-glass anim-in anim-d3 cd-register-bar">
+  <div>
+    <div style="font-family:'Orbitron',monospace;font-size:0.95rem;font-weight:800;color:#f0eaff;margin-bottom:4px;">
+      {% if is_registered %}You're registered for this contest{% else %}Ready to compete?{% endif %}
+    </div>
+    <div style="color:rgba(240,234,255,0.45);font-size:0.82rem;">
+      {% if is_registered %}
+        See you in the arena when it goes live.
+      {% else %}
+        Registration takes one click — you can leave anytime before it starts.
+      {% endif %}
+    </div>
+  </div>
+
+  {% if not user.is_authenticated %}
+    <a href="/accounts/login/" class="btn-gradient" style="font-size:0.85rem;">Login to Register</a>
+  {% elif is_registered %}
+    <div style="display:flex;gap:10px;">
+      {% if contest.status == 'live' %}
+        <a href="{% url 'contest_take_test' contest.pk %}" class="btn-gradient" style="font-size:0.85rem;"><i class="fas fa-laptop-code"></i> Take Test</a>
+      {% elif contest.status == 'ended' %}
+        <a href="{% url 'contest_result' contest.pk %}" class="btn-gradient" style="font-size:0.85rem;"><i class="fas fa-trophy"></i> View Results</a>
+      {% endif %}
+      {% if contest.status == 'upcoming' %}
+        <button class="btn-leave" id="cdLeaveBtn" onclick="cdLeaveContest()"><i class="fas fa-sign-out-alt"></i> Leave Contest</button>
+      {% endif %}
+    </div>
+  {% else %}
+    <button class="btn-gradient" id="cdRegisterBtn" style="font-size:0.85rem;" onclick="cdRegisterContest()">
+      <i class="fas fa-flag-checkered"></i> Register Now
+    </button>
+  {% endif %}
+</div>
+
+<script>
+  function cdGetCookie(name) {
+    const match = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+    return match ? match.pop() : '';
+  }
+  const CD_CSRF = cdGetCookie('csrftoken');
+
+  function cdRegisterContest() {
+    const btn = document.getElementById('cdRegisterBtn');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Registering…'; }
+
+    fetch("{% url 'register_contest' contest.pk %}", {
+      method: 'POST',
+      headers: { 'X-CSRFToken': CD_CSRF, 'X-Requested-With': 'XMLHttpRequest' },
+    })
+      .then(res => {
+        if (!res.ok) throw new Error('Registration failed');
+        window.location.href = "/contest/";
+      })
+      .catch(() => {
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-flag-checkered"></i> Register Now'; }
+        alert('Could not register right now. Please try again.');
+      });
+  }
+
+  function cdLeaveContest() {
+    if (!confirm('Leave "{{ contest.title|escapejs }}"? You can register again anytime before it starts.')) return;
+    const btn = document.getElementById('cdLeaveBtn');
+    if (btn) { btn.disabled = true; }
+
+    fetch("{% url 'leave_contest' contest.pk %}", {
+      method: 'POST',
+      headers: { 'X-CSRFToken': CD_CSRF, 'X-Requested-With': 'XMLHttpRequest' },
+    })
+      .then(res => {
+        if (!res.ok) throw new Error('Leave failed');
+        window.location.reload();
+      })
+      .catch(() => {
+        if (btn) { btn.disabled = false; }
+        alert('Could not leave the contest right now. Please try again.');
+      });
+  }
+</script>
+
+{% endblock %}

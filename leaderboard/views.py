@@ -9,8 +9,10 @@ def leaderboard_view(request):
     users = User.objects.all()
     leaderboard = []
     for user in users:
+        # Only count solves on standalone Problem Bank questions —
+        # contest questions have their own per-contest leaderboard.
         solved = Submission.objects.filter(
-            user=user, result='Accepted'
+            user=user, result='Accepted', question__contests__isnull=True
         ).values('question').distinct().count()
         if solved > 0:
             leaderboard.append({

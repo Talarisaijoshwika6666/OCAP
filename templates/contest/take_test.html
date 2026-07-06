@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+{% block page_title %}// {{ contest.title }}{% endblock %}
+{% block content %}
+ 
+<div class="anim-in" style="margin-bottom:24px;">
+  <a href="/contest/" class="btn-neon" style="font-size:0.78rem;display:inline-flex;align-items:center;gap:8px;">
+    <i class="fas fa-arrow-left"></i> Back to Contests
+  </a>
+</div>
+ 
+<div class="card-glass p-4 anim-in" style="margin-bottom:24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;">
+  <div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+      <span style="background:linear-gradient(135deg,#ff2d78,#b026ff);color:#fff;padding:3px 12px;border-radius:20px;font-size:0.68rem;font-family:'JetBrains Mono',monospace;font-weight:700;">
+        <i class="fas fa-bolt"></i> LIVE
+      </span>
+      <h3 style="font-family:'Orbitron',monospace;font-size:1.2rem;font-weight:900;color:#f0eaff;margin:0;">{{ contest.title }}</h3>
+    </div>
+    <p style="color:rgba(240,234,255,0.45);font-size:0.85rem;margin:0;">{{ contest.description|default:"Solve as many problems as you can before time runs out." }}</p>
+  </div>
+  <div style="text-align:center;">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;letter-spacing:2px;color:#b026ff;margin-bottom:6px;">TIME REMAINING</div>
+    <div id="contest-timer" data-remaining="{{ contest.remaining_seconds }}"
+         style="font-family:'Orbitron',monospace;font-size:1.6rem;font-weight:900;color:#00fff7;text-shadow:0 0 12px rgba(0,255,247,0.4);">
+      --:--:--
+    </div>
+  </div>
+</div>
+ 
+<div class="card-glass anim-in anim-d1" style="margin-bottom:24px;">
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:18px 24px;border-bottom:1px solid rgba(176,38,255,0.15);">
+    <div style="font-family:'Orbitron',monospace;font-size:0.82rem;font-weight:700;color:#f0eaff;letter-spacing:1px;">
+      <i class="fas fa-list-ol" style="color:#b026ff;margin-right:8px;"></i>PROBLEM SET
+    </div>
+    <div style="color:rgba(240,234,255,0.5);font-size:0.78rem;font-family:'JetBrains Mono',monospace;">
+      {{ solved_ids|length }} / {{ questions.count }} solved
+    </div>
+  </div>
+ 
+  <div class="table-responsive">
+    <table class="table mb-0" style="background:#0c081c;">
+      <thead>
+        <tr style="background:rgba(176,38,255,0.1);">
+          <th style="color:#b026ff;padding:13px 22px;border-bottom:1px solid rgba(176,38,255,0.2);font-size:0.7rem;letter-spacing:2px;font-family:'JetBrains Mono',monospace;border-top:none;background:rgba(176,38,255,0.1);">#</th>
+          <th style="color:#b026ff;padding:13px 22px;border-bottom:1px solid rgba(176,38,255,0.2);font-size:0.7rem;letter-spacing:2px;font-family:'JetBrains Mono',monospace;border-top:none;background:rgba(176,38,255,0.1);">TITLE</th>
+          <th style="color:#b026ff;padding:13px 22px;border-bottom:1px solid rgba(176,38,255,0.2);font-size:0.7rem;letter-spacing:2px;font-family:'JetBrains Mono',monospace;border-top:none;background:rgba(176,38,255,0.1);">DIFFICULTY</th>
+          <th style="color:#b026ff;padding:13px 22px;border-bottom:1px solid rgba(176,38,255,0.2);font-size:0.7rem;letter-spacing:2px;font-family:'JetBrains Mono',monospace;border-top:none;background:rgba(176,38,255,0.1);">STATUS</th>
+          <th style="color:#b026ff;padding:13px 22px;border-bottom:1px solid rgba(176,38,255,0.2);font-size:0.7rem;letter-spacing:2px;font-family:'JetBrains Mono',monospace;border-top:none;background:rgba(176,38,255,0.1);">ACTION</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for q in questions %}
+        <tr style="border-bottom:1px solid rgba(176,38,255,0.1);background:#0c081c;"
+            onmouseover="this.style.background='rgba(176,38,255,0.08)'"
+            onmouseout="this.style.background='#0c081c'">
+          <td style="padding:14px 22px;color:rgba(176,38,255,0.6);font-family:'JetBrains Mono',monospace;font-size:0.8rem;background:transparent;">{{ forloop.counter }}</td>
+          <td style="padding:14px 22px;background:transparent;">
+            <a href="{% url 'contest_solve' contest.pk q.pk %}" style="color:#ffffff;font-weight:700;text-decoration:none;font-size:0.92rem;">{{ q.title }}</a>
+          </td>
+          <td style="padding:14px 22px;background:transparent;">
+            {% if q.difficulty == 'Easy' %}
+              <span style="background:rgba(0,255,130,0.15);color:#00ff82;padding:4px 14px;border-radius:20px;font-size:0.75rem;font-weight:700;border:1px solid rgba(0,255,130,0.4);">● Easy</span>
+            {% elif q.difficulty == 'Medium' %}
+              <span style="background:rgba(255,193,7,0.15);color:#ffc107;padding:4px 14px;border-radius:20px;font-size:0.75rem;font-weight:700;border:1px solid rgba(255,193,7,0.4);">● Medium</span>
+            {% else %}
+              <span style="background:rgba(255,45,120,0.15);color:#ff2d78;padding:4px 14px;border-radius:20px;font-size:0.75rem;font-weight:700;border:1px solid rgba(255,45,120,0.4);">● Hard</span>
+            {% endif %}
+          </td>
+          <td style="padding:14px 22px;background:transparent;">
+            {% if q.pk in solved_ids %}
+              <span style="color:#00ff82;font-weight:700;font-family:'JetBrains Mono',monospace;font-size:0.82rem;"><i class="fas fa-check-circle"></i> Solved</span>
+            {% elif q.pk in attempted_ids %}
+              <span style="color:#ffc107;font-weight:700;font-family:'JetBrains Mono',monospace;font-size:0.82rem;"><i class="fas fa-exclamation-circle"></i> Attempted</span>
+            {% else %}
+              <span style="color:rgba(240,234,255,0.3);font-family:'JetBrains Mono',monospace;font-size:0.82rem;">— Untouched</span>
+            {% endif %}
+          </td>
+          <td style="padding:14px 22px;background:transparent;">
+            <a href="{% url 'contest_solve' contest.pk q.pk %}" style="display:inline-flex;align-items:center;gap:6px;padding:6px 16px;font-size:0.78rem;border:1px solid #00fff7;color:#00fff7;border-radius:8px;text-decoration:none;font-weight:700;">
+              <i class="fas fa-play"></i> {% if q.pk in solved_ids %}Review{% else %}Solve{% endif %}
+            </a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5" style="padding:50px;text-align:center;color:rgba(240,234,255,0.4);background:transparent;">
+            <i class="fas fa-code" style="font-size:2rem;display:block;margin-bottom:12px;opacity:0.3;"></i>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:0.8rem;">// no problems attached to this contest yet</span>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+ 
+<div class="anim-in anim-d2" style="text-align:center;">
+  <a href="{% url 'contest_result' contest.pk %}" class="btn-neon">
+    <i class="fas fa-trophy"></i> View Live Leaderboard
+  </a>
+</div>
+ 
+<script>
+(function() {
+  const el = document.getElementById('contest-timer');
+  let remaining = parseInt(el.dataset.remaining, 10) || 0;
+ 
+  function fmt(s) {
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const sec = s % 60;
+    return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(sec).padStart(2,'0');
+  }
+ 
+  function tick() {
+    el.textContent = fmt(remaining);
+    if (remaining <= 300) {
+      el.style.color = '#ff2d78';
+      el.style.textShadow = '0 0 12px rgba(255,45,120,0.5)';
+    }
+    if (remaining <= 0) {
+      clearInterval(timer);
+      el.textContent = '00:00:00';
+      window.location.href = "{% url 'contest_result' contest.pk %}";
+      return;
+    }
+    remaining--;
+  }
+ 
+  tick();
+  const timer = setInterval(tick, 1000);
+})();
+</script>
+ 
+{% endblock %}
+ 

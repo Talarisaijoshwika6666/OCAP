@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+{% block page_title %}// {{ contest.title }} Results{% endblock %}
+{% block content %}
+ 
+<style>
+  .neon-table-wrap { background: rgba(12,8,28,0.85); border-radius: 16px; overflow: hidden; }
+  .neon-table { width: 100%; border-collapse: collapse; background: transparent; }
+  .neon-table thead th {
+    background: linear-gradient(90deg, rgba(255,45,120,0.12), rgba(176,38,255,0.14), rgba(0,255,247,0.08));
+    color: #00fff7; padding: 14px 22px; font-size: 0.7rem; letter-spacing: 2px;
+    font-family: 'JetBrains Mono', monospace; text-align: left; border-bottom: 1px solid rgba(0,255,247,0.25);
+  }
+  .neon-table tbody tr { background: rgba(255,255,255,0.015); border-bottom: 1px solid rgba(176,38,255,0.08); transition: background 0.2s ease; }
+  .neon-table tbody tr:hover { background: rgba(176,38,255,0.08); }
+  .neon-table td { padding: 15px 22px; background: transparent; }
+</style>
+ 
+<div class="anim-in" style="margin-bottom:24px;">
+  <a href="/contest/" class="btn-neon" style="font-size:0.78rem;display:inline-flex;align-items:center;gap:8px;">
+    <i class="fas fa-arrow-left"></i> Back to Contests
+  </a>
+</div>
+ 
+<div class="anim-in" style="text-align:center;margin-bottom:32px;">
+  {% if is_live %}
+  <span style="background:linear-gradient(135deg,#ff2d78,#b026ff);color:#fff;padding:4px 14px;border-radius:20px;font-size:0.7rem;font-family:'JetBrains Mono',monospace;font-weight:700;display:inline-block;margin-bottom:14px;">
+    <i class="fas fa-bolt"></i> LIVE — updating in real time
+  </span>
+  {% else %}
+  <span style="background:rgba(0,255,130,0.1);color:#00ff82;padding:4px 14px;border-radius:20px;font-size:0.7rem;font-family:'JetBrains Mono',monospace;font-weight:700;border:1px solid rgba(0,255,130,0.35);display:inline-block;margin-bottom:14px;">
+    <i class="fas fa-flag-checkered"></i> FINISHED
+  </span>
+  {% endif %}
+  <h2 style="font-family:'Orbitron',monospace;font-size:1.8rem;font-weight:900;color:#f0eaff;margin:0;">
+    <i class="fas fa-trophy" style="color:#00fff7;margin-right:10px;"></i>{{ contest.title }}
+  </h2>
+  <p style="color:rgba(240,234,255,0.45);margin-top:8px;">{{ total_problems }} problem{{ total_problems|pluralize }} · Ranked by score, then earliest last submission</p>
+</div>
+ 
+{% if my_row %}
+<div class="card-glass p-4 anim-in anim-d1" style="margin-bottom:24px;border-color:rgba(0,255,247,0.35);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+  <div style="display:flex;align-items:center;gap:14px;">
+    <div style="width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,#00fff7,#b026ff);display:flex;align-items:center;justify-content:center;font-family:'Orbitron',monospace;font-weight:900;color:#000;">#{{ my_row.rank }}</div>
+    <div>
+      <div style="color:#f0eaff;font-weight:700;font-size:0.95rem;">Your Standing</div>
+      <div style="color:rgba(240,234,255,0.45);font-size:0.78rem;font-family:'JetBrains Mono',monospace;">{{ my_row.solved }} solved · {{ my_row.total_score }} points</div>
+    </div>
+  </div>
+  <a href="{% url 'contest_take_test' contest.pk %}" class="btn-neon" style="font-size:0.78rem;">
+    <i class="fas fa-laptop-code"></i> {% if is_live %}Keep Solving{% else %}Review Problems{% endif %}
+  </a>
+</div>
+{% endif %}
+ 
+<div class="card-glass anim-in anim-d2" style="padding:0;">
+  <div class="table-responsive neon-table-wrap">
+    <table class="neon-table">
+      <thead>
+        <tr>
+          <th>RANK</th>
+          <th>USER</th>
+          <th>SOLVED</th>
+          <th>SCORE</th>
+          <th>LAST SUBMIT</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in leaderboard %}
+        <tr style="{% if row.is_me %}box-shadow: inset 3px 0 0 #00fff7; background: rgba(0,255,247,0.05);{% endif %}">
+          <td>
+            {% if row.rank == 1 %}
+              <span style="font-family:'Orbitron',monospace;font-size:1.1rem;font-weight:900;color:#ffd700;">🥇</span>
+            {% elif row.rank == 2 %}
+              <span style="font-family:'Orbitron',monospace;font-size:1.1rem;font-weight:900;color:#c0c0c0;">🥈</span>
+            {% elif row.rank == 3 %}
+              <span style="font-family:'Orbitron',monospace;font-size:1.1rem;font-weight:900;color:#cd7f32;">🥉</span>
+            {% else %}
+              <span style="font-family:'JetBrains Mono',monospace;color:rgba(240,234,255,0.4);font-size:0.85rem;">#{{ row.rank }}</span>
+            {% endif %}
+          </td>
+          <td>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div style="width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#ff2d78,#b026ff);display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:0.78rem;font-family:'Orbitron',monospace;">
+                {{ row.username|slice:":1"|upper }}
+              </div>
+              <span style="color:#f0eaff;font-weight:600;font-size:0.88rem;">{{ row.username }}{% if row.is_me %} <span style="color:#00fff7;font-size:0.72rem;">(you)</span>{% endif %}</span>
+            </div>
+          </td>
+          <td><span style="color:#00fff7;font-family:'Orbitron',monospace;font-weight:700;font-size:0.9rem;">{{ row.solved }} / {{ total_problems }}</span></td>
+          <td><span style="color:#00ff82;font-family:'Orbitron',monospace;font-weight:700;font-size:0.95rem;">{{ row.total_score }}</span></td>
+          <td><span style="color:rgba(240,234,255,0.4);font-family:'JetBrains Mono',monospace;font-size:0.78rem;">{{ row.last_submission|date:"H:i:s" }}</span></td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5" style="padding:60px;text-align:center;color:rgba(240,234,255,0.3);background:transparent;">
+            <i class="fas fa-trophy" style="font-size:2.5rem;display:block;margin-bottom:14px;opacity:0.15;color:#00fff7;"></i>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:0.85rem;">// no submissions yet — be the first to solve a problem!</span>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+ 
+{% if is_live %}
+<div style="text-align:center;margin-top:18px;color:rgba(240,234,255,0.35);font-size:0.75rem;font-family:'JetBrains Mono',monospace;">
+  <i class="fas fa-sync-alt"></i> auto-refreshing every 15s while the contest is live
+</div>
+<script>
+  setTimeout(function () { window.location.reload(); }, 15000);
+</script>
+{% endif %}
+ 
+{% endblock %}
+ 

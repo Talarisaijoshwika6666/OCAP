@@ -600,6 +600,11 @@
       My Submissions
     </a>
 
+    <a href="/results/my-results/" class="nav-item-side {% if 'my-results' in request.path %}active{% endif %}">
+      <div class="nav-icon"><i class="fas fa-chart-bar"></i></div>
+      My Results
+    </a>
+
     <div class="sidebar-section">// Practice</div>
 
     <a href="/questions/" class="nav-item-side {% if '/questions/' in request.path %}active{% endif %}">
@@ -611,6 +616,11 @@
       <div class="nav-icon"><i class="fas fa-flag-checkered"></i></div>
       Contest
       <span class="nav-badge">LIVE</span>
+    </a>
+
+    <a href="/assessments/" class="nav-item-side {% if '/assessments/' in request.path or '/results/' in request.path %}active{% endif %}">
+      <div class="nav-icon"><i class="fas fa-clipboard-check"></i></div>
+      Assessments
     </a>
 
     <a href="/study-plan/" class="nav-item-side {% if 'study-plan' in request.path %}active{% endif %}">

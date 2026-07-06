@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% block page_title %}// Contest Leaderboard{% endblock %}
+{% block content %}
+ 
+<div class="anim-in" style="text-align:center;margin-bottom:28px;position:relative;">
+  <div style="font-family:'JetBrains Mono',monospace;font-size:0.68rem;letter-spacing:3px;color:#b026ff;margin-bottom:10px;">// COMPETE</div>
+  <h2 style="font-family:'Orbitron',monospace;font-size:2rem;font-weight:900;">
+    <i class="fas fa-trophy" style="color:#00fff7;margin-right:10px;"></i>
+    <span style="background:linear-gradient(90deg,#ff2d78,#b026ff,#00fff7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Contest Leaderboard</span>
+  </h2>
+  <p style="color:rgba(240,234,255,0.45);margin-top:8px;">All contestants, ranked by score across every contest</p>
+</div>
+ 
+<div class="anim-in anim-d1" style="display:flex;justify-content:flex-end;margin-bottom:18px;">
+  <a href="{% url 'contest' %}" class="btn-neon" style="font-size:0.78rem;">
+    <i class="fas fa-arrow-left"></i> Back to Contest
+  </a>
+</div>
+ 
+<div class="card-glass anim-in anim-d2">
+  <div class="table-responsive">
+    <table class="table mb-0">
+      <thead>
+        <tr style="background:rgba(176,38,255,0.08);">
+          <th style="color:#b026ff;padding:14px 22px;border-bottom:1px solid rgba(176,38,255,0.15);font-size:0.7rem;letter-spacing:2px;font-family:'JetBrains Mono',monospace;border-top:none;background:rgba(176,38,255,0.08);">RANK</th>
+          <th style="color:#b026ff;padding:14px 22px;border-bottom:1px solid rgba(176,38,255,0.15);font-size:0.7rem;letter-spacing:2px;font-family:'JetBrains Mono',monospace;border-top:none;background:rgba(176,38,255,0.08);">USER</th>
+          <th style="color:#b026ff;padding:14px 22px;border-bottom:1px solid rgba(176,38,255,0.15);font-size:0.7rem;letter-spacing:2px;font-family:'JetBrains Mono',monospace;border-top:none;background:rgba(176,38,255,0.08);">SOLVED</th>
+          <th style="color:#b026ff;padding:14px 22px;border-bottom:1px solid rgba(176,38,255,0.15);font-size:0.7rem;letter-spacing:2px;font-family:'JetBrains Mono',monospace;border-top:none;background:rgba(176,38,255,0.08);">CONTESTS</th>
+          <th style="color:#b026ff;padding:14px 22px;border-bottom:1px solid rgba(176,38,255,0.15);font-size:0.7rem;letter-spacing:2px;font-family:'JetBrains Mono',monospace;border-top:none;background:rgba(176,38,255,0.08);">SCORE</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for entry in leaderboard %}
+        <tr style="border-bottom:1px solid rgba(176,38,255,0.07);transition:background 0.2s;{% if entry.is_me %}background:rgba(0,255,247,0.06);{% else %}background:rgba(12,8,28,0.6);{% endif %}"
+            onmouseover="this.style.background='rgba(176,38,255,0.05)'"
+            onmouseout="this.style.background='{% if entry.is_me %}rgba(0,255,247,0.06){% else %}rgba(12,8,28,0.6){% endif %}'">
+          <td style="padding:14px 22px;background:transparent;">
+            {% if entry.rank == 1 %}
+              <span style="font-family:'Orbitron',monospace;font-size:1.1rem;font-weight:900;color:#ffd700;">🥇</span>
+            {% elif entry.rank == 2 %}
+              <span style="font-family:'Orbitron',monospace;font-size:1.1rem;font-weight:900;color:#c0c0c0;">🥈</span>
+            {% elif entry.rank == 3 %}
+              <span style="font-family:'Orbitron',monospace;font-size:1.1rem;font-weight:900;color:#cd7f32;">🥉</span>
+            {% else %}
+              <span style="font-family:'JetBrains Mono',monospace;color:rgba(240,234,255,0.4);font-size:0.85rem;">#{{ entry.rank }}</span>
+            {% endif %}
+          </td>
+          <td style="padding:14px 22px;background:transparent;">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div style="width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#ff2d78,#b026ff);display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:0.85rem;font-family:'Orbitron',monospace;">
+                {{ entry.username|slice:":1"|upper }}
+              </div>
+              <span style="color:#f0eaff;font-weight:600;font-size:0.88rem;">{{ entry.username }}</span>
+              {% if entry.is_me %}
+                <span style="font-family:'JetBrains Mono',monospace;font-size:0.62rem;letter-spacing:1px;color:#00fff7;border:1px solid rgba(0,255,247,0.35);border-radius:6px;padding:2px 6px;">YOU</span>
+              {% endif %}
+            </div>
+          </td>
+          <td style="padding:14px 22px;background:transparent;">
+            <span style="color:#00fff7;font-family:'Orbitron',monospace;font-weight:700;font-size:0.95rem;">{{ entry.solved }}</span>
+          </td>
+          <td style="padding:14px 22px;background:transparent;">
+            <span style="color:#ffb020;font-family:'Orbitron',monospace;font-weight:700;font-size:0.95rem;">{{ entry.contests_taken }}</span>
+          </td>
+          <td style="padding:14px 22px;background:transparent;">
+            <span style="color:#00ff82;font-family:'Orbitron',monospace;font-weight:700;font-size:0.95rem;">{{ entry.score }}</span>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5" style="padding:60px;text-align:center;color:rgba(240,234,255,0.3);background:transparent;">
+            <i class="fas fa-trophy" style="font-size:2.5rem;display:block;margin-bottom:14px;opacity:0.15;color:#00fff7;"></i>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:0.85rem;">// no contestants yet — register and take a test!</span>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+ 
+{% endblock %}
+ 

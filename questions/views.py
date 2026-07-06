@@ -7,7 +7,11 @@ import subprocess
 import json
 
 def question_list(request):
-    questions = Question.objects.all().order_by('id')
+    # Problem Bank must only ever show standalone practice questions.
+    # Any question attached to a contest (contest.questions M2M) is
+    # contest-only and must not leak into the public bank.
+    bank_questions = Question.objects.filter(contests__isnull=True).order_by('id')
+    questions = bank_questions
     search = request.GET.get('search', '')
     if search:
         questions = questions.filter(title__icontains=search)
@@ -16,7 +20,7 @@ def question_list(request):
         questions = questions.filter(difficulty=difficulty)
     return render(request, 'questions/question_list.html', {
         'questions': questions,
-        'total_problems': Question.objects.count(),
+        'total_problems': bank_questions.count(),
         'search': search,
         'difficulty': difficulty,
     })

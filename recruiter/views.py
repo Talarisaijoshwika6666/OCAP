@@ -11,7 +11,8 @@ def recruiter_dashboard(request):
         return redirect('/accounts/login/')
 
     # Stats
-    total_questions   = Question.objects.count()
+    # Problem Bank only counts standalone questions, never contest-only ones.
+    total_questions   = Question.objects.filter(contests__isnull=True).count()
     total_candidates  = User.objects.filter(is_staff=False, is_superuser=False).count()
     total_submissions = Submission.objects.count()
 
@@ -25,8 +26,9 @@ def recruiter_dashboard(request):
         .order_by('-total_score')[:10]
     )
 
-    # Question list (read-only, no solve button)
-    questions = Question.objects.all().order_by('difficulty')
+    # Question list (read-only, no solve button) — Problem Bank only,
+    # excludes any question that belongs to a contest.
+    questions = Question.objects.filter(contests__isnull=True).order_by('difficulty')
 
     # Recent submissions
     recent_submissions = (
