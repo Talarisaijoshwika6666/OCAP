@@ -49,10 +49,7 @@
         </div>
     </div>
     <div class="container">
-        problems_solved = submissions.filter(result__in=['AC','Accepted']).values('question').distinct().count()
-        easy_solved = submissions.filter(result__in=['AC','Accepted'], question__difficulty='Easy').values('question').distinct().count()
-        medium_solved = submissions.filter(result__in=['AC','Accepted'], question__difficulty='Medium').values('question').distinct().count()
-        hard_solved = submissions.filter(result__in=['AC','Accepted'], question__difficulty='Hard').values('question').distinct().count()
+        
         <div class="stats-row">
             <div class="stat-card">
                 <div class="number">{{ questions|length }}</div>
