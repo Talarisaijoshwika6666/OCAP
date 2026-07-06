@@ -2,7 +2,8 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from .models import Question
+from django.views.decorators.http import require_POST
+from .models import Question, Bookmark
 import subprocess
 import json
 
@@ -14,12 +15,55 @@ def question_list(request):
     difficulty = request.GET.get('difficulty', '')
     if difficulty:
         questions = questions.filter(difficulty=difficulty)
+    topic = request.GET.get('topic', '')
+    if topic:
+        questions = questions.filter(topic=topic)
+    bookmarked_only = request.GET.get('bookmarked', '')
+
+    bookmarked_ids = set()
+    solved_ids = set()
+    if request.user.is_authenticated:
+        bookmarked_ids = set(
+            Bookmark.objects.filter(user=request.user).values_list('question_id', flat=True)
+        )
+        from submissions.models import Submission
+        solved_ids = set(
+            Submission.objects.filter(user=request.user, result='Accepted')
+            .values_list('question_id', flat=True)
+        )
+
+    if bookmarked_only:
+        questions = questions.filter(pk__in=bookmarked_ids)
+
+    topics = Question.objects.order_by('topic').values_list('topic', flat=True).distinct()
+
     return render(request, 'questions/question_list.html', {
         'questions': questions,
         'total_problems': Question.objects.count(),
         'search': search,
         'difficulty': difficulty,
+        'topic': topic,
+        'topics': topics,
+        'bookmarked_only': bookmarked_only,
+        'bookmarked_ids': bookmarked_ids,
+        'solved_ids': solved_ids,
     })
+
+
+@login_required
+@require_POST
+def toggle_bookmark(request, pk):
+    """AJAX endpoint: toggle bookmark state for a question and persist it
+    immediately so it survives a page refresh."""
+    question = get_object_or_404(Question, pk=pk)
+    bookmark = Bookmark.objects.filter(user=request.user, question=question).first()
+    if bookmark:
+        bookmark.delete()
+        bookmarked = False
+    else:
+        Bookmark.objects.create(user=request.user, question=question)
+        bookmarked = True
+    return JsonResponse({'bookmarked': bookmarked})
 
 @login_required
 def question_detail(request, pk):

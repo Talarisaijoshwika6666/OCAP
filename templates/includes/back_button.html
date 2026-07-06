@@ -1,0 +1,8 @@
+{# Reusable Back button. Include with: {% include 'includes/back_button.html' with fallback_url='/questions/' %} #}
+<button
+  type="button"
+  class="btn-neon back-btn"
+  onclick="goBack('{{ fallback_url|default:"/" }}')"
+  aria-label="Go Back">
+  <i class="fas fa-chevron-left"></i> Back
+</button>

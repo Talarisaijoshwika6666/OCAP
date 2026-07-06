@@ -1,8 +1,14 @@
 {% extends 'base.html' %}
 {% block page_title %}// {{ question.title }}{% endblock %}
 {% block content %}
+<<<<<<< HEAD
 
 {% if request.GET.result and request.GET.result != 'Accepted' %}
+=======
+{% include 'includes/back_button.html' with fallback_url='/questions/' %}
+
+{% if request.GET.result %}
+>>>>>>> origin/ganesh
 <div style="margin-bottom:16px;padding:14px 20px;border-radius:12px;
   background:rgba(255,45,120,0.1);border:1px solid rgba(255,45,120,0.4);color:#ff2d78;
   font-family:'Orbitron',monospace;font-size:0.9rem;font-weight:700;display:flex;align-items:center;gap:10px;">
@@ -19,6 +25,12 @@
     <p style="color:rgba(240,234,255,0.4);font-size:0.8rem;margin-top:12px;">Redirecting to your submissions in 3 seconds...</p>
   </div>
 </div>
+<script>
+  {% if request.GET.result == 'Accepted' %}
+  // Flag this question so the Problem Bank list can play the "just solved" animation next visit.
+  sessionStorage.setItem('justSolvedQuestionId', '{{ question.pk }}');
+  {% endif %}
+</script>
 {% endif %}
 
 <style>

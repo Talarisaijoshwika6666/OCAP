@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ assessment.title }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="container mt-4">
+    <h2>{{ assessment.title }}</h2>
+    <p>⏱ Duration: {{ assessment.duration }} mins</p>
+    <p>🎯 Total Marks: {{ assessment.total_marks }}</p>
+    <p>📊 Difficulty: {{ assessment.difficulty }}</p>
+    <hr>
+    <h4>Questions ({{ questions.count }})</h4>
+    {% for q in questions %}
+    <div class="card mb-2 p-3">
+        <p>{{ forloop.counter }}. {{ q.text }}</p>
+    </div>
+    {% empty %}
+    <p>No questions added yet.</p>
+    {% endfor %}
+    <a href="{% url 'take_assessment' assessment.pk %}" 
+       class="btn btn-success mt-3">Start Test</a>
+    <a href="{% url 'assessments' %}" 
+       class="btn btn-secondary mt-3">Back</a>
+</div>
+</body>
+</html>

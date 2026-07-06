@@ -1,9 +1,7 @@
 {% extends 'base.html' %}
 {% block content %}
 <div class="container mt-5" style="max-width:800px;">
-  <a href="/discuss/" style="color:#888;text-decoration:none;font-size:0.9rem;">
-    <i class="fas fa-arrow-left"></i> Back to Discuss
-  </a>
+  {% include 'includes/back_button.html' with fallback_url='/discuss/' %}
 
   <!-- Post -->
   <div class="card-dark p-4 mt-3 mb-4">
