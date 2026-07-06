@@ -27,6 +27,7 @@ class Assessment(models.Model):
     duration = models.IntegerField(default=60)
     total_marks = models.IntegerField(default=100)
     difficulty = models.CharField(max_length=20, choices=DIFFICULTY, default='Beginner')
+    is_active = models.BooleanField(default=True)
 
     def __str__(self):
         return self.title

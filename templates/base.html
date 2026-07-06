@@ -850,5 +850,10 @@
   });
 </script>
 {% block extra_js %}{% endblock %}
+{% block chatbot_widget %}
+{% if user.is_authenticated %}
+  {% include 'chatbot_widget.html' %}
+{% endif %}
+{% endblock %}
 </body>
 </html>

@@ -5,4 +5,4 @@ from .models import Result
 class ResultAdmin(admin.ModelAdmin):
     list_display = ['candidate', 'assessment', 'score', 'rank', 'submitted_at']
     list_filter = ['assessment', 'rank']
-    search_fields = ['candidate__username', 'assessment__name']
+    search_fields = ['candidate__username', 'assessment__title']
