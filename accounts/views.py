@@ -1,11 +1,27 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth import authenticate, login, logout, get_user_model
+from django.contrib.auth import authenticate, login, logout, get_user_model, update_session_auth_hash
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.http import JsonResponse
 from django.db.models import Sum
 from submissions.models import Submission
+from .models import UserSettings
+from .forms import (
+    UserProfileForm, SettingsPasswordChangeForm, NotificationsSettingsForm,
+    AppearanceSettingsForm, EditorPreferencesForm, PrivacySettingsForm,
+)
 
 User = get_user_model()
 
 RECRUITER_USERNAME = "recruiter"
+
+
+def _apply_unchecked_checkbox_fields(post_data, fields):
+    data = post_data.copy()
+    for field in fields:
+        if field not in data:
+            data[field] = False
+    return data
 RECRUITER_PASSWORD = "Recruiter@1234"
 
 
@@ -115,4 +131,173 @@ def profile_view(request, username=None):
         'total_submissions': total_submissions,
         'total_score':       total_score,
         'problems_solved':   problems_solved,
+    })
+
+@login_required(login_url='/accounts/login/')
+def settings_view(request):
+    """Single-page Settings module: Account, Notifications, Appearance,
+    Editor Preferences, Privacy, About. Each tab posts back to this same
+    view with a hidden `section` field so we know which form to process."""
+    user = request.user
+    user_settings, _ = UserSettings.objects.get_or_create(user=user)
+    active_tab = request.GET.get('tab', 'account')
+
+    if request.method == 'POST':
+        section = request.POST.get('section')
+        active_tab = section or active_tab
+        is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
+
+        if section == 'profile':
+            profile_form = UserProfileForm(
+                request.POST, request.FILES, instance=user)
+            if profile_form.is_valid():
+                profile_form.save()
+                user.refresh_from_db()
+                if is_ajax:
+                    return JsonResponse({
+                        'success': True,
+                        'message': 'Profile updated successfully.',
+                        'username': user.username,
+                        'profile_picture_url': user.profile_picture.url if user.profile_picture else None,
+                    })
+                messages.success(request, 'Profile updated successfully.')
+            else:
+                errors = []
+                for field_errors in profile_form.errors.values():
+                    for err in field_errors:
+                        errors.append(err)
+                        if not is_ajax:
+                            messages.error(request, err)
+                if is_ajax:
+                    return JsonResponse({'success': False, 'errors': errors}, status=400)
+            active_tab = 'account'
+
+        elif section == 'password':
+            password_form = SettingsPasswordChangeForm(user, request.POST)
+            if password_form.is_valid():
+                password_form.save()
+                update_session_auth_hash(request, user)
+                if is_ajax:
+                    return JsonResponse({
+                        'success': True,
+                        'message': 'Password updated successfully.',
+                    })
+                messages.success(request, 'Password updated successfully.')
+            else:
+                errors = []
+                for field_errors in password_form.errors.values():
+                    for err in field_errors:
+                        errors.append(err)
+                        if not is_ajax:
+                            messages.error(request, err)
+                if is_ajax:
+                    return JsonResponse({'success': False, 'errors': errors}, status=400)
+            active_tab = 'account'
+
+        elif section == 'notifications':
+            post_data = _apply_unchecked_checkbox_fields(
+                request.POST,
+                ['email_notifications', 'contest_notifications',
+                 'course_update_notifications', 'submission_result_notifications',
+                 'team_member_notifications', 'spam_filtering']
+            )
+            form = NotificationsSettingsForm(post_data, instance=user_settings)
+            if form.is_valid():
+                form.save()
+                if is_ajax:
+                    return JsonResponse({
+                        'success': True,
+                        'message': 'Notification preferences saved.',
+                    })
+                messages.success(request, 'Notification preferences saved.')
+            else:
+                errors = []
+                for field_errors in form.errors.values():
+                    for err in field_errors:
+                        errors.append(err)
+                        if not is_ajax:
+                            messages.error(request, err)
+                if is_ajax:
+                    return JsonResponse({'success': False, 'errors': errors}, status=400)
+            active_tab = 'notifications'
+
+        elif section == 'appearance':
+            form = AppearanceSettingsForm(request.POST, instance=user_settings)
+            if form.is_valid():
+                form.save()
+                if is_ajax:
+                    return JsonResponse({
+                        'success': True,
+                        'message': 'Appearance updated.',
+                        'theme': user_settings.theme,
+                    })
+                messages.success(request, 'Appearance updated.')
+            else:
+                errors = []
+                for field_errors in form.errors.values():
+                    for err in field_errors:
+                        errors.append(err)
+                        if not is_ajax:
+                            messages.error(request, err)
+                if is_ajax:
+                    return JsonResponse({'success': False, 'errors': errors}, status=400)
+            active_tab = 'appearance'
+
+        elif section == 'editor':
+            post_data = _apply_unchecked_checkbox_fields(
+                request.POST,
+                ['show_line_numbers', 'word_wrap', 'auto_complete', 'auto_save']
+            )
+            form = EditorPreferencesForm(post_data, instance=user_settings)
+            if form.is_valid():
+                form.save()
+                if is_ajax:
+                    return JsonResponse({
+                        'success': True,
+                        'message': 'Editor preferences saved.',
+                    })
+                messages.success(request, 'Editor preferences saved.')
+            else:
+                errors = []
+                for field_errors in form.errors.values():
+                    for err in field_errors:
+                        errors.append(err)
+                        if not is_ajax:
+                            messages.error(request, err)
+                if is_ajax:
+                    return JsonResponse({'success': False, 'errors': errors}, status=400)
+            active_tab = 'editor'
+
+        elif section == 'privacy':
+            post_data = _apply_unchecked_checkbox_fields(
+                request.POST,
+                ['public_profile', 'show_solved_problems',
+                 'show_contest_ranking', 'show_activity']
+            )
+            form = PrivacySettingsForm(post_data, instance=user_settings)
+            if form.is_valid():
+                form.save()
+                if is_ajax:
+                    return JsonResponse({
+                        'success': True,
+                        'message': 'Privacy settings saved.',
+                    })
+                messages.success(request, 'Privacy settings saved.')
+            else:
+                errors = []
+                for field_errors in form.errors.values():
+                    for err in field_errors:
+                        errors.append(err)
+                        if not is_ajax:
+                            messages.error(request, err)
+                if is_ajax:
+                    return JsonResponse({'success': False, 'errors': errors}, status=400)
+            active_tab = 'privacy'
+
+        return redirect(f'/accounts/settings/?tab={active_tab}')
+
+    return render(request, 'accounts/settings.html', {
+        'user_settings': user_settings,
+        'active_tab': active_tab,
+        'password_form': SettingsPasswordChangeForm(user),
     })
