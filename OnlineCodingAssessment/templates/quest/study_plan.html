@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% block page_title %}// Study Plan{% endblock %}
+{% block content %}
+
+<div style="text-align:center;margin-bottom:36px;">
+  <div style="font-family:'JetBrains Mono',monospace;font-size:0.68rem;letter-spacing:3px;color:#b026ff;margin-bottom:10px;">// LEARNING PATH</div>
+  <h2 style="font-family:'Orbitron',monospace;font-size:2rem;font-weight:900;">
+    <i class="fas fa-graduation-cap" style="color:#00fff7;margin-right:10px;"></i>
+    <span style="background:linear-gradient(90deg,#ff2d78,#b026ff,#00fff7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Study Plan</span>
+  </h2>
+  <p style="color:rgba(240,234,255,0.45);margin-top:8px;">Follow the path to master coding interviews</p>
+</div>
+
+<div class="row g-4">
+  <div class="col-md-4">
+    <div class="card-glass p-4" style="border-color:rgba(0,255,130,0.3);">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+        <div style="width:42px;height:42px;border-radius:10px;background:rgba(0,255,130,0.1);border:1px solid rgba(0,255,130,0.3);display:flex;align-items:center;justify-content:center;">
+          <i class="fas fa-seedling" style="color:#00ff82;"></i>
+        </div>
+        <div>
+          <div style="font-family:'Orbitron',monospace;font-size:0.8rem;font-weight:700;color:#00ff82;">BEGINNER</div>
+          <div style="font-size:0.7rem;color:rgba(240,234,255,0.4);font-family:'JetBrains Mono',monospace;">Week 1-2</div>
+        </div>
+      </div>
+      <ul style="list-style:none;padding:0;margin:0;">
+        <li style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05);color:rgba(240,234,255,0.7);font-size:0.83rem;"><i class="fas fa-check-circle" style="color:#00ff82;margin-right:8px;"></i>Arrays & Strings</li>
+        <li style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05);color:rgba(240,234,255,0.7);font-size:0.83rem;"><i class="fas fa-check-circle" style="color:#00ff82;margin-right:8px;"></i>Basic Loops</li>
+        <li style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05);color:rgba(240,234,255,0.7);font-size:0.83rem;"><i class="fas fa-circle" style="color:rgba(255,255,255,0.2);margin-right:8px;"></i>Hash Maps</li>
+        <li style="padding:8px 0;color:rgba(240,234,255,0.7);font-size:0.83rem;"><i class="fas fa-circle" style="color:rgba(255,255,255,0.2);margin-right:8px;"></i>Two Pointers</li>
+      </ul>
+      <a href="/questions/" style="display:block;text-align:center;margin-top:16px;padding:9px;border-radius:8px;background:rgba(0,255,130,0.1);border:1px solid rgba(0,255,130,0.3);color:#00ff82;text-decoration:none;font-size:0.8rem;font-weight:700;">Start Here →</a>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card-glass p-4" style="border-color:rgba(255,193,7,0.3);">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+        <div style="width:42px;height:42px;border-radius:10px;background:rgba(255,193,7,0.1);border:1px solid rgba(255,193,7,0.3);display:flex;align-items:center;justify-content:center;">
+          <i class="fas fa-fire" style="color:#ffc107;"></i>
+        </div>
+        <div>
+          <div style="font-family:'Orbitron',monospace;font-size:0.8rem;font-weight:700;color:#ffc107;">INTERMEDIATE</div>
+          <div style="font-size:0.7rem;color:rgba(240,234,255,0.4);font-family:'JetBrains Mono',monospace;">Week 3-5</div>
+        </div>
+      </div>
+      <ul style="list-style:none;padding:0;margin:0;">
+        <li style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05);color:rgba(240,234,255,0.7);font-size:0.83rem;"><i class="fas fa-circle" style="color:rgba(255,255,255,0.2);margin-right:8px;"></i>Binary Search</li>
+        <li style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05);color:rgba(240,234,255,0.7);font-size:0.83rem;"><i class="fas fa-circle" style="color:rgba(255,255,255,0.2);margin-right:8px;"></i>Linked Lists</li>
+        <li style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05);color:rgba(240,234,255,0.7);font-size:0.83rem;"><i class="fas fa-circle" style="color:rgba(255,255,255,0.2);margin-right:8px;"></i>Stacks & Queues</li>
+        <li style="padding:8px 0;color:rgba(240,234,255,0.7);font-size:0.83rem;"><i class="fas fa-circle" style="color:rgba(255,255,255,0.2);margin-right:8px;"></i>Trees & Graphs</li>
+      </ul>
+      <a href="/questions/" style="display:block;text-align:center;margin-top:16px;padding:9px;border-radius:8px;background:rgba(255,193,7,0.1);border:1px solid rgba(255,193,7,0.3);color:#ffc107;text-decoration:none;font-size:0.8rem;font-weight:700;">Continue →</a>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card-glass p-4" style="border-color:rgba(255,45,120,0.3);">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+        <div style="width:42px;height:42px;border-radius:10px;background:rgba(255,45,120,0.1);border:1px solid rgba(255,45,120,0.3);display:flex;align-items:center;justify-content:center;">
+          <i class="fas fa-bolt" style="color:#ff2d78;"></i>
+        </div>
+        <div>
+          <div style="font-family:'Orbitron',monospace;font-size:0.8rem;font-weight:700;color:#ff2d78;">ADVANCED</div>
+          <div style="font-size:0.7rem;color:rgba(240,234,255,0.4);font-family:'JetBrains Mono',monospace;">Week 6-8</div>
+        </div>
+      </div>
+      <ul style="list-style:none;padding:0;margin:0;">
+        <li style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05);color:rgba(240,234,255,0.7);font-size:0.83rem;"><i class="fas fa-circle" style="color:rgba(255,255,255,0.2);margin-right:8px;"></i>Dynamic Programming</li>
+        <li style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05);color:rgba(240,234,255,0.7);font-size:0.83rem;"><i class="fas fa-circle" style="color:rgba(255,255,255,0.2);margin-right:8px;"></i>Backtracking</li>
+        <li style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05);color:rgba(240,234,255,0.7);font-size:0.83rem;"><i class="fas fa-circle" style="color:rgba(255,255,255,0.2);margin-right:8px;"></i>System Design</li>
+        <li style="padding:8px 0;color:rgba(240,234,255,0.7);font-size:0.83rem;"><i class="fas fa-circle" style="color:rgba(255,255,255,0.2);margin-right:8px;"></i>Mock Interviews</li>
+      </ul>
+      <a href="/questions/" style="display:block;text-align:center;margin-top:16px;padding:9px;border-radius:8px;background:rgba(255,45,120,0.1);border:1px solid rgba(255,45,120,0.3);color:#ff2d78;text-decoration:none;font-size:0.8rem;font-weight:700;">Level Up →</a>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

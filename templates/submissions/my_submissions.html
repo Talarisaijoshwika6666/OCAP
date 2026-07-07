@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% block page_title %}// My Submissions{% endblock %}
+{% block content %}
+{% include 'includes/back_button.html' with fallback_url='/' %}
+
+<style>
+  .table { background: #0c081c !important; }
+  .table td, .table th { background: transparent !important; border-color: rgba(176,38,255,0.1) !important; }
+  .card-glass { background: rgba(12,8,28,0.85) !important; }
+</style>
+
+<div style="text-align:center;margin-bottom:36px;">
+  <div style="font-family:'JetBrains Mono',monospace;font-size:0.68rem;letter-spacing:3px;color:#b026ff;margin-bottom:10px;">// HISTORY</div>
+  <h2 style="font-family:'Orbitron',monospace;font-size:2rem;font-weight:900;">
+    <i class="fas fa-paper-plane" style="color:#00fff7;margin-right:10px;"></i>
+    <span style="background:linear-gradient(90deg,#ff2d78,#b026ff,#00fff7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">My Submissions</span>
+  </h2>
+</div>
+
+<div class="card-glass">
+  <div class="table-responsive">
+    <table class="table mb-0" style="background:#0c081c;">
+      <thead>
+        <tr style="background:rgba(176,38,255,0.1);">
+          <th style="color:#b026ff;padding:13px 22px;border-bottom:1px solid rgba(176,38,255,0.2);font-size:0.7rem;letter-spacing:2px;font-family:'JetBrains Mono',monospace;border-top:none;background:rgba(176,38,255,0.1);">#</th>
+          <th style="color:#b026ff;padding:13px 22px;border-bottom:1px solid rgba(176,38,255,0.2);font-size:0.7rem;letter-spacing:2px;font-family:'JetBrains Mono',monospace;border-top:none;background:rgba(176,38,255,0.1);">PROBLEM</th>
+          <th style="color:#b026ff;padding:13px 22px;border-bottom:1px solid rgba(176,38,255,0.2);font-size:0.7rem;letter-spacing:2px;font-family:'JetBrains Mono',monospace;border-top:none;background:rgba(176,38,255,0.1);">LANGUAGE</th>
+          <th style="color:#b026ff;padding:13px 22px;border-bottom:1px solid rgba(176,38,255,0.2);font-size:0.7rem;letter-spacing:2px;font-family:'JetBrains Mono',monospace;border-top:none;background:rgba(176,38,255,0.1);">RESULT</th>
+          <th style="color:#b026ff;padding:13px 22px;border-bottom:1px solid rgba(176,38,255,0.2);font-size:0.7rem;letter-spacing:2px;font-family:'JetBrains Mono',monospace;border-top:none;background:rgba(176,38,255,0.1);">TIME</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for sub in submissions %}
+        <tr style="border-bottom:1px solid rgba(176,38,255,0.07);background:#0c081c;"
+            onmouseover="this.style.background='rgba(176,38,255,0.05)'"
+            onmouseout="this.style.background='#0c081c'">
+          <td style="padding:14px 22px;color:rgba(176,38,255,0.6);font-family:'JetBrains Mono',monospace;font-size:0.8rem;">{{ forloop.counter }}</td>
+          <td style="padding:14px 22px;">
+            <a href="/questions/{{ sub.question.pk }}/" style="color:#ffffff;font-weight:700;text-decoration:none;font-size:0.88rem;">{{ sub.question.title }}</a>
+          </td>
+          <td style="padding:14px 22px;">
+            <span style="background:rgba(0,212,255,0.1);color:#00d4ff;padding:3px 12px;border-radius:20px;font-size:0.75rem;font-weight:700;border:1px solid rgba(0,212,255,0.3);">{{ sub.language }}</span>
+          </td>
+          <td style="padding:14px 22px;">
+            {% if sub.result == 'Accepted' %}
+              <span style="color:#00ff82;font-weight:700;font-family:'JetBrains Mono',monospace;font-size:0.85rem;"><i class="fas fa-check-circle"></i> Accepted</span>
+            {% elif sub.result == 'Wrong Answer' %}
+              <span style="color:#ff2d78;font-weight:700;font-family:'JetBrains Mono',monospace;font-size:0.85rem;"><i class="fas fa-times-circle"></i> Wrong Answer</span>
+            {% else %}
+              <span style="color:#ffc107;font-weight:700;font-family:'JetBrains Mono',monospace;font-size:0.85rem;"><i class="fas fa-exclamation-circle"></i> {{ sub.result }}</span>
+            {% endif %}
+          </td>
+          <td style="padding:14px 22px;color:rgba(240,234,255,0.4);font-family:'JetBrains Mono',monospace;font-size:0.78rem;">{{ sub.submitted_at|date:"M d, H:i" }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5" style="padding:60px;text-align:center;color:rgba(240,234,255,0.3);background:transparent;">
+            <i class="fas fa-paper-plane" style="font-size:2rem;display:block;margin-bottom:12px;opacity:0.2;"></i>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:0.85rem;">// no submissions yet — solve your first problem!</span>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

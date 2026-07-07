@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% block page_title %}// Contests{% endblock %}
+{% block content %}
+
+<div class="anim-in" style="text-align:center;margin-bottom:36px;">
+  <div style="font-family:'JetBrains Mono',monospace;font-size:0.68rem;letter-spacing:3px;color:#b026ff;margin-bottom:10px;">// COMPETE</div>
+  <h2 style="font-family:'Orbitron',monospace;font-size:2rem;font-weight:900;color:#f0eaff;">
+    <i class="fas fa-flag-checkered" style="color:#ff2d78;margin-right:10px;"></i>
+    <span style="background:linear-gradient(90deg,#ff2d78,#b026ff,#00fff7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Contests</span>
+  </h2>
+  <p style="color:rgba(240,234,255,0.45);margin-top:8px;">Compete, rank up, and prove your skills</p>
+</div>
+
+<!-- Upcoming -->
+<div class="anim-in anim-d1" style="margin-bottom:28px;">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
+    <i class="fas fa-clock" style="color:#00fff7;"></i>
+    <span style="font-family:'Orbitron',monospace;font-size:0.9rem;font-weight:700;color:#00fff7;">Upcoming</span>
+  </div>
+  <div class="row g-3">
+    {% for contest in upcoming_contests %}
+    <div class="col-md-6">
+      <div class="card-glass p-4">
+        <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px;">
+          <h5 style="font-family:'Orbitron',monospace;font-weight:700;color:#f0eaff;font-size:0.95rem;margin:0;">{{ contest.title }}</h5>
+          <span style="background:rgba(0,255,247,0.1);color:#00fff7;padding:3px 12px;border-radius:20px;font-size:0.68rem;font-family:'JetBrains Mono',monospace;border:1px solid rgba(0,255,247,0.3);">Upcoming</span>
+        </div>
+        <p style="color:rgba(240,234,255,0.45);font-size:0.82rem;margin-bottom:12px;">{{ contest.problem_count }} 4 problems · 90 minutes · All levels</p>
+        <div style="color:#b026ff;font-size:0.78rem;font-family:'JetBrains Mono',monospace;margin-bottom:16px;">
+          <i class="fas fa-calendar" style="margin-right:6px;"></i>{{ contest.start_time|date:"D d M, H:i" }}
+        </div>
+        <a href="/contest/register/{{ contest.pk }}/" class="btn-neon" style="font-size:0.78rem;">Register</a>
+      </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+      <div class="card-glass p-4" style="text-align:center;">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="card-glass p-4">
+              <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px;">
+                <h5 style="font-family:'Orbitron',monospace;font-weight:700;color:#f0eaff;font-size:0.95rem;margin:0;">LogicLabs Weekly #42</h5>
+                <span style="background:rgba(0,255,247,0.1);color:#00fff7;padding:3px 12px;border-radius:20px;font-size:0.68rem;font-family:'JetBrains Mono',monospace;border:1px solid rgba(0,255,247,0.3);">Upcoming</span>
+              </div>
+              <p style="color:rgba(240,234,255,0.45);font-size:0.82rem;margin-bottom:12px;">4 problems · 90 minutes · All levels</p>
+              <div style="color:#b026ff;font-size:0.78rem;font-family:'JetBrains Mono',monospace;margin-bottom:16px;">
+                <i class="fas fa-calendar" style="margin-right:6px;"></i>Every Sunday 8:00 PM IST
+              </div>
+              <a href="/contest/register/1/" class="btn-neon" style="font-size:0.78rem;">Register</a>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card-glass p-4">
+              <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px;">
+                <h5 style="font-family:'Orbitron',monospace;font-weight:700;color:#f0eaff;font-size:0.95rem;margin:0;">LogicLabs Biweekly #21</h5>
+                <span style="background:rgba(0,255,247,0.1);color:#00fff7;padding:3px 12px;border-radius:20px;font-size:0.68rem;font-family:'JetBrains Mono',monospace;border:1px solid rgba(0,255,247,0.3);">Upcoming</span>
+              </div>
+              <p style="color:rgba(240,234,255,0.45);font-size:0.82rem;margin-bottom:12px;">4 problems · 90 minutes · Intermediate+</p>
+              <div style="color:#b026ff;font-size:0.78rem;font-family:'JetBrains Mono',monospace;margin-bottom:16px;">
+                <i class="fas fa-calendar" style="margin-right:6px;"></i>Every other Saturday 8:00 PM IST
+              </div>
+              <a href="/contest/register/{{ contest.pk }}/" class="btn-neon" style="font-size:0.78rem;"z>Register</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Past Contests -->
+<div class="anim-in anim-d2">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
+    <i class="fas fa-history" style="color:#b026ff;"></i>
+    <span style="font-family:'Orbitron',monospace;font-size:0.9rem;font-weight:700;color:#b026ff;">Past Contests</span>
+  </div>
+  <div class="card-glass" style="background:rgba(12,8,28,0.85);">
+    <div class="table-responsive">
+      <table class="table mb-0" style="background:#0c081c;">
+        <thead>
+  <tr style="background:rgba(176,38,255,0.1);">
+    <th style="color:#b026ff;padding:13px 22px;font-size:0.7rem;letter-spacing:2px;font-family:'JetBrains Mono',monospace;border-bottom:1px solid rgba(176,38,255,0.2);border-top:none;background:rgba(176,38,255,0.1);">CONTEST</th>
+    <th style="color:#b026ff;padding:13px 22px;font-size:0.7rem;letter-spacing:2px;font-family:'JetBrains Mono',monospace;border-bottom:1px solid rgba(176,38,255,0.2);border-top:none;background:rgba(176,38,255,0.1);">DATE</th>
+    <th style="color:#b026ff;padding:13px 22px;font-size:0.7rem;letter-spacing:2px;font-family:'JetBrains Mono',monospace;border-bottom:1px solid rgba(176,38,255,0.2);border-top:none;background:rgba(176,38,255,0.1);">STATUS</th>
+  </tr>
+</thead>
+        <tbody style="background:#0c081c;">
+          {% for contest in past_contests %}
+          <tr style="border-bottom:1px solid rgba(176,38,255,0.07);background:#0c081c;" onmouseover="this.style.background='rgba(176,38,255,0.05)'" onmouseout="this.style.background='#0c081c'">
+            <td style="padding:14px 22px;color:#f0eaff;font-weight:600;">{{ contest.title }}</td>
+            <td style="padding:14px 22px;color:rgba(240,234,255,0.45);font-family:'JetBrains Mono',monospace;font-size:0.8rem;">{{ contest.date }}</td>
+            <td style="padding:14px 22px;"><span class="badge-easy">Finished</span></td>
+          </tr>
+          {% empty %}
+          <tr style="background:#0c081c;">
+  <td colspan="3" style="padding:40px;text-align:center;color:rgba(240,234,255,0.3);background:#0c081c;font-family:'JetBrains Mono',monospace;font-size:0.85rem;">
+    // no past contests yet
+  </td>
+</tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

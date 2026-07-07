@@ -1,0 +1,99 @@
+{% extends 'recruiter/base_recruiter.html' %}
+{% block title_suffix %}Dashboard{% endblock %}
+{% block page_heading %}Dashboard Overview{% endblock %}
+
+{% block content %}
+<!-- Stats -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-label">Candidates</div>
+        <div class="stat-value">{{ total_candidates }}</div>
+        <div class="stat-icon">👥</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Questions</div>
+        <div class="stat-value">{{ total_questions }}</div>
+        <div class="stat-icon">💻</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Submissions</div>
+        <div class="stat-value">{{ total_submissions }}</div>
+        <div class="stat-icon">📋</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Active Contests</div>
+        <div class="stat-value">{{ active_contests|default:"--" }}</div>
+        <div class="stat-icon">🏆</div>
+    </div>
+</div>
+
+<!-- Problem Bank Table -->
+<div class="table-card" style="margin-bottom: 24px;">
+    <div class="table-header">
+        <div class="table-title">&lt;/&gt; PROBLEM_BANK</div>
+        <a href="/recruiter/problems/" class="btn-view">View All</a>
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Title</th>
+                <th>Difficulty</th>
+                <th>Submissions</th>
+                <th>Last Submitted</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+{% for q in questions %}
+    <tr>
+        <td>{{ forloop.counter }}</td>
+        <td>{{ q.title }}</td>
+        <td><span class="badge-{{ q.difficulty|lower }}">{{ q.difficulty }}</span></td>
+        <td>{{ q.submission_count|default:"0" }}</td>
+        <td>{{ q.last_submitted|default:"—" }}</td>
+        <td><a href="/recruiter/problems/" class="btn-view">View</a></td>
+    </tr>
+{% empty %}
+    <tr>
+        <td colspan="6" style="text-align:center; color:#4b5563; padding:32px;">No problems added yet.</td>
+    </tr>
+{% endfor %}
+</tbody>
+    </table>
+</div>
+
+<!-- Recent Submissions Table -->
+<div class="table-card">
+    <div class="table-header">
+        <div class="table-title">&lt;/&gt; RECENT_SUBMISSIONS</div>
+        <a href="/recruiter/submissions/" class="btn-view">View All</a>
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Candidate</th>
+                <th>Problem</th>
+                <th>Result</th>
+                <th>Submitted At</th>
+            </tr>
+        </thead>
+        <tbody>
+{% for sub in recent_submissions %}
+    <tr>
+        <td>{{ forloop.counter }}</td>
+        <td>{{ sub.user.username }}</td>
+        <td>{{ sub.question.title }}</td>
+        <td>{{ sub.result|default:"—" }}</td>
+        <td>{{ sub.submitted_at|date:"M d, H:i" }}</td>
+    </tr>
+{% empty %}
+    <tr>
+        <td colspan="5" style="text-align:center; color:#4b5563; padding:32px;">No submissions yet.</td>
+    </tr>
+{% endfor %}
+</tbody>
+    </table>
+</div>
+{% endblock %}

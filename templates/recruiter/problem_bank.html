@@ -1,0 +1,81 @@
+{% extends 'recruiter/base_recruiter.html' %}
+{% block title_suffix %}Problem Bank{% endblock %}
+{% block page_heading %}Problem Bank{% endblock %}
+
+{% block content %}
+<a href="/recruiter/dashboard/" style="display:inline-flex; align-items:center; gap:6px; color:#9ca3af; text-decoration:none; font-size:13px; margin-bottom:16px;">
+    ← Back to Dashboard
+</a>
+
+<div class="table-card">
+    <div class="table-header">
+        <div class="table-title">&lt;/&gt; PROBLEM_BANK</div>
+        <div style="display:flex; align-items:center; gap:16px;">
+            <div style="font-size:12px; color:#6b7280;">{{ total_questions }} total</div>
+            <a href="/recruiter/problems/add/" class="filter-apply-btn" style="text-decoration:none;">+ Add Question</a>
+        </div>
+    </div>
+
+    <form method="get" action="/recruiter/problems/" class="filter-bar">
+        <input
+            type="text"
+            name="search"
+            class="filter-input"
+            placeholder="Search by title..."
+            value="{{ search }}">
+
+        <select name="topic" class="filter-select">
+            <option value="">All Topics</option>
+            {% for t in topics %}
+                <option value="{{ t }}" {% if t == topic %}selected{% endif %}>{{ t }}</option>
+            {% endfor %}
+        </select>
+
+        <select name="difficulty" class="filter-select">
+            <option value="">All Levels</option>
+            <option value="Easy" {% if difficulty == 'Easy' %}selected{% endif %}>Easy</option>
+            <option value="Medium" {% if difficulty == 'Medium' %}selected{% endif %}>Medium</option>
+            <option value="Hard" {% if difficulty == 'Hard' %}selected{% endif %}>Hard</option>
+        </select>
+
+        <button type="submit" class="filter-apply-btn">🔍 Apply</button>
+    </form>
+
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Title</th>
+                <th>Topic</th>
+                <th>Difficulty</th>
+                <th>Created Date</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+{% for q in questions %}
+    <tr>
+        <td>{{ forloop.counter }}</td>
+        <td>{{ q.title }}</td>
+        <td>{{ q.topic }}</td>
+        <td><span class="badge-{{ q.difficulty|lower }}">{{ q.difficulty }}</span></td>
+        <td>{{ q.created_at|date:"M d, Y" }}</td>
+        <td>
+            <form method="post" action="/recruiter/problems/delete/{{ q.pk }}/" style="display:inline;"
+                  onsubmit="return confirm('Delete &quot;{{ q.title }}&quot; from the problem bank? This cannot be undone.');">
+                {% csrf_token %}
+                <button type="submit" style="background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.3); color:#f87171; font-size:12px; padding:6px 12px; border-radius:6px; cursor:pointer;">
+                    🗑 Delete
+                </button>
+            </form>
+        </td>
+    </tr>
+{% empty %}
+    <tr>
+        <td colspan="6" style="text-align:center; color:#4b5563; padding:32px;">No problems match your search.</td>
+    </tr>
+{% endfor %}
+</tbody>
+    </table>
+</div>
+{% endblock %}

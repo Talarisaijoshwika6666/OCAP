@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <!-- Welcome Banner -->
+  <div class="card bg-primary text-white mb-4 shadow">
+    <div class="card-body py-4 px-4">
+      <h3>👋 Welcome, {{ user.first_name|default:user.username }}!</h3>
+      <p class="mb-0">Ready to take your coding assessment today?</p>
+    </div>
+  </div>
+
+  <!-- Quick Stats -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-4">
+      <div class="card text-center shadow-sm border-primary">
+        <div class="card-body py-4">
+          <h2 class="text-primary">📝</h2>
+          <h5>Assessments</h5>
+          <a href="/assessments/" class="btn btn-outline-primary btn-sm mt-2">View All</a>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card text-center shadow-sm border-success">
+        <div class="card-body py-4">
+          <h2 class="text-success">📚</h2>
+          <h5>Question Bank</h5>
+          <a href="/questions/" class="btn btn-outline-success btn-sm mt-2">View All</a>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card text-center shadow-sm border-warning">
+        <div class="card-body py-4">
+          <h2 class="text-warning">🏆</h2>
+          <h5>Leaderboard</h5>
+          <a href="/leaderboard/" class="btn btn-outline-warning btn-sm mt-2">View Rankings</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Account Info -->
+  <div class="card shadow-sm">
+    <div class="card-header fw-bold">👤 My Profile</div>
+    <div class="card-body">
+      <p><strong>Name:</strong> {{ user.first_name|default:"Not set" }}</p>
+      <p><strong>Username:</strong> {{ user.username }}</p>
+      <p><strong>Email:</strong> {{ user.email|default:"Not set" }}</p>
+      <p class="mb-0"><strong>Joined:</strong> {{ user.date_joined|date:"d M Y" }}</p>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

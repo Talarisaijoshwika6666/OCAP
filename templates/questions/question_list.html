@@ -1,0 +1,282 @@
+{% extends 'base.html' %}
+{% block page_title %}// Problem Bank{% endblock %}
+{% block content %}
+
+<style>
+  /* Solve button — same visual style previously inlined on the <a>, kept identical */
+  .solve-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 16px;
+    font-size: 0.78rem;
+    border: 1px solid #00fff7;
+    color: #00fff7;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 700;
+    transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+  }
+  .solve-btn:hover {
+    background: rgba(0,255,247,0.1);
+    box-shadow: 0 0 12px rgba(0,255,247,0.25);
+  }
+  .solve-btn.is-solved {
+    border: 1px solid #00ff82;
+    color: #00ff82;
+  }
+  .solve-btn.is-solved:hover {
+    background: rgba(0,255,130,0.1);
+    box-shadow: 0 0 12px rgba(0,255,130,0.3);
+  }
+  .solve-btn.just-solved {
+    animation: solvedPulse 0.6s ease;
+  }
+  @keyframes solvedPulse {
+    0%   { transform: scale(1); box-shadow: 0 0 0 rgba(0,255,130,0); }
+    40%  { transform: scale(1.08); box-shadow: 0 0 18px rgba(0,255,130,0.55); }
+    100% { transform: scale(1); box-shadow: 0 0 12px rgba(0,255,130,0.3); }
+  }
+
+  /* Bookmark toggle — flat ribbon icon, no border/box */
+  .bookmark-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border: none;
+    background: transparent;
+    color: rgba(240,234,255,0.35);
+    cursor: pointer;
+    font-size: 1rem;
+    transition: color 0.2s ease, transform 0.15s ease;
+  }
+  .bookmark-btn:hover {
+    color: #ffc107;
+    transform: translateY(-1px) scale(1.08);
+  }
+  .bookmark-btn.is-bookmarked {
+    color: #ffc107;
+  }
+  .bookmark-btn.bookmark-pop {
+    animation: bookmarkPop 0.35s ease;
+  }
+  @keyframes bookmarkPop {
+    0%   { transform: scale(1); }
+    50%  { transform: scale(1.3); }
+    100% { transform: scale(1); }
+  }
+
+  /* Filter bar */
+  .filter-input, .filter-select {
+    background: #0a0614;
+    border: 1px solid rgba(176,38,255,0.25);
+    border-radius: 8px;
+    color: #f0eaff;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    padding: 10px 14px;
+    outline: none;
+    transition: border-color 0.2s ease;
+  }
+  .filter-input::placeholder { color: rgba(240,234,255,0.35); }
+  .filter-input:focus, .filter-select:focus { border-color: rgba(176,38,255,0.6); }
+  .filter-apply-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: none;
+    background: linear-gradient(135deg,#00fff7,#b026ff);
+    color: #fff;
+    font-family: 'Orbitron', monospace;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: box-shadow 0.2s ease, transform 0.15s ease;
+  }
+  .filter-apply-btn:hover {
+    box-shadow: 0 0 14px rgba(176,38,255,0.4);
+    transform: translateY(-1px);
+  }
+  .filter-checkbox {
+    width: 16px;
+    height: 16px;
+    accent-color: #ffc107;
+    cursor: pointer;
+  }
+</style>
+
+<div class="card-glass anim-in">
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:20px 24px;border-bottom:1px solid rgba(176,38,255,0.15);">
+    <div style="font-family:'Orbitron',monospace;font-size:0.82rem;font-weight:700;color:#f0eaff;letter-spacing:1px;">
+      <i class="fas fa-code" style="color:#b026ff;margin-right:8px;"></i>PROBLEM_BANK
+    </div>
+    <div class="d-flex gap-2">
+      <span style="background:rgba(0,255,130,0.15);color:#00ff82;padding:4px 12px;border-radius:20px;font-size:0.72rem;font-weight:700;border:1px solid rgba(0,255,130,0.4);">Easy</span>
+      <span style="background:rgba(255,193,7,0.15);color:#ffc107;padding:4px 12px;border-radius:20px;font-size:0.72rem;font-weight:700;border:1px solid rgba(255,193,7,0.4);">Med</span>
+      <span style="background:rgba(255,45,120,0.15);color:#ff2d78;padding:4px 12px;border-radius:20px;font-size:0.72rem;font-weight:700;border:1px solid rgba(255,45,120,0.4);">Hard</span>
+    </div>
+  </div>
+
+  <form method="get" action="/questions/" style="display:flex;align-items:center;gap:12px;padding:18px 24px;border-bottom:1px solid rgba(176,38,255,0.15);flex-wrap:wrap;">
+    <input
+      type="text"
+      name="search"
+      class="filter-input"
+      style="flex:1;min-width:220px;"
+      placeholder="Search by title or description..."
+      value="{{ search }}">
+
+    <select name="topic" class="filter-select">
+      <option value="">All Topics</option>
+      {% for t in topics %}
+        <option value="{{ t }}" {% if t == topic %}selected{% endif %}>{{ t }}</option>
+      {% endfor %}
+    </select>
+
+    <select name="difficulty" class="filter-select">
+      <option value="">All Levels</option>
+      <option value="Easy" {% if difficulty == 'Easy' %}selected{% endif %}>Easy</option>
+      <option value="Medium" {% if difficulty == 'Medium' %}selected{% endif %}>Medium</option>
+      <option value="Hard" {% if difficulty == 'Hard' %}selected{% endif %}>Hard</option>
+    </select>
+
+    <label style="display:flex;align-items:center;gap:8px;color:#f0eaff;font-family:'JetBrains Mono',monospace;font-size:0.82rem;cursor:pointer;white-space:nowrap;">
+      <input type="checkbox" name="bookmarked" value="1" class="filter-checkbox" {% if bookmarked_only %}checked{% endif %}>
+      <i class="fas fa-bookmark" style="color:#ffc107;"></i> Bookmarked
+    </label>
+
+    <button type="submit" class="filter-apply-btn">
+      <i class="fas fa-filter"></i> Apply
+    </button>
+  </form>
+
+  <div class="table-responsive">
+    <table class="table mb-0" style="background:#0c081c;">
+      <thead>
+        <tr style="background:rgba(176,38,255,0.1);">
+          <th style="color:#b026ff;padding:13px 22px;border-bottom:1px solid rgba(176,38,255,0.2);font-size:0.7rem;letter-spacing:2px;font-family:'JetBrains Mono',monospace;border-top:none;background:rgba(176,38,255,0.1);">#</th>
+          <th style="color:#b026ff;padding:13px 22px;border-bottom:1px solid rgba(176,38,255,0.2);font-size:0.7rem;letter-spacing:2px;font-family:'JetBrains Mono',monospace;border-top:none;background:rgba(176,38,255,0.1);">TITLE</th>
+          <th style="color:#b026ff;padding:13px 22px;border-bottom:1px solid rgba(176,38,255,0.2);font-size:0.7rem;letter-spacing:2px;font-family:'JetBrains Mono',monospace;border-top:none;background:rgba(176,38,255,0.1);">TOPIC</th>
+          <th style="color:#b026ff;padding:13px 22px;border-bottom:1px solid rgba(176,38,255,0.2);font-size:0.7rem;letter-spacing:2px;font-family:'JetBrains Mono',monospace;border-top:none;background:rgba(176,38,255,0.1);">DIFFICULTY</th>
+          <th style="color:#b026ff;padding:13px 22px;border-bottom:1px solid rgba(176,38,255,0.2);font-size:0.7rem;letter-spacing:2px;font-family:'JetBrains Mono',monospace;border-top:none;background:rgba(176,38,255,0.1);">ACTION</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for q in questions %}
+        <tr style="border-bottom:1px solid rgba(176,38,255,0.1);transition:background 0.2s;background:#0c081c;"
+            onmouseover="this.style.background='rgba(176,38,255,0.08)'"
+            onmouseout="this.style.background='#0c081c'">
+          <td style="padding:14px 22px;color:rgba(176,38,255,0.6);font-family:'JetBrains Mono',monospace;font-size:0.8rem;background:transparent;">{{ forloop.counter }}</td>
+          <td style="padding:14px 22px;background:transparent;">
+            <a href="/questions/{{ q.pk }}/"
+               style="color:#ffffff;font-weight:700;text-decoration:none;font-size:0.92rem;"
+               onmouseover="this.style.color='#ff2d78'"
+               onmouseout="this.style.color='#ffffff'">
+              {{ q.title }}
+            </a>
+          </td>
+          <td style="padding:14px 22px;background:transparent;color:rgba(240,234,255,0.7);font-family:'JetBrains Mono',monospace;font-size:0.85rem;">{{ q.topic }}</td>
+          <td style="padding:14px 22px;background:transparent;">
+            {% if q.difficulty == 'Easy' %}
+              <span style="background:rgba(0,255,130,0.15);color:#00ff82;padding:4px 14px;border-radius:20px;font-size:0.75rem;font-weight:700;border:1px solid rgba(0,255,130,0.4);">● Easy</span>
+            {% elif q.difficulty == 'Medium' %}
+              <span style="background:rgba(255,193,7,0.15);color:#ffc107;padding:4px 14px;border-radius:20px;font-size:0.75rem;font-weight:700;border:1px solid rgba(255,193,7,0.4);">● Medium</span>
+            {% else %}
+              <span style="background:rgba(255,45,120,0.15);color:#ff2d78;padding:4px 14px;border-radius:20px;font-size:0.75rem;font-weight:700;border:1px solid rgba(255,45,120,0.4);">● Hard</span>
+            {% endif %}
+          </td>
+          <td style="padding:14px 22px;background:transparent;">
+            <div style="display:flex;align-items:center;gap:12px;">
+              <button
+                type="button"
+                class="bookmark-btn{% if q.pk in bookmarked_ids %} is-bookmarked{% endif %}"
+                data-question-id="{{ q.pk }}"
+                data-bookmarked="{% if q.pk in bookmarked_ids %}true{% else %}false{% endif %}"
+                onclick="toggleBookmark(this)"
+                aria-label="Toggle bookmark"
+                title="Bookmark this problem">
+                <i class="{% if q.pk in bookmarked_ids %}fas{% else %}far{% endif %} fa-bookmark"></i>
+              </button>
+              {% if q.pk in solved_ids %}
+                <a href="/questions/{{ q.pk }}/" class="solve-btn is-solved">
+                  <i class="fas fa-check"></i> Solved
+                </a>
+              {% else %}
+                <a href="/questions/{{ q.pk }}/" class="solve-btn">
+                  <i class="fas fa-play"></i> Solve
+                </a>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5" style="padding:50px;text-align:center;color:rgba(240,234,255,0.4);background:transparent;">
+            <i class="fas fa-code" style="font-size:2rem;display:block;margin-bottom:12px;opacity:0.3;"></i>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:0.8rem;">// no problems yet</span>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+function toggleBookmark(btn) {
+  const questionId = btn.getAttribute('data-question-id');
+  const wasBookmarked = btn.getAttribute('data-bookmarked') === 'true';
+
+  // Optimistic UI update so the icon feels instant, backend call follows immediately after.
+  btn.classList.add('bookmark-pop');
+  setTimeout(() => btn.classList.remove('bookmark-pop'), 350);
+
+  fetch(`/questions/bookmark/${questionId}/toggle/`, {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': '{{ csrf_token }}',
+      'Content-Type': 'application/json',
+    },
+  })
+    .then(r => r.json())
+    .then(data => {
+      const icon = btn.querySelector('i');
+      if (data.bookmarked) {
+        btn.classList.add('is-bookmarked');
+        btn.setAttribute('data-bookmarked', 'true');
+        icon.classList.remove('far');
+        icon.classList.add('fas');
+      } else {
+        btn.classList.remove('is-bookmarked');
+        btn.setAttribute('data-bookmarked', 'false');
+        icon.classList.remove('fas');
+        icon.classList.add('far');
+      }
+    })
+    .catch(() => {
+      // Revert optimistic state if the request failed, keep UI in sync with backend.
+      btn.setAttribute('data-bookmarked', wasBookmarked ? 'true' : 'false');
+    });
+}
+</script>
+
+<script>
+  const justSolvedId = sessionStorage.getItem('justSolvedQuestionId');
+  if (justSolvedId) {
+    const btn = document.querySelector(`.bookmark-btn[data-question-id="${justSolvedId}"]`);
+    if (btn) {
+      const wrapper = btn.parentElement;
+      const solveEl = wrapper ? wrapper.querySelector('.solve-btn') : null;
+      if (solveEl) {
+        solveEl.classList.add('just-solved');
+      }
+    }
+    sessionStorage.removeItem('justSolvedQuestionId');
+  }
+</script>
+
+{% endblock %}
