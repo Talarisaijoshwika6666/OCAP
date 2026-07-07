@@ -2,184 +2,1580 @@
 {% block page_title %}// Overview{% endblock %}
 {% block content %}
 
-<div class="anim-in" style="background:linear-gradient(135deg,rgba(0,212,255,0.1),rgba(176,38,255,0.12),rgba(255,45,120,0.08));border:1px solid rgba(0,212,255,0.25);border-radius:20px;padding:30px 32px;margin-bottom:26px;position:relative;overflow:hidden;">
+<style>
+  /* --- Cursor-Tracking Glow Cards --- */
+  .stat-card-link {
+    text-decoration: none !important;
+    display: block;
+    color: inherit;
+  }
+  
+  .glow-card-interactive {
+    position: relative;
+    background: rgba(12,8,28,0.75);
+    border: 1px solid rgba(176,38,255,0.18);
+    border-radius: 16px;
+    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    cursor: pointer;
+    overflow: hidden;
+  }
+  
+  .glow-card-interactive::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+      280px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+      var(--glow-color, rgba(0, 212, 255, 0.08)), 
+      transparent 75%
+    );
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+  
+  .glow-card-interactive:hover::before {
+    opacity: 1;
+  }
+  
+  .glow-card-interactive > * {
+    position: relative;
+    z-index: 2;
+  }
+  
+  .glow-card-interactive:hover {
+    transform: translateY(-5px) scale(1.03);
+    border-color: var(--glow-hover-border, #00d4ff) !important;
+    box-shadow: 
+      0 0 25px var(--glow-shadow, rgba(0, 212, 255, 0.25)),
+      0 10px 30px rgba(0, 0, 0, 0.4);
+  }
+
+  /* --- Minimal SVG Styling --- */
+  .minimal-dash-svg {
+    display: inline-block;
+    vertical-align: middle;
+    flex-shrink: 0;
+  }
+
+  /* --- Contribution Grid Custom Tooltips --- */
+  .contrib-tile-cell:hover {
+    transform: scale(1.35);
+    z-index: 10;
+    filter: brightness(1.2);
+  }
+  .contrib-tile-cell .contrib-tooltip-custom {
+    visibility: hidden;
+    position: absolute;
+    bottom: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(12, 8, 28, 0.98);
+    border: 1px solid rgba(176, 38, 255, 0.45);
+    color: #fff;
+    font-size: 0.58rem;
+    font-family: var(--font-code);
+    padding: 5px 9px;
+    border-radius: 4px;
+    white-space: nowrap;
+    z-index: 100;
+    pointer-events: none;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.75);
+  }
+  .contrib-tile-cell:hover .contrib-tooltip-custom {
+    visibility: visible;
+  }
+  
+  .calendar-year-btn:hover {
+    background: rgba(176, 38, 255, 0.08) !important;
+    border-color: rgba(176, 38, 255, 0.3) !important;
+    color: #b026ff !important;
+  }
+  .calendar-year-btn.active {
+    background: rgba(176, 38, 255, 0.18) !important;
+    border-color: #b026ff !important;
+    color: #fff !important;
+    box-shadow: 0 0 10px rgba(176, 38, 255, 0.25);
+  }
+
+  /* --- Glowing Gradient numbers --- */
+  .gradient-num-cyan {
+    background: linear-gradient(135deg, #00d4ff, #b026ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 10px rgba(0, 212, 255, 0.3));
+    display: inline-block;
+  }
+  .gradient-num-green {
+    background: linear-gradient(135deg, #00ff82, #00fff7);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 10px rgba(0, 255, 130, 0.3));
+    display: inline-block;
+  }
+  .gradient-num-pink {
+    background: linear-gradient(135deg, #ff2d78, #ffa116);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 10px rgba(255, 45, 120, 0.3));
+    display: inline-block;
+  }
+  .gradient-num-purple {
+    background: linear-gradient(135deg, #b026ff, #ff00aa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 10px rgba(176, 38, 255, 0.3));
+    display: inline-block;
+  }
+
+  /* --- Terminal Scanline CRT effect --- */
+  .crt-terminal {
+    position: relative;
+    overflow: hidden;
+  }
+  .crt-terminal::after {
+    content: " ";
+    display: block;
+    position: absolute;
+    top: 0; left: 0; bottom: 0; right: 0;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.15) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+    z-index: 5;
+    background-size: 100% 3px, 6px 100%;
+    pointer-events: none;
+  }
+
+  /* HUD Corner Accents */
+  .hud-card {
+    position: relative;
+  }
+  .hud-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; width: 10px; height: 10px;
+    border-top: 2px solid var(--card-accent, rgba(176, 38, 255, 0.4));
+    border-left: 2px solid var(--card-accent, rgba(176, 38, 255, 0.4));
+    pointer-events: none;
+    z-index: 5;
+  }
+  .hud-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0; right: 0; width: 10px; height: 10px;
+    border-bottom: 2px solid var(--card-accent, rgba(176, 38, 255, 0.4));
+    border-right: 2px solid var(--card-accent, rgba(176, 38, 255, 0.4));
+    pointer-events: none;
+    z-index: 5;
+  }
+
+  /* Blinking terminal cursor */
+  .terminal-cursor {
+    animation: blink-cursor 1s step-end infinite;
+  }
+  @keyframes blink-cursor {
+    from, to { color: transparent }
+    50% { color: #ff2d78 }
+  }
+
+  /* Glitch Text Effect */
+  .glitch-title {
+    position: relative;
+    cursor: default;
+    display: inline-block;
+  }
+  
+  .glitch-title:hover {
+    animation: glitch-skew 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) both infinite;
+  }
+  
+  .glitch-title::before,
+  .glitch-title::after {
+    content: attr(data-text);
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    opacity: 0.8;
+  }
+  
+  .glitch-title:hover::before {
+    animation: glitch-anim-1 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) both infinite;
+    color: #00fff7;
+    z-index: -1;
+  }
+  
+  .glitch-title:hover::after {
+    animation: glitch-anim-2 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) both infinite;
+    color: #ff2d78;
+    z-index: -2;
+  }
+
+  @keyframes glitch-anim-1 {
+    0% { clip: rect(12px, 9999px, 66px, 0); transform: translate(-2px, -2px); }
+    50% { clip: rect(34px, 9999px, 5px, 0); transform: translate(1px, 2px); }
+    100% { clip: rect(12px, 9999px, 66px, 0); transform: translate(-2px, -2px); }
+  }
+  @keyframes glitch-anim-2 {
+    0% { clip: rect(45px, 9999px, 12px, 0); transform: translate(2px, 2px); }
+    50% { clip: rect(5px, 9999px, 55px, 0); transform: translate(-1px, -2px); }
+    100% { clip: rect(45px, 9999px, 12px, 0); transform: translate(2px, 2px); }
+  }
+  @keyframes glitch-skew {
+    0% { transform: skew(0deg); }
+    20% { transform: skew(-2deg); }
+    40% { transform: skew(3deg); }
+    60% { transform: skew(-1deg); }
+    80% { transform: skew(1deg); }
+    100% { transform: skew(0deg); }
+  }
+
+  /* Stat Card Hover Icon Animations */
+  .glow-card-interactive:hover .minimal-dash-svg {
+    animation: svg-bounce 0.6s ease-in-out;
+  }
+
+  @keyframes svg-bounce {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-3px) scale(1.1); filter: drop-shadow(0 0 8px currentColor); }
+  }
+
+  /* --- Skeleton Animation --- */
+  .skeleton-bg {
+    background: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.02) 25%,
+      rgba(255, 255, 255, 0.08) 37%,
+      rgba(255, 255, 255, 0.02) 63%
+    );
+    background-size: 400% 100%;
+    animation: skeleton-shimmer 1.4s ease infinite;
+    border-radius: 4px;
+    display: inline-block;
+  }
+  
+  @keyframes skeleton-shimmer {
+    0% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  
+  .stat-loading, .content-loading {
+    display: block;
+  }
+  
+  .stat-loaded, .content-loaded {
+    display: none;
+  }
+
+  /* --- AI Insights Sub-cards --- */
+  .insight-subcard {
+    background: rgba(255, 255, 255, 0.015);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 14px;
+    display: flex;
+    gap: 16px;
+    transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+  }
+  
+  .insight-subcard:last-child {
+    margin-bottom: 0;
+  }
+  
+  .insight-subcard:hover {
+    background: rgba(255, 255, 255, 0.035);
+    transform: translateX(6px);
+    border-color: var(--insight-border);
+    box-shadow: 0 0 20px var(--insight-shadow);
+  }
+
+  /* --- Timeline Design --- */
+  .timeline {
+    position: relative;
+    padding-left: 24px;
+    border-left: 2px solid rgba(255, 255, 255, 0.06);
+    margin-left: 12px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+  }
+  
+  .timeline-item {
+    position: relative;
+    margin-bottom: 20px;
+  }
+  
+  .timeline-item:last-child {
+    margin-bottom: 0;
+  }
+  
+  .timeline-marker {
+    position: absolute;
+    left: -33px;
+    top: 4px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #0a0a14;
+    border: 2px solid var(--marker-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 10px var(--marker-glow);
+    transition: all 0.3s ease;
+    z-index: 2;
+  }
+  
+  .timeline-item:hover .timeline-marker {
+    transform: scale(1.25);
+    box-shadow: 0 0 18px var(--marker-glow);
+  }
+  
+  .timeline-content {
+    background: rgba(255, 255, 255, 0.015);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 12px;
+    padding: 14px 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+  }
+  
+  .timeline-content:hover {
+    background: rgba(255, 255, 255, 0.035);
+    border-color: var(--marker-border);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
+  }
+
+  .timeline-title {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .timeline-meta {
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    margin-top: 3px;
+    font-family: var(--font-code);
+  }
+
+  /* --- Empty State --- */
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.01);
+    border: 1px dashed rgba(255, 255, 255, 0.08);
+    transition: all 0.3s ease;
+  }
+  
+  .empty-state:hover {
+    border-color: rgba(255, 45, 120, 0.25);
+    background: rgba(255, 45, 120, 0.01);
+  }
+  
+  .empty-icon {
+    font-size: 2.2rem;
+    color: rgba(255, 45, 120, 0.35);
+    margin-bottom: 14px;
+    filter: drop-shadow(0 0 10px rgba(255, 45, 120, 0.15));
+  }
+  
+  .empty-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.85rem;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+    letter-spacing: 0.5px;
+  }
+  
+  .empty-desc {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    margin-bottom: 16px;
+  }
+
+  /* --- Skill Radar Polished --- */
+  .skill-item {
+    margin-bottom: 16px;
+  }
+  
+  .skill-item:last-child {
+    margin-bottom: 0;
+  }
+  
+  .skill-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+    align-items: center;
+  }
+  
+  .skill-name {
+    color: var(--text-dim);
+    font-size: 0.75rem;
+    font-family: var(--font-code);
+  }
+  
+  .skill-percentage {
+    font-size: 0.75rem;
+    font-family: var(--font-code);
+    font-weight: 700;
+  }
+  
+  .progress-neon-polished {
+    height: 8px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    overflow: visible;
+    position: relative;
+  }
+  
+  .progress-neon-polished-bar {
+    height: 100%;
+    border-radius: 10px;
+    width: 0%;
+    transition: width 1.8s cubic-bezier(0.19, 1, 0.22, 1);
+    position: relative;
+    box-shadow: 0 0 10px var(--bar-glow);
+  }
+  
+  .progress-neon-polished-bar::after {
+    content: '';
+    position: absolute;
+    top: 0; right: 0; bottom: 0; left: 0;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.15) 50%,
+      transparent
+    );
+    background-size: 200% 100%;
+    animation: bar-shine-anim 4s infinite linear;
+    border-radius: 10px;
+  }
+  
+  @keyframes bar-shine-anim {
+    0% { background-position: -100% 0; }
+    100% { background-position: 100% 0; }
+  }
+
+  /* --- AI Mentor Enhanced --- */
+  .ai-mentor-avatar {
+    position: relative;
+    animation: ai-pulse 3s infinite ease-in-out;
+  }
+  
+  @keyframes ai-pulse {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 18px rgba(176,38,255,0.4); }
+    50% { transform: scale(1.06); box-shadow: 0 0 28px rgba(176,38,255,0.7); }
+  }
+
+  /* --- Quick Access Links Polished --- */
+  .quick-access-link-polished {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--text-dim);
+    text-decoration: none;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    border: 1px solid transparent;
+    margin-bottom: 6px;
+    transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+  }
+  
+  .quick-access-link-polished:last-child {
+    margin-bottom: 0;
+  }
+  
+  .quick-access-link-polished:hover {
+    color: var(--hover-color) !important;
+    background: var(--hover-bg);
+    border-color: var(--hover-border);
+    transform: translateX(6px);
+  }
+
+  /* --- Hero Badges --- */
+  .hero-badge-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-family: var(--font-code);
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  /* --- 14-day Contribution Matrix --- */
+  .contrib-matrix {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    margin-bottom: 22px;
+    background: rgba(255, 255, 255, 0.015);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 12px;
+    padding: 12px 16px;
+    overflow-x: auto;
+  }
+  
+  .contrib-tile {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    position: relative;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .contrib-tile.active {
+    background: #00ff82;
+    border-color: #00ff82;
+    box-shadow: 0 0 6px rgba(0, 255, 130, 0.6);
+  }
+  
+  .contrib-tile:hover {
+    transform: scale(1.3);
+    z-index: 10;
+  }
+  
+  .contrib-tooltip {
+    visibility: hidden;
+    background-color: #0c081c;
+    color: #fff;
+    text-align: center;
+    border-radius: 4px;
+    padding: 4px 8px;
+    position: absolute;
+    z-index: 20;
+    bottom: 130%;
+    left: 50%;
+    transform: translateX(-50%);
+    opacity: 0;
+    transition: opacity 0.2s;
+    font-size: 0.65rem;
+    font-family: var(--font-code);
+    white-space: nowrap;
+    border: 1px solid rgba(0, 255, 130, 0.3);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  }
+  
+  .contrib-tile:hover .contrib-tooltip {
+    visibility: visible;
+    opacity: 1;
+  }
+</style>
+
+<!-- Hero Welcome Section -->
+<div class="anim-in hud-card glow-card-interactive" style="--glow-color: rgba(0, 212, 255, 0.08); --glow-hover-border: rgba(0, 212, 255, 0.25); --glow-shadow: rgba(0, 212, 255, 0.15); --card-accent: rgba(0, 212, 255, 0.4); background:linear-gradient(135deg,rgba(0,212,255,0.1),rgba(176,38,255,0.12),rgba(255,45,120,0.08));border:1px solid rgba(0,212,255,0.25);border-radius:20px;padding:26px 32px;margin-bottom:26px;position:relative;overflow:hidden;">
   <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#00d4ff,#b026ff,#ff2d78,transparent);"></div>
   <div style="position:absolute;top:-30px;right:-30px;width:160px;height:160px;border-radius:50%;background:radial-gradient(circle,rgba(0,212,255,0.15),transparent 70%);"></div>
-  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;position:relative;z-index:1;">
-    <div style="display:flex;align-items:center;gap:16px;">
-      <div style="width:54px;height:54px;border-radius:14px;overflow:hidden;border:1px solid rgba(255,255,255,0.15);box-shadow:0 0 20px rgba(0,212,255,0.3);flex-shrink:0;background:#000;">
+  
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:20px;position:relative;z-index:1;">
+    <div style="display:flex;align-items:center;gap:18px;flex: 1;min-width: 280px;">
+      <div style="width:58px;height:58px;border-radius:14px;overflow:hidden;border:1px solid rgba(255,255,255,0.15);box-shadow:0 0 20px rgba(0,212,255,0.35);flex-shrink:0;background:#000;">
         <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTFFJdllY1_vWrWkBGH7nWHv2JdnkgoW9ORVaNHkQkDvQ&s" alt="LogicLabs" style="width:100%;height:100%;object-fit:cover;">
       </div>
-      <div>
-        <div style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;letter-spacing:3px;color:#00d4ff;margin-bottom:6px;">// AI ASSISTANT</div>
-        <h2 style="font-family:'Orbitron',monospace;font-size:1.5rem;font-weight:900;color:#f0eaff;margin:0;">Welcome, {{ user.username|default:"Guest" }}<span style="color:#ff2d78;">_</span></h2>
-        <p style="color:rgba(240,234,255,0.5);margin:6px 0 0;font-size:0.85rem;">Your AI mentor recommends focusing on <span style="color:#00fff7;font-weight:600;">Binary Search</span> this week.</p>
+      <div style="flex: 1;">
+        <div style="display:flex; align-items:center; gap: 8px; margin-bottom: 6px;">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;letter-spacing:3px;color:#00d4ff;">// DEV COMPANION ONLINE</div>
+          <span style="font-family: var(--font-code); color: #00ff82; font-size: 0.65rem; background: rgba(0, 255, 130, 0.08); border: 1px solid rgba(0, 255, 130, 0.2); padding: 1.5px 6px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px;">
+            <span style="width: 6px; height: 6px; background-color: #00ff82; border-radius: 50%; display: inline-block; box-shadow: 0 0 8px #00ff82; animation: pulse-glow 1.5s infinite;"></span> SYS_CONNECTED
+          </span>
+        </div>
+        <h2 style="font-family:'Orbitron',monospace;font-size:1.45rem;font-weight:900;color:#f0eaff;margin:0;">Welcome back, {{ user.username|default:"Guest" }}<span class="terminal-cursor" style="color:#ff2d78;">_</span></h2>
+        
+        <!-- Interactive Badges Row -->
+        <div id="hero-badges-loading" style="display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap;">
+          <div class="skeleton-bg" style="width: 105px; height: 26px; border-radius: 8px;"></div>
+          <div class="skeleton-bg" style="width: 90px; height: 26px; border-radius: 8px;"></div>
+          <div class="skeleton-bg" style="width: 160px; height: 26px; border-radius: 8px;"></div>
+        </div>
+        <div id="hero-badges" style="display: none; gap: 8px; margin-top: 10px; flex-wrap: wrap;">
+          <span class="hero-badge-item" style="background: rgba(255, 45, 120, 0.08); border: 1px solid rgba(255, 45, 120, 0.25); color: #ff2d78; display: inline-flex; align-items: center;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:12px; height:12px; margin-right:5px;"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            <span id="hero-streak">0</span> Day Streak
+          </span>
+          <span class="hero-badge-item" style="background: rgba(0, 255, 130, 0.08); border: 1px solid rgba(0, 255, 130, 0.25); color: #00ff82; display: inline-flex; align-items: center;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:12px; height:12px; margin-right:5px;"><polyline points="20 6 9 17 4 12"/></svg>
+            <span id="hero-solved">0</span> Solved
+          </span>
+          <span class="hero-badge-item" style="background: rgba(176, 38, 255, 0.08); border: 1px solid rgba(176, 38, 255, 0.25); color: #b026ff; display: inline-flex; align-items: center;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px; height:12px; margin-right:5px;"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+            Goal: <span id="hero-weekly-progress">0/5</span> Solved
+          </span>
+        </div>
       </div>
     </div>
-    <a href="/questions/" class="btn-gradient"><i class="fas fa-bolt"></i> Resume Practice</a>
+    <div>
+      <a href="/questions/" id="hero-resume-btn" class="btn-gradient" style="display: inline-flex; align-items: center;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:14px; height:14px; margin-right:6px;"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        Resume Practice
+      </a>
+    </div>
+  </div>
+
+  <!-- Real-time Console Log Stream -->
+  <div class="crt-terminal" style="background: rgba(0, 0, 0, 0.45); border: 1px solid rgba(0, 212, 255, 0.15); border-radius: 8px; padding: 12px 16px; margin-top: 18px; font-family: var(--font-code); font-size: 0.7rem; color: #00d4ff; overflow: hidden; position: relative;">
+    <div style="position: absolute; top: 8px; right: 10px; display: flex; gap: 4px;">
+      <span style="width: 5px; height: 5px; border-radius: 50%; background: #ff2d78;"></span>
+      <span style="width: 5px; height: 5px; border-radius: 50%; background: #ffa116;"></span>
+      <span style="width: 5px; height: 5px; border-radius: 50%; background: #00ff82;"></span>
+    </div>
+    <div id="console-logs" style="line-height: 1.5; height: 42px; overflow-y: hidden; text-align: left;">
+      <div style="color: rgba(0, 212, 255, 0.45); font-family: var(--font-code); font-size: 0.65rem;">> Initialising connection terminal logs...</div>
+    </div>
   </div>
 </div>
 
 <div class="row g-3 mb-4">
+  <!-- Card 1: Problem Bank -->
   <div class="col-6 col-md-3">
-    <div class="stat-card anim-in anim-d1">
-      <div style="width:36px;height:36px;border-radius:8px;background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.25);display:flex;align-items:center;justify-content:center;margin-bottom:14px;">
-        <i class="fas fa-bullseye" style="color:#00d4ff;"></i>
+    <a href="/questions/" class="stat-card-link">
+      <div class="glow-card-interactive hud-card anim-in anim-d1" style="--glow-color: rgba(0, 212, 255, 0.15); --glow-hover-border: #00d4ff; --glow-shadow: rgba(0, 212, 255, 0.25); --card-accent: rgba(0, 212, 255, 0.4); padding: 22px; height: 100%; position: relative;">
+        <!-- Card Sparkline -->
+        <svg style="position: absolute; bottom: 0; left: 0; width: 100%; height: 32px; pointer-events: none; opacity: 0.35; z-index: 1;">
+          <defs>
+            <linearGradient id="spark-grad-cyan" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="#00d4ff" stop-opacity="0.6"/>
+              <stop offset="100%" stop-color="#00d4ff" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <path d="M 0 32 Q 30 12 60 22 T 120 6 T 180 24 T 240 14 L 240 32 Z" fill="url(#spark-grad-cyan)" />
+        </svg>
+
+        <div style="width:36px;height:36px;border-radius:8px;background:rgba(0,212,255,0.06);border:1px solid rgba(0,212,255,0.18);display:flex;align-items:center;justify-content:center;margin-bottom:14px;color:#00d4ff;">
+          <svg class="minimal-dash-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px; height:18px;">
+            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+            <path d="M2 17l10 5 10-5"/>
+            <path d="M2 7v10"/>
+            <path d="M12 12v10"/>
+            <path d="M22 7v10"/>
+          </svg>
+        </div>
+        
+        <!-- Loading skeleton -->
+        <div class="stat-loading">
+          <div class="skeleton-bg" style="width: 50px; height: 32px; margin-bottom: 8px;"></div>
+          <div class="skeleton-bg" style="width: 90px; height: 12px;"></div>
+        </div>
+        
+        <!-- Loaded view -->
+        <div class="stat-loaded" style="position: relative; z-index: 2;">
+          <div class="number count-up gradient-num-cyan" id="stat-total-problems" style="font-family:'Orbitron',monospace;font-size:2rem;font-weight:900;line-height:1.2;">0</div>
+          <div style="color:rgba(240,234,255,0.7);font-size:0.75rem;font-family:'Orbitron',monospace;letter-spacing:0.5px;margin-top:4px;">Problem Bank</div>
+        </div>
       </div>
-      <div style="font-family:'Orbitron',monospace;font-size:2rem;font-weight:900;color:#00d4ff;">{{ total_problems }}</div>
-      <div style="color:rgba(240,234,255,0.4);font-size:0.7rem;font-family:'JetBrains Mono',monospace;">// total_problems</div>
-    </div>
+    </a>
   </div>
+
+  <!-- Card 2: My Submissions -->
   <div class="col-6 col-md-3">
-    <div class="stat-card anim-in anim-d2">
-      <div style="width:36px;height:36px;border-radius:8px;background:rgba(0,255,130,0.08);border:1px solid rgba(0,255,130,0.2);display:flex;align-items:center;justify-content:center;margin-bottom:14px;">
-        <i class="fas fa-check-circle" style="color:#00ff82;"></i>
+    <a href="/submissions/my-submissions/" class="stat-card-link">
+      <div class="glow-card-interactive hud-card anim-in anim-d2" style="--glow-color: rgba(0, 255, 130, 0.12); --glow-hover-border: #00ff82; --glow-shadow: rgba(0, 255, 130, 0.22); --card-accent: rgba(0, 255, 130, 0.4); padding: 22px; height: 100%; position: relative;">
+        <!-- Card Sparkline -->
+        <svg style="position: absolute; bottom: 0; left: 0; width: 100%; height: 32px; pointer-events: none; opacity: 0.35; z-index: 1;">
+          <defs>
+            <linearGradient id="spark-grad-green" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="#00ff82" stop-opacity="0.6"/>
+              <stop offset="100%" stop-color="#00ff82" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <path d="M 0 32 Q 40 20 80 10 T 160 26 T 240 8 L 240 32 Z" fill="url(#spark-grad-green)" />
+        </svg>
+
+        <div style="width:36px;height:36px;border-radius:8px;background:rgba(0,255,130,0.06);border:1px solid rgba(0,255,130,0.18);display:flex;align-items:center;justify-content:center;margin-bottom:14px;color:#00ff82;">
+          <svg class="minimal-dash-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px; height:18px;">
+            <line x1="22" y1="2" x2="11" y2="13"/>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          </svg>
+        </div>
+        
+        <!-- Loading skeleton -->
+        <div class="stat-loading">
+          <div class="skeleton-bg" style="width: 50px; height: 32px; margin-bottom: 8px;"></div>
+          <div class="skeleton-bg" style="width: 90px; height: 12px;"></div>
+        </div>
+        
+        <!-- Loaded view -->
+        <div class="stat-loaded" style="position: relative; z-index: 2;">
+          <div class="number count-up gradient-num-green" id="stat-problems-solved" style="font-family:'Orbitron',monospace;font-size:2rem;font-weight:900;line-height:1.2;">0</div>
+          <div style="color:rgba(240,234,255,0.7);font-size:0.75rem;font-family:'Orbitron',monospace;letter-spacing:0.5px;margin-top:4px;">My Submissions</div>
+        </div>
       </div>
-      <div style="font-family:'Orbitron',monospace;font-size:2rem;font-weight:900;color:#00ff82;">0</div>
-      <div style="color:rgba(240,234,255,0.4);font-size:0.7rem;font-family:'JetBrains Mono',monospace;">// accepted</div>
-    </div>
+    </a>
   </div>
+
+  <!-- Card 3: Coding Streak -->
   <div class="col-6 col-md-3">
-    <div class="stat-card anim-in anim-d3">
-      <div style="width:36px;height:36px;border-radius:8px;background:rgba(255,45,120,0.08);border:1px solid rgba(255,45,120,0.2);display:flex;align-items:center;justify-content:center;margin-bottom:14px;">
-        <i class="fas fa-fire" style="color:#ff2d78;"></i>
+    <a href="/study-plan/" class="stat-card-link">
+      <div class="glow-card-interactive hud-card anim-in anim-d3" style="--glow-color: rgba(255, 45, 120, 0.12); --glow-hover-border: #ff2d78; --glow-shadow: rgba(255, 45, 120, 0.22); --card-accent: rgba(255, 45, 120, 0.4); padding: 22px; height: 100%; position: relative;">
+        <!-- Card Sparkline -->
+        <svg style="position: absolute; bottom: 0; left: 0; width: 100%; height: 32px; pointer-events: none; opacity: 0.35; z-index: 1;">
+          <defs>
+            <linearGradient id="spark-grad-pink" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="#ff2d78" stop-opacity="0.6"/>
+              <stop offset="100%" stop-color="#ff2d78" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <path d="M 0 32 Q 25 8 50 20 T 100 28 T 150 12 T 200 24 T 240 6 L 240 32 Z" fill="url(#spark-grad-pink)" />
+        </svg>
+
+        <div style="width:36px;height:36px;border-radius:8px;background:rgba(255,45,120,0.06);border:1px solid rgba(255,45,120,0.18);display:flex;align-items:center;justify-content:center;margin-bottom:14px;color:#ff2d78;">
+          <svg class="minimal-dash-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px; height:18px;">
+            <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>
+          </svg>
+        </div>
+        
+        <!-- Loading skeleton -->
+        <div class="stat-loading">
+          <div class="skeleton-bg" style="width: 50px; height: 32px; margin-bottom: 8px;"></div>
+          <div class="skeleton-bg" style="width: 90px; height: 12px;"></div>
+        </div>
+        
+        <!-- Loaded view -->
+        <div class="stat-loaded" style="position: relative; z-index: 2;">
+          <div class="number count-up gradient-num-pink" id="stat-streak" style="font-family:'Orbitron',monospace;font-size:2rem;font-weight:900;line-height:1.2;">0</div>
+          <div style="color:rgba(240,234,255,0.7);font-size:0.75rem;font-family:'Orbitron',monospace;letter-spacing:0.5px;margin-top:4px;">Coding Streak</div>
+        </div>
       </div>
-      <div style="font-family:'Orbitron',monospace;font-size:2rem;font-weight:900;color:#ff2d78;">0</div>
-      <div style="color:rgba(240,234,255,0.4);font-size:0.7rem;font-family:'JetBrains Mono',monospace;">// streak</div>
-    </div>
+    </a>
   </div>
+
+  <!-- Card 4: Leaderboard -->
   <div class="col-6 col-md-3">
-    <div class="stat-card anim-in anim-d4">
-      <div style="width:36px;height:36px;border-radius:8px;background:rgba(176,38,255,0.08);border:1px solid rgba(176,38,255,0.2);display:flex;align-items:center;justify-content:center;margin-bottom:14px;">
-        <i class="fas fa-trophy" style="color:#b026ff;"></i>
+    <a href="/leaderboard/" class="stat-card-link">
+      <div class="glow-card-interactive hud-card anim-in anim-d4" style="--glow-color: rgba(176, 38, 255, 0.12); --glow-hover-border: #b026ff; --glow-shadow: rgba(176, 38, 255, 0.22); --card-accent: rgba(176, 38, 255, 0.4); padding: 22px; height: 100%; position: relative;">
+        <!-- Card Sparkline -->
+        <svg style="position: absolute; bottom: 0; left: 0; width: 100%; height: 32px; pointer-events: none; opacity: 0.35; z-index: 1;">
+          <defs>
+            <linearGradient id="spark-grad-purple" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="#b026ff" stop-opacity="0.6"/>
+              <stop offset="100%" stop-color="#b026ff" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <path d="M 0 32 Q 35 24 70 8 T 140 18 T 210 6 T 240 14 L 240 32 Z" fill="url(#spark-grad-purple)" />
+        </svg>
+
+        <div style="width:36px;height:36px;border-radius:8px;background:rgba(176,38,255,0.06);border:1px solid rgba(176,38,255,0.18);display:flex;align-items:center;justify-content:center;margin-bottom:14px;color:#b026ff;">
+          <svg class="minimal-dash-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px; height:18px;">
+            <path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7z"/>
+            <path d="M3 20h18"/>
+          </svg>
+        </div>
+        
+        <!-- Loading skeleton -->
+        <div class="stat-loading">
+          <div class="skeleton-bg" style="width: 50px; height: 32px; margin-bottom: 8px;"></div>
+          <div class="skeleton-bg" style="width: 90px; height: 12px;"></div>
+        </div>
+        
+        <!-- Loaded view -->
+        <div class="stat-loaded" style="position: relative; z-index: 2;">
+          <div class="number gradient-num-purple" id="stat-global-rank" style="font-family:'Orbitron',monospace;font-size:2rem;font-weight:900;line-height:1.2;">—</div>
+          <div style="color:rgba(240,234,255,0.7);font-size:0.75rem;font-family:'Orbitron',monospace;letter-spacing:0.5px;margin-top:4px;">Leaderboard</div>
+        </div>
       </div>
-      <div style="font-family:'Orbitron',monospace;font-size:2rem;font-weight:900;color:#b026ff;">—</div>
-      <div style="color:rgba(240,234,255,0.4);font-size:0.7rem;font-family:'JetBrains Mono',monospace;">// global_rank</div>
-    </div>
+    </a>
   </div>
 </div>
 
 <div class="row g-4">
   <div class="col-md-8">
-    <div class="card-glass anim-in anim-d2 p-4 mb-4" style="border-color:rgba(0,212,255,0.25);position:relative;overflow:hidden;">
+    <!-- AI Insights Card -->
+    <div class="glow-card-interactive anim-in anim-d2 p-4 mb-4" style="--glow-color: rgba(176, 38, 255, 0.08); --glow-hover-border: rgba(176, 38, 255, 0.35); --glow-shadow: rgba(176, 38, 255, 0.15); border-color:rgba(0,212,255,0.25); position:relative; overflow:hidden;">
       <div style="position:absolute;top:-40px;right:-40px;width:140px;height:140px;border-radius:50%;background:radial-gradient(circle,rgba(0,212,255,0.1),transparent 70%);"></div>
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;position:relative;z-index:1;">
-        <i class="fas fa-wand-magic-sparkles" style="color:#00d4ff;"></i>
-        <span style="font-family:'Orbitron',monospace;font-size:0.85rem;font-weight:700;color:#00d4ff;letter-spacing:1px;">AI_INSIGHTS</span>
-        <span style="margin-left:auto;background:rgba(0,255,130,0.1);color:#00ff82;padding:3px 10px;border-radius:20px;font-size:0.65rem;font-family:'JetBrains Mono',monospace;border:1px solid rgba(0,255,130,0.3);">
-          <i class="fas fa-circle" style="font-size:0.5rem;margin-right:4px;"></i>LIVE
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;position:relative;z-index:1;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#00d4ff; width:16px; height:16px; display:inline-block; vertical-align:middle;">
+          <path d="M12 3c0 4.5 3.5 8 8 8-4.5 0-8 3.5-8 8 0-4.5-3.5-8-8-8 4.5 0 8-3.5 8-8Z"/>
+        </svg>
+        <span class="glitch-title" data-text="AI_INSIGHTS" style="font-family:'Orbitron',monospace;font-size:0.85rem;font-weight:700;color:#00d4ff;letter-spacing:1px;">AI_INSIGHTS</span>
+        <span style="margin-left:auto;background:rgba(0,255,130,0.06);color:#00ff82;padding:3px 10px;border-radius:20px;font-size:0.65rem;font-family:'JetBrains Mono',monospace;border:1px solid rgba(0,255,130,0.2); display:inline-flex; align-items:center; gap:5px;">
+          <span style="width: 5px; height: 5px; background-color: #00ff82; border-radius: 50%; display: inline-block; box-shadow:0 0 6px #00ff82;"></span>LIVE
         </span>
       </div>
-      <div style="display:flex;gap:14px;margin-bottom:16px;position:relative;z-index:1;">
-        <div style="width:38px;height:38px;border-radius:10px;background:rgba(0,255,130,0.08);border:1px solid rgba(0,255,130,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-          <i class="fas fa-arrow-trend-up" style="color:#00ff82;font-size:0.9rem;"></i>
+
+      <!-- Loading Skeletons -->
+      <div id="insights-loading" class="content-loading">
+        <div style="display: flex; gap: 16px; padding: 16px; background: rgba(255,255,255,0.01); border-radius: 12px; border: 1px solid rgba(255,255,255,0.03); margin-bottom: 14px;">
+          <div class="skeleton-bg" style="width: 38px; height: 38px; border-radius: 10px; flex-shrink: 0;"></div>
+          <div style="flex-grow: 1;">
+            <div class="skeleton-bg" style="width: 40%; height: 16px; margin-bottom: 8px;"></div>
+            <div class="skeleton-bg" style="width: 85%; height: 12px;"></div>
+          </div>
         </div>
-        <div>
-          <div style="color:#f0eaff;font-weight:600;font-size:0.85rem;margin-bottom:3px;">Strength detected: SQL & Databases</div>
-          <div style="color:rgba(240,234,255,0.45);font-size:0.78rem;">You're solving database problems faster than 80% of peers.</div>
+        <div style="display: flex; gap: 16px; padding: 16px; background: rgba(255,255,255,0.01); border-radius: 12px; border: 1px solid rgba(255,255,255,0.03); margin-bottom: 14px;">
+          <div class="skeleton-bg" style="width: 38px; height: 38px; border-radius: 10px; flex-shrink: 0;"></div>
+          <div style="flex-grow: 1;">
+            <div class="skeleton-bg" style="width: 35%; height: 16px; margin-bottom: 8px;"></div>
+            <div class="skeleton-bg" style="width: 75%; height: 12px;"></div>
+          </div>
         </div>
       </div>
-      <div style="display:flex;gap:14px;margin-bottom:16px;position:relative;z-index:1;">
-        <div style="width:38px;height:38px;border-radius:10px;background:rgba(255,45,120,0.08);border:1px solid rgba(255,45,120,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-          <i class="fas fa-triangle-exclamation" style="color:#ff2d78;font-size:0.9rem;"></i>
-        </div>
-        <div>
-          <div style="color:#f0eaff;font-weight:600;font-size:0.85rem;margin-bottom:3px;">Gap found: System Design</div>
-          <div style="color:rgba(240,234,255,0.45);font-size:0.78rem;">Practicing 3 more problems this week could close this gap.</div>
-        </div>
-      </div>
-      <div style="display:flex;gap:14px;position:relative;z-index:1;">
-        <div style="width:38px;height:38px;border-radius:10px;background:rgba(176,38,255,0.08);border:1px solid rgba(176,38,255,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-          <i class="fas fa-lightbulb" style="color:#b026ff;font-size:0.9rem;"></i>
-        </div>
-        <div>
-          <div style="color:#f0eaff;font-weight:600;font-size:0.85rem;margin-bottom:3px;">Suggested next problem</div>
-          <div style="color:rgba(240,234,255,0.45);font-size:0.78rem;">Based on your pace, try a Medium-difficulty array problem next.</div>
-        </div>
+
+      <!-- Loaded Content -->
+      <div id="insights-container" class="content-loaded" style="position:relative;z-index:1;">
+        <!-- Loaded via AJAX -->
       </div>
     </div>
 
-    <div class="card-glass anim-in anim-d3 p-4">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
-        <i class="fas fa-timeline" style="color:#ff2d78;"></i>
-        <span style="font-family:'Orbitron',monospace;font-size:0.85rem;font-weight:700;color:#f0eaff;letter-spacing:1px;">RECENT_ACTIVITY</span>
+    <!-- Recent Activity Card -->
+    <div class="glow-card-interactive anim-in anim-d3 p-4" style="--glow-color: rgba(255, 45, 120, 0.08); --glow-hover-border: rgba(255, 45, 120, 0.35); --glow-shadow: rgba(255, 45, 120, 0.15);">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#ff2d78; width:16px; height:16px; display:inline-block; vertical-align:middle;">
+          <circle cx="12" cy="12" r="10"/>
+          <polyline points="12 6 12 12 16 14"/>
+        </svg>
+        <span class="glitch-title" data-text="RECENT_ACTIVITY" style="font-family:'Orbitron',monospace;font-size:0.85rem;font-weight:700;color:#f0eaff;letter-spacing:1px;">RECENT_ACTIVITY</span>
       </div>
-      <div style="text-align:center;padding:36px 0;color:rgba(240,234,255,0.3);">
-        <i class="fas fa-clock-rotate-left" style="font-size:2rem;display:block;margin-bottom:12px;opacity:0.2;"></i>
-        <span style="font-family:'JetBrains Mono',monospace;font-size:0.8rem;">// no activity yet — solve your first problem to begin tracking</span>
+
+      <!-- LeetCode & GitHub-style Contribution Calendar -->
+      <div id="contrib-matrix-container" style="display: none;">
+        <!-- LeetCode-style Active Streak Flame Badge -->
+        <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(255, 45, 120, 0.04); border: 1px solid rgba(255, 45, 120, 0.15); padding: 10px 14px; border-radius: 12px; margin-bottom: 16px; box-shadow: 0 0 15px rgba(255, 45, 120, 0.05);">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <!-- Glowing Flame SVG -->
+            <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(255, 45, 120, 0.1); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#ff2d78" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px; filter: drop-shadow(0 0 6px rgba(255, 45, 120, 0.6));">
+                <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>
+              </svg>
+            </div>
+            <div>
+              <div style="font-family: 'Orbitron', monospace; font-size: 0.72rem; font-weight: 800; color: #fff; letter-spacing: 0.5px;">ACTIVE STREAK</div>
+              <div style="font-size: 0.58rem; font-family: var(--font-code); color: var(--text-dim);">LeetCode active day track</div>
+            </div>
+          </div>
+          <div style="text-align: right;">
+            <div style="font-family: 'Orbitron', monospace; font-size: 1.15rem; font-weight: 900; color: #ff2d78; text-shadow: 0 0 10px rgba(255, 45, 120, 0.4); display: flex; align-items: center; gap: 4px; line-height: 1;">
+              <span id="activity-streak-val">0</span> <span style="font-size: 0.65rem; font-weight: 700; color: rgba(240, 234, 255, 0.6);">DAYS</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- GitHub Contribution Graph -->
+        <div style="display: flex; gap: 16px; align-items: flex-start; margin-top: 10px; flex-wrap: wrap;">
+          <!-- Left side: Calendar Grid -->
+          <div style="flex-grow: 1; overflow-x: auto; padding-bottom: 6px; border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 12px; background: rgba(0, 0, 0, 0.15); padding: 14px; min-width: 280px;">
+            <!-- Month labels wrapper -->
+            <div id="calendar-months" style="display: grid; grid-template-columns: repeat(12, 1fr); margin-left: 24px; font-family: 'Orbitron', monospace; font-size: 0.55rem; color: rgba(240, 234, 255, 0.45); margin-bottom: 8px;">
+              <span>Jan</span><span>Feb</span><span>Mar</span><span>Apr</span><span>May</span><span>Jun</span>
+              <span>Jul</span><span>Aug</span><span>Sep</span><span>Oct</span><span>Nov</span><span>Dec</span>
+            </div>
+            
+            <div style="display: flex; gap: 6px;">
+              <!-- Weekday labels -->
+              <div style="display: flex; flex-direction: column; justify-content: space-between; font-size: 0.52rem; font-family: 'Orbitron', monospace; color: rgba(240, 234, 255, 0.3); height: 82px; padding-top: 2px; text-align: left; width: 18px; line-height: 1.1;">
+                <span>Sun</span>
+                <span>Tue</span>
+                <span>Thu</span>
+                <span>Sat</span>
+              </div>
+              
+              <!-- Grid Matrix -->
+              <div id="github-calendar-grid" style="display: grid; grid-auto-flow: column; grid-template-rows: repeat(7, 1fr); gap: 3.5px; flex-grow: 1;">
+                <!-- Dynamically generated day boxes -->
+              </div>
+            </div>
+
+            <!-- Calendar footer info -->
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.55rem; font-family: var(--font-code); color: rgba(240, 234, 255, 0.4); margin-top: 12px; padding-left: 24px;">
+              <span id="calendar-summary-text">0 submissions in 2026</span>
+              <div style="display: flex; align-items: center; gap: 4px;">
+                <span>Less</span>
+                <span style="width: 8px; height: 8px; background: rgba(255, 255, 255, 0.03); border-radius: 1px; border: 1px solid rgba(255,255,255,0.05);"></span>
+                <span style="width: 8px; height: 8px; background: rgba(176, 38, 255, 0.25); border-radius: 1px; border: 1px solid rgba(176,38,255,0.15);"></span>
+                <span style="width: 8px; height: 8px; background: rgba(176, 38, 255, 0.55); border-radius: 1px; border: 1px solid rgba(176,38,255,0.35);"></span>
+                <span style="width: 8px; height: 8px; background: rgba(176, 38, 255, 0.8); border-radius: 1px; border: 1px solid rgba(176,38,255,0.55); box-shadow: 0 0 5px rgba(176,38,255,0.35);"></span>
+                <span style="width: 8px; height: 8px; background: #b026ff; border-radius: 1px; border: 1px solid #b026ff; box-shadow: 0 0 8px rgba(176,38,255,0.85);"></span>
+                <span>More</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right side: Year Switcher panel -->
+          <div id="calendar-years" style="display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; min-width: 58px;">
+            <!-- Dynamically populated year selector buttons -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Loading Skeletons -->
+      <div id="activity-loading" class="content-loading">
+        <div style="display: flex; gap: 16px; margin-bottom: 20px; margin-left: 12px;">
+          <div class="skeleton-bg" style="width: 16px; height: 16px; border-radius: 50%; flex-shrink: 0; margin-top: 4px;"></div>
+          <div style="flex-grow: 1;">
+            <div class="skeleton-bg" style="width: 50%; height: 16px; margin-bottom: 6px;"></div>
+            <div class="skeleton-bg" style="width: 20%; height: 10px;"></div>
+          </div>
+        </div>
+        <div style="display: flex; gap: 16px; margin-bottom: 20px; margin-left: 12px;">
+          <div class="skeleton-bg" style="width: 16px; height: 16px; border-radius: 50%; flex-shrink: 0; margin-top: 4px;"></div>
+          <div style="flex-grow: 1;">
+            <div class="skeleton-bg" style="width: 40%; height: 16px; margin-bottom: 6px;"></div>
+            <div class="skeleton-bg" style="width: 25%; height: 10px;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loaded Content -->
+      <div id="activity-container" class="content-loaded">
+        <!-- Loaded via AJAX -->
       </div>
     </div>
   </div>
 
   <div class="col-md-4 d-flex flex-column gap-4">
-    <div class="card-glass anim-in anim-d2 p-4">
-      <div style="font-family:'Orbitron',monospace;font-size:0.78rem;font-weight:700;color:#f0eaff;letter-spacing:1px;margin-bottom:18px;">
-        <i class="fas fa-satellite-dish" style="color:#00d4ff;margin-right:8px;"></i>SKILL_RADAR
+    <!-- Developer Progress Card (Replaces Skill Radar) -->
+    <div class="glow-card-interactive anim-in anim-d2 p-4" style="--glow-color: rgba(0, 212, 255, 0.08); --glow-hover-border: rgba(0, 212, 255, 0.35); --glow-shadow: rgba(0, 212, 255, 0.15);">
+      <div style="font-family:'Orbitron',monospace;font-size:0.78rem;font-weight:700;color:#f0eaff;letter-spacing:1px;margin-bottom:20px; display:flex; align-items:center; gap:8px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#00d4ff; width:16px; height:16px;">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+        </svg>DEVELOPER_PROFILE
       </div>
-      <div class="mb-3">
-        <div class="d-flex justify-content-between mb-1">
-          <span style="color:rgba(240,234,255,0.45);font-size:0.75rem;font-family:'JetBrains Mono',monospace;">data_structures</span>
-          <span style="color:#00fff7;font-size:0.75rem;font-family:'JetBrains Mono',monospace;">85%</span>
+      
+      <!-- Loading Skeletons -->
+      <div id="skills-loading" class="content-loading">
+        <div style="display: flex; gap: 16px; align-items: center; margin-bottom: 20px;">
+          <div class="skeleton-bg" style="width: 54px; height: 54px; border-radius: 12px; flex-shrink: 0;"></div>
+          <div style="flex-grow: 1;">
+            <div class="skeleton-bg" style="width: 60%; height: 16px; margin-bottom: 8px;"></div>
+            <div class="skeleton-bg" style="width: 100%; height: 8px; border-radius: 10px;"></div>
+          </div>
         </div>
-        <div class="progress-neon"><div class="progress-neon-bar" style="background:linear-gradient(90deg,#00fff7,#b026ff);" data-width="85"></div></div>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px;">
+          <div class="skeleton-bg" style="height: 56px; border-radius: 10px;"></div>
+          <div class="skeleton-bg" style="height: 56px; border-radius: 10px;"></div>
+          <div class="skeleton-bg" style="height: 56px; border-radius: 10px;"></div>
+        </div>
+        <div class="skeleton-bg" style="width: 100%; height: 44px; border-radius: 12px;"></div>
       </div>
-      <div class="mb-3">
-        <div class="d-flex justify-content-between mb-1">
-          <span style="color:rgba(240,234,255,0.45);font-size:0.75rem;font-family:'JetBrains Mono',monospace;">algorithms</span>
-          <span style="color:#b026ff;font-size:0.75rem;font-family:'JetBrains Mono',monospace;">72%</span>
+
+      <!-- Loaded Content -->
+      <div id="skills-container" class="content-loaded">
+        <!-- Level & XP header -->
+        <div style="display: flex; gap: 16px; align-items: center; margin-bottom: 20px;">
+          <div style="position: relative; width: 68px; height: 68px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-right: 4px;">
+            <svg style="position: absolute; transform: rotate(-90deg); width: 68px; height: 68px;">
+              <!-- Background ring -->
+              <circle cx="34" cy="34" r="28" stroke="rgba(255, 255, 255, 0.05)" stroke-width="4" fill="transparent" />
+              <!-- Animated glow progress ring -->
+              <circle id="prof-level-circle" cx="34" cy="34" r="28" stroke="url(#level-ring-grad)" stroke-width="4" fill="transparent" stroke-dasharray="176" stroke-dashoffset="176" stroke-linecap="round" style="transition: stroke-dashoffset 1.8s cubic-bezier(0.19, 1, 0.22, 1); filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.6));" />
+              
+              <!-- Gradient definitions -->
+              <defs>
+                <linearGradient id="level-ring-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#00d4ff" />
+                  <stop offset="50%" stop-color="#b026ff" />
+                  <stop offset="100%" stop-color="#ff2d78" />
+                </linearGradient>
+              </defs>
+            </svg>
+            <div style="text-align: center; position: relative; z-index: 2; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+              <div style="font-size: 0.5rem; font-family: 'Orbitron', monospace; font-weight: 700; color: rgba(240, 234, 255, 0.55); letter-spacing: 0.5px; line-height: 1;">LVL</div>
+              <div id="prof-level" style="font-size: 1.35rem; font-family: 'Orbitron', monospace; font-weight: 900; color: #fff; line-height: 1; margin-top: 1px; text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);">0</div>
+            </div>
+          </div>
+          <div style="flex-grow: 1;">
+            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px;">
+              <span style="font-family: 'Orbitron', monospace; font-size: 0.8rem; font-weight: 700; color: #fff; letter-spacing: 0.5px;">XP Progress</span>
+              <span id="prof-xp-text" style="font-size: 0.72rem; font-family: var(--font-code); color: var(--text-dim);">0 / 500 XP</span>
+            </div>
+            <div class="progress-neon-polished" style="height: 8px;">
+              <div id="prof-xp-bar" class="progress-neon-polished-bar" style="background: linear-gradient(90deg, #00d4ff, #b026ff); --bar-glow: #b026ff44; width: 0%;"></div>
+            </div>
+          </div>
         </div>
-        <div class="progress-neon"><div class="progress-neon-bar" style="background:linear-gradient(90deg,#b026ff,#ff2d78);" data-width="72"></div></div>
-      </div>
-      <div class="mb-3">
-        <div class="d-flex justify-content-between mb-1">
-          <span style="color:rgba(240,234,255,0.45);font-size:0.75rem;font-family:'JetBrains Mono',monospace;">system_design</span>
-          <span style="color:#ff2d78;font-size:0.75rem;font-family:'JetBrains Mono',monospace;">60%</span>
+
+        <!-- 3-Column Profile Stats -->
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px;">
+          <!-- Solved Card -->
+          <div style="background: rgba(255,255,255,0.015); border: 1px solid rgba(255,255,255,0.04); border-radius: 12px; padding: 12px 8px; text-align: center; transition: all 0.3s;"
+               onmouseover="this.style.borderColor='rgba(0, 255, 130, 0.2)';this.style.background='rgba(0, 255, 130, 0.02)'"
+               onmouseout="this.style.borderColor='rgba(255,255,255,0.04)';this.style.background='rgba(255,255,255,0.015)'">
+            <div style="font-size: 0.65rem; font-family: 'Orbitron', monospace; color: var(--text-dim); margin-bottom: 6px; letter-spacing: 0.5px;">SOLVED</div>
+            <div id="prof-solved" style="font-size: 1.1rem; font-family: 'Orbitron', monospace; font-weight: 800; color: #00ff82;">0</div>
+          </div>
+          <!-- Rank Card -->
+          <div style="background: rgba(255,255,255,0.015); border: 1px solid rgba(255,255,255,0.04); border-radius: 12px; padding: 12px 8px; text-align: center; transition: all 0.3s;"
+               onmouseover="this.style.borderColor='rgba(176, 38, 255, 0.2)';this.style.background='rgba(176, 38, 255, 0.02)'"
+               onmouseout="this.style.borderColor='rgba(255,255,255,0.04)';this.style.background='rgba(255,255,255,0.015)'">
+            <div style="font-size: 0.65rem; font-family: 'Orbitron', monospace; color: var(--text-dim); margin-bottom: 6px; letter-spacing: 0.5px;">RANK</div>
+            <div id="prof-rank" style="font-size: 1.1rem; font-family: 'Orbitron', monospace; font-weight: 800; color: #b026ff;">—</div>
+          </div>
+          <!-- Accuracy Card -->
+          <div style="background: rgba(255,255,255,0.015); border: 1px solid rgba(255,255,255,0.04); border-radius: 12px; padding: 12px 8px; text-align: center; transition: all 0.3s;"
+               onmouseover="this.style.borderColor='rgba(0, 212, 255, 0.2)';this.style.background='rgba(0, 212, 255, 0.02)'"
+               onmouseout="this.style.borderColor='rgba(255,255,255,0.04)';this.style.background='rgba(255,255,255,0.015)'">
+            <div style="font-size: 0.65rem; font-family: 'Orbitron', monospace; color: var(--text-dim); margin-bottom: 6px; letter-spacing: 0.5px;">ACCURACY</div>
+            <div id="prof-accuracy" style="font-size: 1.1rem; font-family: 'Orbitron', monospace; font-weight: 800; color: #00d4ff;">0%</div>
+          </div>
         </div>
-        <div class="progress-neon"><div class="progress-neon-bar" style="background:linear-gradient(90deg,#ff2d78,#ff6b2b);" data-width="60"></div></div>
-      </div>
-      <div>
-        <div class="d-flex justify-content-between mb-1">
-          <span style="color:rgba(240,234,255,0.45);font-size:0.75rem;font-family:'JetBrains Mono',monospace;">sql_databases</span>
-          <span style="color:#00ff82;font-size:0.75rem;font-family:'JetBrains Mono',monospace;">91%</span>
+
+        <!-- Weekly Goal Section -->
+        <div style="background: rgba(255, 45, 120, 0.02); border: 1px solid rgba(255, 45, 120, 0.12); border-radius: 12px; padding: 14px 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px;">
+            <span style="font-family: 'Orbitron', monospace; font-size: 0.75rem; font-weight: 700; color: #ff2d78; letter-spacing: 0.5px; display:inline-flex; align-items:center; gap:6px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px; height:12px;"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>WEEKLY TARGET
+            </span>
+            <span id="prof-weekly-progress-text" style="font-size: 0.72rem; font-family: var(--font-code); color: var(--text-dim);">0 / 5 Solved</span>
+          </div>
+          <div class="progress-neon-polished" style="height: 6px;">
+            <div id="prof-weekly-progress-bar" class="progress-neon-polished-bar" style="background: linear-gradient(90deg, #ff2d78, #ff6b2b); --bar-glow: #ff2d7844; width: 0%;"></div>
+          </div>
         </div>
-        <div class="progress-neon"><div class="progress-neon-bar" style="background:linear-gradient(90deg,#00ff82,#00fff7);" data-width="91"></div></div>
       </div>
     </div>
 
-    <div class="card-glass anim-in anim-d3 p-4" style="border-color:rgba(176,38,255,0.3);position:relative;overflow:hidden;">
-      <div style="position:absolute;top:-20px;right:-20px;width:100px;height:100px;border-radius:50%;background:radial-gradient(circle,rgba(176,38,255,0.15),transparent 70%);"></div>
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;position:relative;z-index:1;">
-        <div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,#b026ff,#ff2d78);display:flex;align-items:center;justify-content:center;box-shadow:0 0 18px rgba(176,38,255,0.4);flex-shrink:0;">
-          <i class="fas fa-robot" style="color:#fff;"></i>
+    <!-- AI Mentor Card -->
+    <div class="glow-card-interactive ai-mentor-card anim-in anim-d3 p-4" style="--glow-color: rgba(176, 38, 255, 0.12); --glow-hover-border: rgba(176, 38, 255, 0.5); --glow-shadow: rgba(176, 38, 255, 0.25); position:relative; overflow:hidden;">
+      <div style="position:absolute;top:-20px;right:-20px;width:100px;height:100px;border-radius:50%;background:radial-gradient(circle,rgba(176, 38, 255, 0.15),transparent 70%);"></div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;position:relative;z-index:1;">
+        <div class="ai-mentor-avatar" style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,#b026ff,#ff2d78);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px; height:20px;">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
         </div>
         <div>
-          <div style="color:#b026ff;font-weight:700;font-size:0.8rem;font-family:'Orbitron',monospace;">AI MENTOR</div>
+          <div style="color:#b026ff;font-weight:700;font-size:0.8rem;font-family:'Orbitron',monospace;">DEV COMPANION</div>
           <div style="color:rgba(240,234,255,0.4);font-size:0.68rem;font-family:'JetBrains Mono',monospace;">// ask me anything</div>
         </div>
       </div>
-      <p style="color:rgba(240,234,255,0.5);font-size:0.78rem;margin-bottom:14px;position:relative;z-index:1;">"Stuck on a problem? I can break it down step by step."</p>
-      <a href="/discuss/" class="btn-neon w-100 justify-content-center" style="position:relative;z-index:1;"><i class="fas fa-comment-dots"></i> Start Chat</a>
+      <p id="ai-mentor-tips" style="color:rgba(240,234,255,0.65);font-size:0.8rem;line-height:1.4;margin-bottom:16px;position:relative;z-index:1;min-height: 44px; text-align: left;">
+        "Stuck on a logic problem or need help optimizing your code? I can break it down step-by-step."
+      </p>
+      <a href="/discuss/" class="btn-neon w-100 justify-content-center" style="position:relative;z-index:1; display:inline-flex; align-items:center; gap:8px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:16px; height:16px;">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg> Start Chat
+      </a>
     </div>
 
-    <div class="card-glass anim-in anim-d4 p-4">
-      <div style="font-family:'Orbitron',monospace;font-size:0.78rem;font-weight:700;color:#f0eaff;letter-spacing:1px;margin-bottom:14px;">
-        <i class="fas fa-terminal" style="color:#00fff7;margin-right:8px;"></i>QUICK_ACCESS
+    <!-- Quick Access Card -->
+    <div class="glow-card-interactive anim-in anim-d4 p-4" style="--glow-color: rgba(0, 255, 247, 0.06); --glow-hover-border: rgba(0, 255, 247, 0.3); --glow-shadow: rgba(0, 255, 247, 0.15);">
+      <div style="font-family:'Orbitron',monospace;font-size:0.78rem;font-weight:700;color:#f0eaff;letter-spacing:1px;margin-bottom:16px; display:flex; align-items:center; gap:8px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#00fff7" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:16px; height:16px;">
+          <circle cx="12" cy="12" r="10"/>
+          <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>
+        </svg>QUICK_ACCESS
       </div>
-      <a href="/contest/" style="display:flex;align-items:center;gap:10px;color:rgba(240,234,255,0.45);text-decoration:none;padding:9px 12px;border-radius:8px;font-size:0.83rem;border:1px solid transparent;margin-bottom:2px;"
-         onmouseover="this.style.background='rgba(255,45,120,0.06)';this.style.color='#ff2d78'"
-         onmouseout="this.style.background='transparent';this.style.color='rgba(240,234,255,0.45)'">
-        <i class="fas fa-flag-checkered" style="color:#ff2d78;width:16px;"></i> Contests
+      
+      <a href="/contest/" class="quick-access-link-polished" style="--hover-color: #ff2d78; --hover-bg: rgba(255, 45, 120, 0.05); --hover-border: rgba(255, 45, 120, 0.15); display:flex; align-items:center; gap:12px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#ff2d78" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px; height:14px;">
+          <path d="M4 22V4c4-1 6 2 10 0v10c-4 2-6-1-10 1"/>
+        </svg> Contests
       </a>
-      <a href="/leaderboard/" style="display:flex;align-items:center;gap:10px;color:rgba(240,234,255,0.45);text-decoration:none;padding:9px 12px;border-radius:8px;font-size:0.83rem;border:1px solid transparent;margin-bottom:2px;"
-         onmouseover="this.style.background='rgba(0,255,130,0.06)';this.style.color='#00ff82'"
-         onmouseout="this.style.background='transparent';this.style.color='rgba(240,234,255,0.45)'">
-        <i class="fas fa-trophy" style="color:#00ff82;width:16px;"></i> Leaderboard
+      <a href="/leaderboard/" class="quick-access-link-polished" style="--hover-color: #00ff82; --hover-bg: rgba(0, 255, 130, 0.05); --hover-border: rgba(0, 255, 130, 0.15); display:flex; align-items:center; gap:12px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#00ff82" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px; height:14px;">
+          <path d="M18 20V10h4v10h-4zM6 20V14h4v6H6zm6 0V4h4v16h-4z"/>
+        </svg> Leaderboard
       </a>
-      <a href="/study-plan/" style="display:flex;align-items:center;gap:10px;color:rgba(240,234,255,0.45);text-decoration:none;padding:9px 12px;border-radius:8px;font-size:0.83rem;border:1px solid transparent;">
-        <i class="fas fa-graduation-cap" style="color:#b026ff;width:16px;"></i> Study Plan
+      <a href="/study-plan/" class="quick-access-link-polished" style="--hover-color: #b026ff; --hover-bg: rgba(176, 38, 255, 0.05); --hover-border: rgba(176, 38, 255, 0.15); display:flex; align-items:center; gap:12px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#b026ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px; height:14px;">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+        </svg> Study Plan
       </a>
     </div>
   </div>
 </div>
 
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Count-up animation
+  function animateCountUp(element, endVal, duration = 1200) {
+    if (!element) return;
+    
+    // If endVal is not a number, just display it
+    if (isNaN(endVal) || endVal === null || endVal === undefined || endVal === '') {
+      element.textContent = endVal || '—';
+      return;
+    }
+    
+    const startVal = 0;
+    const targetVal = parseInt(endVal, 10);
+    let startTime = null;
+    
+    function step(timestamp) {
+      if (!startTime) startTime = timestamp;
+      const progress = Math.min((timestamp - startTime) / duration, 1);
+      // Easing function outQuad
+      const easedProgress = progress * (2 - progress);
+      const currentVal = Math.floor(easedProgress * (targetVal - startVal) + startVal);
+      element.textContent = currentVal;
+      
+      if (progress < 1) {
+        window.requestAnimationFrame(step);
+      } else {
+        element.textContent = targetVal;
+      }
+    }
+    window.requestAnimationFrame(step);
+  }
+
+  // Mouse-tracking ambient glow coordinates updater
+  document.addEventListener('mousemove', e => {
+    document.querySelectorAll('.glow-card-interactive').forEach(card => {
+      const rect = card.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      card.style.setProperty('--mouse-x', `${x}px`);
+      card.style.setProperty('--mouse-y', `${y}px`);
+    });
+  });
+
+  // Typewriter Coder Logs inside welcome banner
+  function startConsoleLogs(messages) {
+    const logsEl = document.getElementById('console-logs');
+    if (!logsEl) return;
+    logsEl.innerHTML = '';
+    let msgIdx = 0;
+    
+    function printNextMessage() {
+      if (msgIdx >= messages.length) return;
+      const msg = messages[msgIdx];
+      const div = document.createElement('div');
+      div.style.whiteSpace = 'nowrap';
+      div.style.overflow = 'hidden';
+      div.style.borderRight = '2px solid #00d4ff';
+      div.style.width = '0';
+      div.style.color = msg.includes('APPROVED') || msg.includes('OPTIMAL') ? '#00ff82' : (msg.includes('AI:') ? '#b026ff' : '#00d4ff');
+      div.textContent = '> ' + msg;
+      logsEl.appendChild(div);
+      
+      let charIdx = 0;
+      const typeSpeed = 20; // Type characters fast
+      
+      function typeChar() {
+        if (charIdx <= msg.length) {
+          // Adjust width calculation for standard display
+          div.style.width = (charIdx * 7.5) + 'px';
+          charIdx++;
+          setTimeout(typeChar, typeSpeed);
+        } else {
+          div.style.borderRight = 'none';
+          logsEl.scrollTop = logsEl.scrollHeight;
+          msgIdx++;
+          setTimeout(printNextMessage, 300); // Small delay between logs
+        }
+      }
+      typeChar();
+    }
+    printNextMessage();
+  }
+
+  // AI Mentor Tip Rotator (Typing Effect)
+  function initAiMentorTips() {
+    const tips = [
+      "Stuck on a logic problem? Ask me to break it down step-by-step.",
+      "Big O Tip: Sorting usually takes O(N log N) time on average.",
+      "Algorithm Tip: Try a two-pointer technique for sorted arrays.",
+      "Complexity Tip: Hash maps give O(1) average lookup times. Use them!",
+      "Hacker Tip: Always verify bounds & null cases first during coding.",
+      "Study Tip: Consistently coding 1 problem daily builds strong muscle memory."
+    ];
+    
+    const tipsEl = document.getElementById('ai-mentor-tips');
+    if (!tipsEl) return;
+    
+    let currentTipIdx = 0;
+    
+    function rotateTip() {
+      const text = tips[currentTipIdx];
+      tipsEl.style.opacity = 0;
+      tipsEl.style.transition = 'opacity 0.5s ease';
+      
+      setTimeout(() => {
+        tipsEl.textContent = '';
+        tipsEl.style.opacity = 1;
+        let charIdx = 0;
+        
+        function typeChar() {
+          if (charIdx < text.length) {
+            tipsEl.textContent += text[charIdx];
+            charIdx++;
+            setTimeout(typeChar, 25);
+          } else {
+            // Setup next rotation in 8 seconds
+            currentTipIdx = (currentTipIdx + 1) % tips.length;
+            setTimeout(rotateTip, 8000);
+          }
+        }
+        typeChar();
+      }, 600);
+    }
+    
+    // Start after 5 seconds
+    setTimeout(rotateTip, 5000);
+  }
+
+  // GitHub / LeetCode Contribution Calendar rendering
+  function renderCalendar(year, activeDates) {
+    const gridContainer = document.getElementById('github-calendar-grid');
+    if (!gridContainer) return;
+    
+    gridContainer.innerHTML = '';
+    
+    const startDate = new Date(year, 0, 1);
+    const startDayOfWeek = startDate.getDay(); // 0 is Sunday, 1 is Monday ...
+    const endDate = new Date(year, 11, 31);
+    
+    function formatDate(d) {
+      const yr = d.getFullYear();
+      const mo = String(d.getMonth() + 1).padStart(2, '0');
+      const dy = String(d.getDate()).padStart(2, '0');
+      return `${yr}-${mo}-${dy}`;
+    }
+
+    let cellsHtml = '';
+    let subCountInYear = 0;
+    
+    // 1. Add placeholders for alignment (Align Sunday as 1st row)
+    for (let i = 0; i < startDayOfWeek; i++) {
+      cellsHtml += `<div style="width: 8px; height: 8px; opacity: 0; pointer-events: none;"></div>`;
+    }
+    
+    // 2. Add actual days of the year
+    let currentDate = new Date(startDate);
+    const activeSet = new Set(activeDates);
+    
+    while (currentDate <= endDate) {
+      const dateStr = formatDate(currentDate);
+      const isActive = activeSet.has(dateStr);
+      
+      let bgStyle = 'rgba(255, 255, 255, 0.03)';
+      let borderStyle = '1px solid rgba(255, 255, 255, 0.05)';
+      let glowStyle = '';
+      
+      if (isActive) {
+        subCountInYear++;
+        bgStyle = '#b026ff';
+        borderStyle = '1px solid #b026ff';
+        glowStyle = 'box-shadow: 0 0 8px rgba(176,38,255,0.75);';
+      }
+      
+      const tooltipText = `${currentDate.toLocaleDateString(undefined, {month: 'short', day: 'numeric', year: 'numeric'})}: ${isActive ? 'Code Submission' : 'No activity'}`;
+      
+      cellsHtml += `
+        <div class="contrib-tile-cell" style="width: 8px; height: 8px; background: ${bgStyle}; border: ${borderStyle}; border-radius: 1.5px; ${glowStyle} cursor: pointer; position: relative;">
+          <span class="contrib-tooltip-custom">${tooltipText}</span>
+        </div>
+      `;
+      
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+    
+    gridContainer.innerHTML = cellsHtml;
+    
+    // Update Summary text
+    const summaryEl = document.getElementById('calendar-summary-text');
+    if (summaryEl) {
+      summaryEl.textContent = `${subCountInYear} submission${subCountInYear === 1 ? '' : 's'} in ${year}`;
+    }
+  }
+
+  window.changeCalendarYear = function(year) {
+    document.querySelectorAll('.calendar-year-btn').forEach(btn => {
+      btn.classList.toggle('active', parseInt(btn.getAttribute('data-year')) === year);
+    });
+    renderCalendar(year, window.activeDatesList || []);
+  };
+
+  // Load backend dashboard statistics and populate layout
+  async function loadDashboardData() {
+    try {
+      const response = await fetch('/dashboard/api/');
+      if (!response.ok) {
+        throw new Error('Failed to fetch dashboard data');
+      }
+      const data = await response.json();
+      
+      // Update Hero Badges
+      const heroStreakEl = document.getElementById('hero-streak');
+      const heroSolvedEl = document.getElementById('hero-solved');
+      const heroWeeklyProgressEl = document.getElementById('hero-weekly-progress');
+      
+      if (heroStreakEl && heroSolvedEl && heroWeeklyProgressEl) {
+        heroStreakEl.textContent = data.streak;
+        heroSolvedEl.textContent = data.problems_solved;
+        heroWeeklyProgressEl.textContent = `${data.gamified.weekly_solved}/${data.gamified.weekly_goal}`;
+        
+        document.getElementById('hero-badges-loading').style.display = 'none';
+        document.getElementById('hero-badges').style.display = 'flex';
+      }
+      
+      // Update Resume Practice button if there's a recommended question
+      const recommendedInsight = data.insights.find(ins => ins.type === 'recommendation' && ins.question_id);
+      const resumeBtn = document.getElementById('hero-resume-btn');
+      if (resumeBtn && recommendedInsight) {
+        resumeBtn.href = `/submissions/submit/${recommendedInsight.question_id}/`;
+        resumeBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:14px; height:14px; margin-right:6px; display:inline-block; vertical-align:middle;"><polygon points="5 3 19 12 5 21 5 3"/></svg> Continue Solving`;
+      }
+
+      // Start Hacker Console Log Stream
+      const consoleMessages = [
+        "LOGS: Initializing kernel OS connection...",
+        "SYS: Connected to db.sqlite3 successfully.",
+        "SEC: Authenticating user handshake: APPROVED",
+        "STATS: Parsing submission databases...",
+        "OS: Level metrics synced. Level: " + (data.gamified.level || 1) + " | XP: " + data.gamified.xp,
+        "AI: Suggested next challenge: " + (recommendedInsight ? recommendedInsight.title : "Ready"),
+        "SYS: Dashboard online. System: OPTIMAL"
+      ];
+      startConsoleLogs(consoleMessages);
+
+      // Update statistics
+      const totalProblemsEl = document.getElementById('stat-total-problems');
+      const problemsSolvedEl = document.getElementById('stat-problems-solved');
+      const streakEl = document.getElementById('stat-streak');
+      const globalRankEl = document.getElementById('stat-global-rank');
+      
+      // Hide loading skeletons, show contents
+      document.querySelectorAll('.stat-loading').forEach(el => el.style.display = 'none');
+      document.querySelectorAll('.stat-loaded').forEach(el => el.style.display = 'block');
+      
+      animateCountUp(totalProblemsEl, data.total_problems);
+      animateCountUp(problemsSolvedEl, data.problems_solved);
+      animateCountUp(streakEl, data.streak);
+      
+      if (data.global_rank !== null && data.global_rank !== undefined && data.global_rank !== '—') {
+        animateCountUp(globalRankEl, data.global_rank);
+      } else {
+        globalRankEl.textContent = '—';
+      }
+      
+      // Update Developer Progress
+      const skillsLoading = document.getElementById('skills-loading');
+      const skillsContainer = document.getElementById('skills-container');
+      
+      if (skillsLoading && skillsContainer) {
+        skillsLoading.style.display = 'none';
+        skillsContainer.style.display = 'block';
+        
+        // Populate values
+        document.getElementById('prof-level').textContent = data.gamified.level;
+        document.getElementById('prof-xp-text').textContent = `${data.gamified.xp_in_level} / ${data.gamified.xp_next_level} XP`;
+        
+        animateCountUp(document.getElementById('prof-solved'), data.problems_solved);
+        document.getElementById('prof-rank').textContent = data.global_rank !== '—' ? `#${data.global_rank}` : '—';
+        document.getElementById('prof-accuracy').textContent = `${data.gamified.accuracy}%`;
+        document.getElementById('prof-weekly-progress-text').textContent = `${data.gamified.weekly_solved} / ${data.gamified.weekly_goal} Solved`;
+        
+        // Setup Progress Bars
+        const xpBar = document.getElementById('prof-xp-bar');
+        const weeklyBar = document.getElementById('prof-weekly-progress-bar');
+        const levelCircle = document.getElementById('prof-level-circle');
+        
+        xpBar.setAttribute('data-width', data.gamified.xp_progress_pct);
+        weeklyBar.setAttribute('data-width', data.gamified.weekly_progress_pct);
+        
+        // Trigger progress width and circle dashoffset animation
+        setTimeout(() => {
+          xpBar.style.width = data.gamified.xp_progress_pct + '%';
+          weeklyBar.style.width = data.gamified.weekly_progress_pct + '%';
+          
+          if (levelCircle) {
+            const circumference = 176;
+            const progressPct = Math.min(Math.max(parseInt(data.gamified.xp_progress_pct) || 0, 0), 100);
+            const offset = circumference - (progressPct / 100) * circumference;
+            levelCircle.style.strokeDashoffset = offset;
+          }
+        }, 100);
+      }
+      
+      // Helper function to map FontAwesome icons to minimal SVGs
+      function getMinimalIconSvg(iconName, color) {
+        const svgStyle = `width: 18px; height: 18px; color: ${color};`;
+        if (iconName.includes('fa-rocket')) {
+          return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="${svgStyle}"><path d="M4.5 16.5c-1.5 1.25-2.5 3.5-2.5 3.5s2.25-1 3.5-2.5M12 2C6.5 2 2 6.5 2 12c0 2 .5 3.5 1.5 4.5L8 12c1-1 2.5-1.5 4-1.5s3 .5 4 1.5l4.5 4.5c1-1 1.5-2.5 1.5-4.5 0-5.5-4.5-10-10-10z"/><path d="M12 8c.5 0 1 .5 1 1s-.5 1-1 1-1-.5-1-1 .5-1 1-1z"/></svg>`;
+        } else if (iconName.includes('fa-triangle-exclamation')) {
+          return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="${svgStyle}"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`;
+        } else if (iconName.includes('fa-lightbulb')) {
+          return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="${svgStyle}"><path d="M15 14c.2-.2.4-.4.6-.7C16.8 11.7 17 10 15.8 8.3 14.5 6.7 12 6 10 7.3c-2 1.3-2.5 3.8-1.3 5.7.2.3.4.5.6.7v3h6v-3z"/><line x1="9" y1="21" x2="15" y2="21"/><line x1="10" y1="18" x2="14" y2="18"/></svg>`;
+        } else if (iconName.includes('fa-arrow-trend-up')) {
+          return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="${svgStyle}"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>`;
+        }
+        return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="${svgStyle}"><circle cx="12" cy="12" r="10"/></svg>`;
+      }
+
+      // Update AI Insights
+      const insightsLoading = document.getElementById('insights-loading');
+      const insightsContainer = document.getElementById('insights-container');
+      
+      if (insightsLoading && insightsContainer) {
+        insightsLoading.style.display = 'none';
+        insightsContainer.style.display = 'block';
+        
+        let insightsHtml = '';
+        data.insights.forEach((insight, idx) => {
+          const clickAttr = insight.question_id ? `style="cursor: pointer;" onclick="window.location.href='/submissions/submit/${insight.question_id}/'"` : '';
+          const sysId = `[INSIGHT_0${idx + 1}]`;
+          const minimalIcon = getMinimalIconSvg(insight.icon, insight.color);
+          
+          insightsHtml += `
+            <div class="insight-subcard" ${clickAttr} style="--insight-border: ${insight.border}; --insight-shadow: ${insight.color}18;">
+              <div style="width:38px;height:38px;border-radius:10px;background:${insight.bg};border:1px solid ${insight.border};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                ${minimalIcon}
+              </div>
+              <div style="flex-grow: 1;">
+                <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 3px;">
+                  <span style="color:#f0eaff;font-weight:600;font-size:0.85rem;">${insight.title}</span>
+                  <span style="font-family: var(--font-code); font-size: 0.65rem; color: rgba(240,234,255,0.25);">${sysId}</span>
+                </div>
+                <div style="color:rgba(240,234,255,0.45);font-size:0.78rem;">${insight.desc}</div>
+              </div>
+            </div>
+          `;
+        });
+        
+        insightsContainer.innerHTML = insightsHtml;
+      }
+      
+      // Update Recent Activity & Contribution Grid
+      const activityLoading = document.getElementById('activity-loading');
+      const activityContainer = document.getElementById('activity-container');
+      
+      if (activityLoading && activityContainer) {
+        activityLoading.style.display = 'none';
+        activityContainer.style.display = 'block';
+        
+        // 14-day contribution grid rendering
+        const contribContainer = document.getElementById('contrib-matrix-container');
+        const contribList = document.getElementById('contrib-matrix-list');
+        if (contribContainer && data.active_dates) {
+          contribContainer.style.display = 'block';
+          
+          // Animate the Leetcode-style streak badge number
+          const actStreakVal = document.getElementById('activity-streak-val');
+          if (actStreakVal) {
+            animateCountUp(actStreakVal, data.streak);
+          }
+
+          // Save active dates globally
+          window.activeDatesList = data.active_dates;
+          const currentYear = new Date().getFullYear();
+          
+          // Generate Year switcher buttons
+          const yearsSet = new Set([currentYear, currentYear - 1]);
+          data.active_dates.forEach(dateStr => {
+            const yr = parseInt(dateStr.split('-')[0]);
+            if (yr) yearsSet.add(yr);
+          });
+          const sortedYears = Array.from(yearsSet).sort((a, b) => b - a);
+          
+          const yearsContainer = document.getElementById('calendar-years');
+          if (yearsContainer) {
+            yearsContainer.innerHTML = sortedYears.map(yr => `
+              <button class="calendar-year-btn ${yr === currentYear ? 'active' : ''}" onclick="changeCalendarYear(${yr})" data-year="${yr}" style="
+                font-family: 'Orbitron', monospace; 
+                font-size: 0.65rem; 
+                font-weight: 700;
+                border: 1px solid rgba(255, 255, 255, 0.05); 
+                background: rgba(255, 255, 255, 0.015);
+                color: rgba(240, 234, 255, 0.45); 
+                padding: 6px 8px; 
+                border-radius: 8px;
+                cursor: pointer;
+                transition: all 0.3s;
+                text-align: center;
+              ">${yr}</button>
+            `).join('');
+          }
+
+          // Initial render for current year
+          renderCalendar(currentYear, data.active_dates);
+        }
+
+        if (data.activities.length === 0) {
+          activityContainer.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-icon" style="display:flex; justify-content:center; align-items:center; margin-bottom:14px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="rgba(255, 45, 120, 0.35)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:36px; height:36px; filter: drop-shadow(0 0 10px rgba(255, 45, 120, 0.15));"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              </div>
+              <div class="empty-title">NO_ACTIVITY_RECORDED</div>
+              <div class="empty-desc">Solve your first challenge to start tracking your daily progress timeline.</div>
+              <a href="/questions/" class="btn-neon btn-sm" style="display:inline-flex; align-items:center; gap:6px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px; height:12px;"><polygon points="5 3 19 12 5 21 5 3"/></svg> Solve First Problem
+              </a>
+            </div>
+          `;
+        } else {
+          let activityHtml = '<div class="timeline">';
+          data.activities.forEach(act => {
+            let markerColor = '#ff2d78';
+            let markerGlow = 'rgba(255, 45, 120, 0.4)';
+            let markerBorder = 'rgba(255, 45, 120, 0.2)';
+            let markerSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="${markerColor}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width: 8px; height: 8px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+            
+            if (act.status === 'Accepted') {
+              markerColor = '#00ff82';
+              markerGlow = 'rgba(0, 255, 130, 0.4)';
+              markerBorder = 'rgba(0, 255, 130, 0.2)';
+              markerSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="${markerColor}" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" style="width: 8px; height: 8px;"><polyline points="20 6 9 17 4 12"/></svg>`;
+            } else if (act.status === 'Partial') {
+              markerColor = '#00fff7';
+              markerGlow = 'rgba(0, 255, 247, 0.4)';
+              markerBorder = 'rgba(0, 255, 247, 0.2)';
+              markerSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="${markerColor}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width: 8px; height: 8px;"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="8"/></svg>`;
+            }
+            
+            const subDate = new Date(act.submitted_at);
+            const formattedDate = subDate.toLocaleDateString(undefined, { 
+              month: 'short', 
+              day: 'numeric', 
+              hour: '2-digit', 
+              minute: '2-digit' 
+            });
+            
+            activityHtml += `
+              <div class="timeline-item">
+                <div class="timeline-marker" style="--marker-color: ${markerColor}; --marker-glow: ${markerGlow}; display:flex; align-items:center; justify-content:center;">
+                  ${markerSvg}
+                </div>
+                <div class="timeline-content" style="--marker-border: ${markerBorder}; cursor: pointer;" onclick="window.location.href='/submissions/submit/${act.question_id}/'">
+                  <div>
+                    <div class="timeline-title">${act.question_title}</div>
+                    <div class="timeline-meta">${formattedDate}</div>
+                  </div>
+                  <div style="text-align: right;">
+                    <div style="font-family:'Orbitron',monospace;font-size:0.8rem;font-weight:700;color:${markerColor}">${act.score}%</div>
+                    <div style="font-size:0.65rem;color:rgba(240,234,255,0.4);margin-top:2px;">Score</div>
+                  </div>
+                </div>
+              </div>
+            `;
+          });
+          activityHtml += '</div>';
+          activityContainer.innerHTML = activityHtml;
+        }
+      }
+      
+    } catch (error) {
+      console.error('Error loading dashboard data:', error);
+      // Fallback in case of error: show plain stats
+      document.querySelectorAll('.stat-loading, .content-loading').forEach(el => el.style.display = 'none');
+      document.querySelectorAll('.stat-loaded, .content-loaded').forEach(el => el.style.display = 'block');
+    }
+  }
+
+  // Load data on page load
+  window.addEventListener('DOMContentLoaded', () => {
+    loadDashboardData();
+    initAiMentorTips();
+  });
+</script>
 {% endblock %}

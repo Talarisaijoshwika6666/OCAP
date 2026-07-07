@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Question, TestCase
+from .models import Question, TestCase, Bookmark
 
 class TestCaseInline(admin.TabularInline):
     model = TestCase
@@ -11,3 +11,9 @@ class QuestionAdmin(admin.ModelAdmin):
     fields = ['title', 'description', 'difficulty', 'sample_input', 'sample_output', 'hint', 'answer', 'time_limit']
     inlines = [TestCaseInline]
     
+    inlines = [TestCaseInline]
+
+@admin.register(Bookmark)
+class BookmarkAdmin(admin.ModelAdmin):
+    list_display = ['user', 'question', 'created_at']
+    list_filter = ['created_at']

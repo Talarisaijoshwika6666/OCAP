@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-5" style="max-width:800px;">
+
+  <!-- Score Card -->
+  <div class="card-dark p-4 text-center mb-4"
+    style="border-color:{% if score == 100 %}#10b981{% elif score >= 50 %}#f59e0b{% else %}#ef4444{% endif %};">
+    <div style="font-size:3rem;margin-bottom:10px;">
+      {% if score == 100 %}🎉{% elif score >= 50 %}⚡{% else %}❌{% endif %}
+    </div>
+    <h2 style="color:{% if score == 100 %}#10b981{% elif score >= 50 %}#f59e0b{% else %}#ef4444{% endif %};font-weight:800;">
+      {{ score }}%
+    </h2>
+    <p style="color:#888;">{{ passed }} / {{ total }} test cases passed</p>
+    <h5 style="color:#fff;">{{ question.title }}</h5>
+    <div class="d-flex justify-content-center gap-3 mt-3">
+      <a href="/questions/{{ question.pk }}/" class="btn-arena btn">Try Again</a>
+      <a href="/questions/" class="btn" style="border:1px solid #444;color:#888;border-radius:20px;">Back to Problems</a>
+    </div>
+  </div>
+
+  <!-- Test Case Results -->
+  <h5 style="color:#f59e0b;margin-bottom:15px;">Test Case Results</h5>
+  {% for r in results %}
+  <div class="card-dark p-3 mb-3"
+    style="border-left:4px solid {% if r.passed %}#10b981{% else %}#ef4444{% endif %};">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <span style="color:{% if r.passed %}#10b981{% else %}#ef4444{% endif %};font-weight:700;">
+        {% if r.passed %}✅ Passed{% else %}❌ Failed{% endif %}
+      </span>
+    </div>
+    <div class="row">
+      <div class="col-4">
+        <div style="color:#666;font-size:0.75rem;margin-bottom:4px;">INPUT</div>
+        <code style="color:#aaa;font-size:0.85rem;">{{ r.input }}</code>
+      </div>
+      <div class="col-4">
+        <div style="color:#666;font-size:0.75rem;margin-bottom:4px;">EXPECTED</div>
+        <code style="color:#10b981;font-size:0.85rem;">{{ r.expected }}</code>
+      </div>
+      <div class="col-4">
+        <div style="color:#666;font-size:0.75rem;margin-bottom:4px;">YOUR OUTPUT</div>
+        <code style="color:{% if r.passed %}#10b981{% else %}#ef4444{% endif %};font-size:0.85rem;">
+          {% if r.error %}{{ r.error }}{% else %}{{ r.got }}{% endif %}
+        </code>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+
+  {% if score == 100 %}
+  <div class="card-dark p-4 text-center" style="border-color:#10b981;">
+    <p style="color:#10b981;font-weight:700;margin:0;">🏆 Perfect Score! All test cases passed!</p>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

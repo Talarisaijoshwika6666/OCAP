@@ -17,4 +17,4 @@ class Result(models.Model):
     submitted_at = models.DateTimeField(auto_now_add=True)
     
     def __str__(self):
-        return f"{self.candidate.username} - {self.assessment.name}"
+        return f"{self.candidate.username} - {self.assessment.title}"
