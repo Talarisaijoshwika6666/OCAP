@@ -20,6 +20,18 @@
     <i class="fas fa-arrow-left"></i> Back to Contests
   </a>
 </div>
+
+{% if auto_submitted_notice %}
+<div class="anim-in" style="margin-bottom:24px;background:rgba(255,45,120,0.1);border:1px solid rgba(255,45,120,0.4);border-radius:12px;padding:16px 22px;display:flex;align-items:center;gap:14px;">
+  <i class="fas fa-triangle-exclamation" style="color:#ff2d78;font-size:1.4rem;"></i>
+  <div>
+    <div style="color:#ff2d78;font-weight:800;font-family:'Orbitron',monospace;font-size:0.9rem;">Test auto-submitted</div>
+    <div style="color:rgba(240,234,255,0.6);font-size:0.85rem;margin-top:2px;">
+      Your test was automatically submitted because you left the contest window repeatedly (tab-switching / focus-loss detected 3 times).
+    </div>
+  </div>
+</div>
+{% endif %}
  
 <div class="anim-in" style="text-align:center;margin-bottom:32px;">
   {% if is_live %}
@@ -46,9 +58,11 @@
       <div style="color:rgba(240,234,255,0.45);font-size:0.78rem;font-family:'JetBrains Mono',monospace;">{{ my_row.solved }} solved · {{ my_row.total_score }} points</div>
     </div>
   </div>
+  {% if not auto_submitted_notice %}
   <a href="{% url 'contest_take_test' contest.pk %}" class="btn-neon" style="font-size:0.78rem;">
     <i class="fas fa-laptop-code"></i> {% if is_live %}Keep Solving{% else %}Review Problems{% endif %}
   </a>
+  {% endif %}
 </div>
 {% endif %}
  

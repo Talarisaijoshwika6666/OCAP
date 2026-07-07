@@ -15,6 +15,8 @@ class ContestAdmin(admin.ModelAdmin):
  
 @admin.register(ContestRegistration)
 class ContestRegistrationAdmin(admin.ModelAdmin):
-    list_display = ('user', 'contest', 'registered_at')
-    list_filter = ('contest',)
+    # violation_count / auto_submitted surface proctoring activity
+    # directly in the admin so recruiters can audit flagged candidates.
+    list_display = ('user', 'contest', 'registered_at', 'violation_count', 'auto_submitted', 'auto_submitted_at')
+    list_filter = ('contest', 'auto_submitted')
  

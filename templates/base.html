@@ -564,7 +564,7 @@
     }
   </style>
 </head>
-<body>
+<body data-contest-lock="{% if contest_lock %}1{% else %}0{% endif %}">
 
 <!-- Background glow layer -->
 <div class="bg-layer"></div>
@@ -742,7 +742,52 @@
       setTimeout(() => { bar.style.width = w + '%'; }, 400);
     });
   });
+
+  // ── Contest nav-lock ──────────────────────────────────────────
+  // While the candidate is on an active contest test page (the
+  // problem-list "take test" page or the code arena), the view sets
+  // data-contest-lock="1" on <body>. That's our cue to block every
+  // sidebar/topbar navigation link — including clicking "Contest"
+  // again — so they can't wander off to another part of the app
+  // until the test is actually submitted. This is purely a UX guard;
+  // the real enforcement (blocking direct URL access, refresh, etc.)
+  // lives server-side in the contest views themselves.
+  (function() {
+    if (document.body.getAttribute('data-contest-lock') !== '1') return;
+
+    function showNavLockNotice() {
+      let toast = document.getElementById('nav-lock-toast');
+      if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'nav-lock-toast';
+        toast.style.cssText = 'position:fixed;top:84px;left:50%;transform:translateX(-50%);z-index:10000;'
+          + 'background:rgba(18,10,32,0.98);border:1px solid rgba(255,45,120,0.5);color:#f0eaff;'
+          + 'padding:12px 22px;border-radius:10px;font-family:"JetBrains Mono",monospace;font-size:0.82rem;'
+          + 'box-shadow:0 0 30px rgba(255,45,120,0.25);display:flex;align-items:center;gap:10px;'
+          + 'max-width:90vw;text-align:left;';
+        toast.innerHTML = '<i class="fas fa-lock" style="color:#ff2d78;"></i>'
+          + '<span>You can\'t leave this page during an active test. Submit the test to continue.</span>';
+        document.body.appendChild(toast);
+      }
+      toast.style.display = 'flex';
+      clearTimeout(toast._hideTimer);
+      toast._hideTimer = setTimeout(() => { toast.style.display = 'none'; }, 3200);
+    }
+
+    // Event delegation on the document — this fires before any normal
+    // link navigation, so preventDefault() here stops the browser from
+    // ever leaving the page for anything matched below.
+    document.addEventListener('click', function(e) {
+      const link = e.target.closest('a');
+      if (!link) return;
+      if (!link.matches('.nav-item-side, .topbar-btn, .topbar-user, #back-to-contests-link')) return;
+      e.preventDefault();
+      e.stopPropagation();
+      showNavLockNotice();
+    }, true);
+  })();
 </script>
 {% block extra_js %}{% endblock %}
 </body>
 </html>
+

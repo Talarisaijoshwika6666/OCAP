@@ -147,6 +147,30 @@
     .ct-problem-pane, .ct-code-pane { width:100% !important; }
     .ct-shell { height:auto; }
   }
+
+  /* ── Proctoring (anti-tab-switch) warning modal ──
+     Sits above everything, blocks interaction with the arena underneath,
+     and can only be dismissed via the "I Understand" button (or, on the
+     final auto-submit, isn't dismissible at all — it just informs). */
+  .proctor-overlay {
+    position:fixed; inset:0; z-index:9999; display:none;
+    align-items:center; justify-content:center; padding:20px;
+    background:rgba(5,2,12,0.86); backdrop-filter:blur(6px);
+  }
+  .proctor-card {
+    max-width:440px; width:100%; text-align:center;
+    background:rgba(18,10,32,0.98); border:1px solid rgba(255,45,120,0.5);
+    border-radius:16px; padding:34px 28px; box-shadow:0 0 50px rgba(255,45,120,0.3);
+  }
+  .proctor-icon { font-size:2.3rem; color:#ff2d78; margin-bottom:14px; }
+  .proctor-title { font-family:var(--font-display); color:#fff; font-size:1.1rem; font-weight:900; margin:0 0 14px 0; letter-spacing:0.5px; }
+  .proctor-message { color:rgba(240,234,255,0.88); font-size:0.92rem; line-height:1.65; margin:0 0 10px 0; }
+  .proctor-next { color:#ffc107; font-size:0.82rem; font-weight:700; margin:0 0 24px 0; line-height:1.5; }
+  .proctor-ack-btn {
+    background:linear-gradient(135deg,#ff2d78,#b026ff); color:#fff; border:none; border-radius:8px;
+    padding:12px 30px; font-weight:800; font-size:0.9rem; cursor:pointer; font-family:var(--font-code);
+    box-shadow:0 0 16px rgba(176,38,255,0.35);
+  }
 </style>
 
 <div class="ct-shell anim-in">
@@ -258,6 +282,24 @@
   </div>
 </div>
 <div class="ct-footer-counter">Question {{ question_number }} of {{ total_questions }}</div>
+ 
+<!-- ── Proctoring warning modal ──────────────────────────────────────
+     Reused for both violation warnings (1 of 2 / 2 of 2, with an
+     "I Understand" button the candidate must click to resume) and the
+     final auto-submit notice (no button — it's informational only,
+     since submission is already happening automatically). Only present
+     on this contest-arena page, so it never appears on practice /
+     Problem Bank pages. -->
+<div id="proctor-overlay" class="proctor-overlay">
+  <div class="proctor-card">
+    <div class="proctor-icon"><i class="fas fa-triangle-exclamation"></i></div>
+    <h3 id="proctor-title" class="proctor-title">Warning</h3>
+    <p id="proctor-message" class="proctor-message"></p>
+    <p id="proctor-next" class="proctor-next"></p>
+    <button id="proctor-ack-btn" class="proctor-ack-btn">I Understand, Continue</button>
+  </div>
+</div>
+
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
@@ -273,6 +315,7 @@
   const SUBMIT_URL_TEMPLATE = "{% url 'contest_submit_solution' contest.pk 0 %}"; // .../solve/0/submit/ — 0 gets swapped per-question
   const TAKE_TEST_URL = "{% url 'contest_take_test' contest.pk %}";
   const RESULT_URL = "{% url 'contest_result' contest.pk %}";
+  const REPORT_VIOLATION_URL = "{% url 'contest_report_violation' contest.pk %}";
   const CSRF = "{{ csrf_token }}";
   // @ts-ignore
   const CONTEST_PK = Number(`{{ contest.pk }}`) || 0;
@@ -435,8 +478,12 @@
     return SUBMIT_URL_TEMPLATE.replace('/0/submit/', `/${qid}/submit/`);
   }
 
-  function submitEntireTest() {
-    if (!confirm("Submit the entire test? This will grade every question in this contest and you won't be able to change your answers after this.")) {
+  function submitEntireTest(auto) {
+    // `auto` is true when the proctor is force-submitting after the 3rd
+    // violation — same grading path as a manual "Submit Test" click,
+    // just without the confirm() prompt and tagged so the results page
+    // shows the auto-submit banner.
+    if (!auto && !confirm("Submit the entire test? This will grade every question in this contest and you won't be able to change your answers after this.")) {
       return;
     }
 
@@ -444,11 +491,15 @@
 
     const submitBtn = document.getElementById('ct-submit-btn');
     submitBtn.disabled = true;
-    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting Test...';
+    submitBtn.innerHTML = auto
+      ? '<i class="fas fa-spinner fa-spin"></i> Auto-Submitting…'
+      : '<i class="fas fa-spinner fa-spin"></i> Submitting Test...';
 
     showConsoleTab('testcases');
     const panel = document.getElementById('ct-panel-testcases');
-    panel.innerHTML = '<span style="color:#f2a33d;">// Submitting the entire test — grading all questions...</span>';
+    panel.innerHTML = auto
+      ? '<span style="color:#ff2d78;">// Proctoring violation limit reached — auto-submitting the entire test...</span>'
+      : '<span style="color:#f2a33d;">// Submitting the entire test — grading all questions...</span>';
 
     const tasks = ALL_QUESTION_IDS.map(qid => {
       let code, language;
@@ -487,10 +538,13 @@
       html += '<div style="color:rgba(240,234,255,0.5);font-size:0.8rem;">Redirecting you to the results page…</div>';
       panel.innerHTML = html;
 
+      // The auto-submitted banner and the removal of "Keep Solving" on
+      // the results page are both driven by the persisted registration
+      // state (checked server-side), so a plain redirect is enough here.
       setTimeout(() => { window.location.href = RESULT_URL; }, 900);
     });
   }
-  document.getElementById('ct-submit-btn').addEventListener('click', submitEntireTest);
+  document.getElementById('ct-submit-btn').addEventListener('click', function() { submitEntireTest(false); });
 
   // ── Reset ──
   document.getElementById('ct-reset-btn').addEventListener('click', function() {
@@ -537,6 +591,120 @@
     });
   });
 
+  // ─────────────────────────────────────────────────────────────
+  // Proctoring — anti-tab-switching
+  //
+  // Detects the candidate switching tabs, switching apps/minimizing the
+  // window, or otherwise leaving this page, using both the Page
+  // Visibility API and window blur (belt-and-braces — some
+  // window-manager/OS combinations only reliably fire one of the two).
+  // Every suspected violation is reported to the server, which is the
+  // only place the count is actually kept and validated — this script
+  // never decides on its own that the 3-strikes threshold was crossed;
+  // it just relays what the server says.
+  // ─────────────────────────────────────────────────────────────
+  const proctorOverlay = document.getElementById('proctor-overlay');
+  const proctorTitleEl = document.getElementById('proctor-title');
+  const proctorMessageEl = document.getElementById('proctor-message');
+  const proctorNextEl = document.getElementById('proctor-next');
+  const proctorAckBtn = document.getElementById('proctor-ack-btn');
+ 
+  // Restored from the server so a page refresh doesn't let a candidate
+  // pretend they never got any warnings — purely informational here,
+  // since the server re-validates the real count on every report anyway.
+  let knownViolationCount = parseInt('{{ initial_violation_count|default:0 }}', 10) || 0;
+ 
+  // Paused while the modal is showing (or a report is in flight) so a
+  // single tab-switch can't be reported twice (blur + visibilitychange
+  // both fire) and so the candidate can't rack up violations while
+  // they're stuck reading the warning.
+  let proctorPaused = false;
+ 
+  function openProctorModal(title, message, next, showAck) {
+    proctorTitleEl.textContent = title;
+    proctorMessageEl.textContent = message;
+    proctorNextEl.textContent = next || '';
+    proctorAckBtn.style.display = showAck ? 'inline-block' : 'none';
+    proctorOverlay.style.display = 'flex';
+  }
+ 
+  function closeProctorModal() {
+    proctorOverlay.style.display = 'none';
+  }
+ 
+  proctorAckBtn.addEventListener('click', function() {
+    closeProctorModal();
+    proctorPaused = false; // resume watching for further violations
+  });
+ 
+  function reportViolation() {
+    if (proctorPaused) return;
+    proctorPaused = true;
+ 
+    fetch(REPORT_VIOLATION_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+      body: JSON.stringify({}),
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (!data.ok) {
+          // Contest isn't live / candidate isn't registered (edge case,
+          // e.g. contest ended in the background) — nothing to enforce.
+          proctorPaused = false;
+          return;
+        }
+ 
+        knownViolationCount = data.violation_count;
+ 
+        if (data.auto_submit) {
+          // 3rd violation — server has already flagged this
+          // registration as auto-submitted. Show a non-dismissible
+          // notice and force-submit exactly like the "Submit Test"
+          // button, then redirect with the auto-submitted banner.
+          openProctorModal(
+            'Test Auto-Submitted',
+            'You left the contest window again after your final warning.',
+            'Your test is being submitted automatically…',
+            false
+          );
+          submitEntireTest(true);
+          return;
+        }
+ 
+        if (knownViolationCount <= 1) {
+          openProctorModal(
+            'Warning 1 of 2',
+            'You have switched tabs or left the contest window. Please remain on the contest page.',
+            'One more warning will be issued before your test is automatically submitted.',
+            true
+          );
+        } else {
+          openProctorModal(
+            'Warning 2 of 2',
+            'This is your final warning.',
+            'If you leave the contest window again, your test will be submitted automatically.',
+            true
+          );
+        }
+      })
+      .catch(() => {
+        // Network hiccup reporting the violation — don't leave the
+        // candidate locked out by a stuck client-side flag; let the
+        // next genuine violation try again.
+        proctorPaused = false;
+      });
+  }
+ 
+  // Fires when the tab is switched, the window is minimized, or the OS
+  // switches to a different application.
+  document.addEventListener('visibilitychange', function() {
+    if (document.hidden) reportViolation();
+  });
+ 
+  // Belt-and-braces: catches focus loss that visibilitychange can miss.
+  window.addEventListener('blur', reportViolation);
+ 
   // ── Shared contest countdown ──
   const timerEl = document.getElementById('ct-timer');
   let remaining = parseInt(timerEl.dataset.remaining, 10) || 0;

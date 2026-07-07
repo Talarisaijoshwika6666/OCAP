@@ -4,7 +4,9 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import get_user_model
 from django.contrib import messages
+from django.db import transaction
 from django.http import JsonResponse, HttpResponseForbidden
+from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
@@ -18,22 +20,37 @@ def _is_ajax(request):
     return request.headers.get('X-Requested-With') == 'XMLHttpRequest'
 
 
+def _auto_submitted_result_redirect(contest):
+    """Bounce a locked-out (auto-submitted) candidate to the results page,
+    with a flag the template uses to show the 'auto-submitted' banner."""
+    return redirect(reverse('contest_result', kwargs={'pk': contest.pk}) + '?auto_submitted=1')
+
+
 def _get_live_contest_and_question(request, pk, question_pk):
     """Shared guard for the contest arena: must be registered, contest must
-    be live right now, and the question must actually belong to it."""
+    be live right now, and the question must actually belong to it.
+
+    Also enforces proctoring: once a candidate has been auto-submitted
+    (3rd tab-switch violation), they are locked out of the arena entirely
+    and bounced to the results page — this is what stops someone from
+    dodging the lockout with a page refresh or by navigating back in."""
     contest = get_object_or_404(Contest, pk=pk)
     question = get_object_or_404(contest.questions, pk=question_pk)
 
-    if not ContestRegistration.objects.filter(contest=contest, user=request.user).exists():
-        return contest, question, redirect('contest')
+    registration = ContestRegistration.objects.filter(contest=contest, user=request.user).first()
+    if registration is None:
+        return contest, question, None, redirect('contest')
+
+    if registration.auto_submitted:
+        return contest, question, registration, _auto_submitted_result_redirect(contest)
 
     now = timezone.now()
     if now < contest.start_time:
-        return contest, question, redirect('contest')
+        return contest, question, registration, redirect('contest')
     if now > contest.end_time:
-        return contest, question, redirect('contest_result', pk=contest.pk)
+        return contest, question, registration, redirect('contest_result', pk=contest.pk)
 
-    return contest, question, None
+    return contest, question, registration, None
 
 
 SUPPORTED_LANGUAGES = [
@@ -217,15 +234,95 @@ def leave_contest(request, pk):
     return redirect('/contest/')
 
 
+# ─────────────────────────────────────────────────────────────────
+# Proctoring — anti-tab-switching
+#
+# The browser only ever *reports* a suspected violation; the server is
+# the single source of truth for the count and for deciding when the
+# 3-strikes threshold is crossed. This means:
+#   - refreshing the page can't reset the count (it lives on the
+#     ContestRegistration row, not in localStorage/sessionStorage),
+#   - a user can't spoof "auto_submit: true" client-side — the server
+#     only reports it once its own persisted counter says so,
+#   - concurrent/duplicate beacons (e.g. blur + visibilitychange firing
+#     for the same tab-switch) are handled with a row-level lock so the
+#     count can't be inflated by a race condition.
+# ─────────────────────────────────────────────────────────────────
+
+MAX_CONTEST_VIOLATIONS = 3  # 2 warnings; the 3rd violation triggers auto-submit
+
+
+@login_required
+@require_POST
+def contest_report_violation(request, pk):
+    """Called by the arena's JS whenever the candidate switches tabs,
+    switches apps, minimizes the window, or otherwise loses focus/
+    visibility while a contest is live. Increments the persisted
+    violation counter and tells the client whether this crossed the
+    auto-submit threshold.
+
+    Uses normal (non-exempt) CSRF protection — the arena template already
+    sends the session's CSRF token via the X-CSRFToken header, same as
+    the existing run/submit endpoints.
+    """
+    contest = get_object_or_404(Contest, pk=pk)
+
+    # Only meaningful while the contest is actually live; ignore stray
+    # beacons from a stale/backgrounded tab for a contest that has since
+    # ended or hasn't started (nothing to enforce in either case).
+    if contest.status != 'live':
+        return JsonResponse({'ok': False, 'error': 'Contest is not currently live.'}, status=400)
+
+    with transaction.atomic():
+        registration = ContestRegistration.objects.select_for_update().filter(
+            contest=contest, user=request.user
+        ).first()
+
+        if registration is None:
+            return JsonResponse({'ok': False, 'error': 'You are not registered for this contest.'}, status=403)
+
+        # Already locked out by an earlier violation report (e.g. a
+        # duplicate beacon arriving after the auto-submit one) — tell the
+        # client to redirect without counting it again.
+        if registration.auto_submitted:
+            return JsonResponse({
+                'ok': True,
+                'violation_count': registration.violation_count,
+                'auto_submit': True,
+            })
+
+        registration.violation_count += 1
+        should_auto_submit = registration.violation_count >= MAX_CONTEST_VIOLATIONS
+
+        update_fields = ['violation_count']
+        if should_auto_submit:
+            registration.auto_submitted = True
+            registration.auto_submitted_at = timezone.now()
+            update_fields += ['auto_submitted', 'auto_submitted_at']
+
+        registration.save(update_fields=update_fields)
+
+    return JsonResponse({
+        'ok': True,
+        'violation_count': registration.violation_count,
+        'auto_submit': should_auto_submit,
+    })
+
+
 @login_required
 def contest_take_test(request, pk):
     """The 'test page' — the live problem set for a contest a user has registered for."""
     contest = get_object_or_404(Contest, pk=pk)
-    is_registered = ContestRegistration.objects.filter(contest=contest, user=request.user).exists()
+    registration = ContestRegistration.objects.filter(contest=contest, user=request.user).first()
 
-    if not is_registered:
+    if registration is None:
         messages.error(request, 'You need to register for this contest before taking the test.')
         return redirect('/contest/')
+
+    # Proctoring lockout: once auto-submitted, the candidate can't come
+    # back to the problem list either — straight to the results page.
+    if registration.auto_submitted:
+        return _auto_submitted_result_redirect(contest)
 
     now = timezone.now()
 
@@ -264,6 +361,10 @@ def contest_take_test(request, pk):
         'solved_ids': solved_ids,
         'attempted_ids': attempted_ids,
         'now': now,
+        # Nav-lock: this view already guarantees the contest is live,
+        # registered, and not auto-submitted by this point — so it's
+        # exactly the right moment to lock sidebar/topbar navigation.
+        'contest_lock': True,
     })
 
 
@@ -315,12 +416,21 @@ def contest_result(request, pk):
 
     my_row = next((r for r in leaderboard if r['is_me']), None)
 
+    # Proctoring: whether this candidate is permanently locked out of the
+    # arena because they were auto-submitted (3rd violation). Read from
+    # the persisted registration row — not the one-time '?auto_submitted=1'
+    # query param — so the banner/lockout stay correct even if the
+    # candidate reloads this page later without that param in the URL.
+    registration = ContestRegistration.objects.filter(contest=contest, user=request.user).first()
+    auto_submitted_notice = bool(registration and registration.auto_submitted)
+
     return render(request, 'contest/result.html', {
         'contest': contest,
         'leaderboard': leaderboard,
         'my_row': my_row,
         'total_problems': total_problems,
         'is_live': contest.status == 'live',
+        'auto_submitted_notice': auto_submitted_notice,
     })
 
 
@@ -333,7 +443,7 @@ def contest_result(request, pk):
 
 @login_required
 def contest_solve(request, pk, question_pk):
-    contest, question, guard = _get_live_contest_and_question(request, pk, question_pk)
+    contest, question, registration, guard = _get_live_contest_and_question(request, pk, question_pk)
     if guard:
         return guard
 
@@ -367,6 +477,12 @@ def contest_solve(request, pk, question_pk):
         'solved_ids': solved_ids,
         'attempted_ids': attempted_ids,
         'last_submission': last_submission,
+        # Proctoring: restore the candidate's current warning count so a
+        # page refresh doesn't reset it back to zero on the client.
+        'initial_violation_count': registration.violation_count,
+        # Nav-lock: same reasoning as contest_take_test — arena guard has
+        # already confirmed this is a live, in-progress attempt.
+        'contest_lock': True,
     })
 
 
@@ -376,7 +492,7 @@ def contest_solve(request, pk, question_pk):
 def contest_run_code(request, pk, question_pk):
     """Quick 'Run' against the question's visible sample I/O only —
     does not touch hidden test cases and never creates a Submission."""
-    contest, question, guard = _get_live_contest_and_question(request, pk, question_pk)
+    contest, question, registration, guard = _get_live_contest_and_question(request, pk, question_pk)
     if guard:
         return JsonResponse({'error': 'Contest is not currently live for you.'}, status=403)
 
@@ -405,7 +521,7 @@ def contest_submit_solution(request, pk, question_pk):
     """Runs the code against every test case for the question, stores a
     Submission (so the arena table + live leaderboard update instantly),
     and returns per-case verdicts (hidden cases are reported pass/fail only)."""
-    contest, question, guard = _get_live_contest_and_question(request, pk, question_pk)
+    contest, question, registration, guard = _get_live_contest_and_question(request, pk, question_pk)
     if guard:
         return JsonResponse({'error': 'Contest is not currently live for you.'}, status=403)
 
@@ -471,4 +587,5 @@ def contest_submit_solution(request, pk, question_pk):
         'total': total,
         'cases': case_results,
     })
+ 
  

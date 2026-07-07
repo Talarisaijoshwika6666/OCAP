@@ -56,9 +56,24 @@ class ContestRegistration(models.Model):
     contest = models.ForeignKey(Contest, on_delete=models.CASCADE, related_name='registrations')
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='contest_registrations')
     registered_at = models.DateTimeField(auto_now_add=True)
+
+    # --- Proctoring / anti-tab-switching state ---
+    # Persisted on the registration row (not just the session) so the
+    # warning count survives page refreshes and can be validated
+    # server-side before an automatic submission is ever performed.
+    violation_count = models.PositiveSmallIntegerField(
+        default=0,
+        help_text='Number of tab-switch / focus-loss violations recorded during this contest.',
+    )
+    auto_submitted = models.BooleanField(
+        default=False,
+        help_text='True once the test was force-submitted due to repeated proctoring violations.',
+    )
+    auto_submitted_at = models.DateTimeField(null=True, blank=True)
  
     class Meta:
         unique_together = ('contest', 'user')
  
     def __str__(self):
         return f"{self.user} -> {self.contest}"
+ 
