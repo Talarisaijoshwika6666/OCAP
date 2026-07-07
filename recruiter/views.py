@@ -11,6 +11,9 @@ def recruiter_dashboard(request):
     if not request.user.is_authenticated:
         return redirect('/accounts/login/')
 
+    from assessments.utils import ensure_assessments_exist
+    ensure_assessments_exist()
+
     # Stats
     total_candidates  = User.objects.filter(is_staff=False, is_superuser=False).count()
     total_assessments = Assessment.objects.count()
@@ -21,10 +24,10 @@ def recruiter_dashboard(request):
     avg_score_query = Submission.objects.aggregate(Avg('score'))['score__avg']
     avg_score = round(avg_score_query, 1) if avg_score_query is not None else 0.0
 
-    # Recent Assessments with candidate count
-    recent_assessments = Assessment.objects.annotate(
-        candidate_count=Count('results')
-    ).order_by('-id')[:5]
+    # Recent Questions (Problem Bank) with submission count
+    recent_questions = list(Question.objects.annotate(
+        submission_count=Count('submission')
+    ).order_by('-id')[:5])
 
     # Recruitment Insights
     total_subs = Submission.objects.count()
@@ -43,10 +46,56 @@ def recruiter_dashboard(request):
     }
 
     # Recent Activity (latest submissions)
-    recent_activity = (
-        Submission.objects.select_related('user', 'question')
-        .order_by('-submitted_at')[:8]
-    )
+    from results.models import Result
+    
+    class MockUser:
+        def __init__(self, username):
+            self.username = username
+
+    class MockQuestion:
+        def __init__(self, title):
+            self.title = title
+
+    class UnifiedActivity:
+        def __init__(self, username, submitted_at, question_title, language, score, result):
+            self.user = MockUser(username)
+            self.submitted_at = submitted_at
+            self.question = MockQuestion(question_title)
+            self.language = language
+            self.score = score
+            self.result = result
+
+    real_activity = []
+    
+    # 1. Fetch real Submissions
+    for s in Submission.objects.select_related('user', 'question').order_by('-submitted_at')[:8]:
+        real_activity.append(
+            UnifiedActivity(
+                username=s.user.username,
+                submitted_at=s.submitted_at,
+                question_title=s.question.title,
+                language=s.language.title(),
+                score=s.score,
+                result=s.result
+            )
+        )
+        
+    # 2. Fetch real Results
+    for r in Result.objects.select_related('candidate', 'assessment').order_by('-submitted_at')[:8]:
+        real_activity.append(
+            UnifiedActivity(
+                username=r.candidate.username,
+                submitted_at=r.submitted_at,
+                question_title=r.assessment.title,
+                language="Assessment",
+                score=r.score,
+                result="Passed" if r.passed else "Failed"
+            )
+        )
+        
+    # 3. Sort by submitted_at descending
+    real_activity.sort(key=lambda x: x.submitted_at, reverse=True)
+    recent_activity = real_activity[:8]
 
     return render(request, 'recruiter/dashboard.html', {
         'username': request.user.username,
@@ -56,7 +105,7 @@ def recruiter_dashboard(request):
         'total_submissions': total_submissions,
         'active_assessments': active_assessments,
         'avg_score': avg_score,
-        'recent_assessments': recent_assessments,
+        'recent_questions': recent_questions,
         'insights': insights,
         'recent_activity': recent_activity,
     })

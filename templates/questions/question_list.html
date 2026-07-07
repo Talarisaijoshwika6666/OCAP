@@ -109,6 +109,7 @@
   }
 </style>
 
+
 <div class="card-glass anim-in">
   <div style="display:flex;justify-content:space-between;align-items:center;padding:20px 24px;border-bottom:1px solid rgba(176,38,255,0.15);">
     <div style="font-family:'Orbitron',monospace;font-size:0.82rem;font-weight:700;color:#f0eaff;letter-spacing:1px;">
@@ -178,6 +179,9 @@
                onmouseout="this.style.color='#ffffff'">
               {{ q.title }}
             </a>
+            <div style="font-size: 0.78rem; color: rgba(240,234,255,0.45); font-weight: normal; margin-top: 4px; line-height: 1.4; max-width: 600px;">
+              {{ q.description }}
+            </div>
           </td>
           <td style="padding:14px 22px;background:transparent;color:rgba(240,234,255,0.7);font-family:'JetBrains Mono',monospace;font-size:0.85rem;">{{ q.topic }}</td>
           <td style="padding:14px 22px;background:transparent;">
