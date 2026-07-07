@@ -12,11 +12,23 @@
 
 {% if request.GET.result == 'Accepted' %}
 <div id="congrats-overlay" style="position:fixed;inset:0;background:rgba(10,6,20,0.85);z-index:9999;display:flex;align-items:center;justify-content:center;">
-  <div style="background:#13091f;border:1px solid rgba(0,255,130,0.4);border-radius:16px;padding:40px 50px;text-align:center;box-shadow:0 0 40px rgba(0,255,130,0.2);">
+  <div style="background:#13091f;border:1px solid rgba(0,255,130,0.4);border-radius:16px;padding:40px 50px;text-align:center;box-shadow:0 0 40px rgba(0,255,130,0.2);min-width:380px;">
     <i class="fas fa-check-circle" style="font-size:3rem;color:#00ff82;"></i>
     <h2 style="color:#00ff82;font-family:'Orbitron',monospace;margin-top:16px;">ACCEPTED — Great job!</h2>
     <p style="color:rgba(240,234,255,0.7);font-family:'JetBrains Mono',monospace;">Congrats! You completed the problem.</p>
-    <p style="color:rgba(240,234,255,0.4);font-size:0.8rem;margin-top:12px;">Redirecting to your submissions in 3 seconds...</p>
+
+    {% if not next_question %}
+    <p id="queue-msg" style="color:rgba(240,234,255,0.4);font-size:0.8rem;margin-top:12px;">No more questions in queue. Redirecting in 3 seconds...</p>
+    {% endif %}
+
+    <div style="display:flex;justify-content:space-between;gap:16px;margin-top:24px;">
+      <a href="/questions/" style="flex:1;padding:10px;border-radius:8px;border:1px solid rgba(255,45,120,0.4);background:rgba(255,45,120,0.1);color:#ff2d78;font-family:'Orbitron',monospace;font-size:0.8rem;font-weight:700;text-decoration:none;">
+        <i class="fas fa-sign-out-alt"></i> Exit
+      </a>
+      <a href="{% if next_question %}/questions/{{ next_question.pk }}/{% else %}/questions/{% endif %}" style="flex:1;padding:10px;border-radius:8px;border:1px solid rgba(0,255,247,0.4);background:rgba(0,255,247,0.1);color:#00fff7;font-family:'Orbitron',monospace;font-size:0.8rem;font-weight:700;text-decoration:none;">
+        Next <i class="fas fa-arrow-right"></i>
+      </a>
+    </div>
   </div>
 </div>
 {% endif %}
@@ -100,21 +112,11 @@
         </div>
         <select id="lang-select" style="background:#0a0614;border:1px solid rgba(176,38,255,0.3);border-radius:8px;color:#f0eaff;padding:4px 10px;font-family:'JetBrains Mono',monospace;font-size:0.8rem;" onchange="changeLanguage(this.value)">
           <option value="python">Python3</option>
-          <option value="python2">Python</option>
           <option value="javascript">JavaScript</option>
-          <option value="typescript">TypeScript</option>
           <option value="java">Java</option>
+          <option value="ruby">Ruby</option>
           <option value="cpp">C++</option>
           <option value="c">C</option>
-          <option value="csharp">C#</option>
-          <option value="go">Go</option>
-          <option value="kotlin">Kotlin</option>
-          <option value="swift">Swift</option>
-          <option value="rust">Rust</option>
-          <option value="ruby">Ruby</option>
-          <option value="php">PHP</option>
-          <option value="dart">Dart</option>
-          <option value="scala">Scala</option>
         </select>
         <div style="display:flex;gap:8px;">
           <button onclick="clearEditor()" style="padding:6px 14px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:transparent;color:rgba(240,234,255,0.5);font-size:0.78rem;cursor:pointer;">Clear</button>
@@ -136,6 +138,7 @@
         {% csrf_token %}
         <input type="hidden" name="code" id="hidden-code">
         <input type="hidden" name="language" id="hidden-lang">
+        <input type="hidden" name="auto_submit" id="hidden-auto-submit" value="0">
         <button type="submit" style="width:100%;padding:10px;border-radius:8px;border:none;background:linear-gradient(135deg,#00fff7,#b026ff);color:#fff;font-family:'Orbitron',monospace;font-size:0.85rem;font-weight:700;cursor:pointer;">
           <i class="fas fa-paper-plane"></i> SUBMIT SOLUTION
         </button>
@@ -146,22 +149,12 @@
 
 <script>
 const templates = {
-  python:     "def solution():\n    pass",
-  python2:    "def solution():\n    pass",
-  javascript: "var solution = function() {\n    \n};",
-  typescript: "function solution(): void {\n    \n}",
-  java:       "class Solution {\n    public void solution() {\n        \n    }\n}",
-  cpp:        "#include <bits/stdc++.h>\nusing namespace std;\n\nclass Solution {\npublic:\n    void solution() {\n        \n    }\n};",
-  c:          "#include <stdio.h>\n\nvoid solution() {\n    \n}",
-  csharp:     "public class Solution {\n    public void Solution() {\n        \n    }\n}",
-  go:         "func solution() {\n    \n}",
-  kotlin:     "fun solution() {\n    \n}",
-  swift:      "func solution() {\n    \n}",
-  rust:       "fn solution() {\n    \n}",
-  ruby:       "def solution\n    \nend",
-  php:        "<?php\nfunction solution() {\n    \n}",
-  dart:       "void solution() {\n    \n}",
-  scala:      "object Solution {\n    def solution(): Unit = {\n        \n    }\n}",
+  python:     "print(\"Hello, World!\")",
+  javascript: "console.log(\"Hello, World!\");",
+  java:       "public class Main {\n    public static void main(String[] args) {\n        System.out.println(\"Hello, World!\");\n    }\n}",
+  ruby:       "puts \"Hello, World!\"",
+  cpp:        "#include <iostream>\nusing namespace std;\n\nint main() {\n    cout << \"Hello, World!\" << endl;\n    return 0;\n}",
+  c:          "#include <stdio.h>\n\nint main() {\n    printf(\"Hello, World!\\n\");\n    return 0;\n}",
 };
 
 function changeLanguage(lang) {
@@ -275,6 +268,7 @@ function tickTimer() {
     document.getElementById('timerDisplay').textContent = '00:00';
     document.getElementById('hidden-code').value = document.getElementById('code-editor').value;
     document.getElementById('hidden-lang').value = document.getElementById('lang-select').value;
+    document.getElementById('hidden-auto-submit').value = '1';
     document.getElementById('submit-form').submit();
   }
 }
@@ -285,7 +279,7 @@ function resetEverything() {
   document.getElementById('code-editor').value = templates[lang] || '';
   document.getElementById('output-area').innerHTML = '// Run your code to see output here';
   clearInterval(timerInterval);
-  totalSeconds = 60 * 60;
+  totalSeconds = {{ question.time_limit }} * 60;
   warned = false;
   document.getElementById('timerDisplay').textContent = formatTime(totalSeconds);
   const box = document.getElementById('timerBox');
@@ -297,10 +291,10 @@ function resetEverything() {
 timerInterval = setInterval(tickTimer, 1000);
 </script>
 
-{% if request.GET.result == 'Accepted' %}
+{% if request.GET.result == 'Accepted' and not next_question %}
 <script>
   setTimeout(function() {
-    window.location.href = '/submissions/my-submissions/';
+    window.location.href = '/questions/';
   }, 3000);
 </script>
 {% endif %}

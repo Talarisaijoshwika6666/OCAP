@@ -40,13 +40,15 @@
     </div>
   </div>
   <div class="col-6 col-md-3">
-    <div class="stat-card anim-in anim-d3">
+    <a href="/streak/" style="text-decoration:none;">
+    <div class="stat-card anim-in anim-d3" style="--card-accent:#ff2d78;cursor:pointer;">
       <div style="width:36px;height:36px;border-radius:8px;background:rgba(255,45,120,0.08);border:1px solid rgba(255,45,120,0.2);display:flex;align-items:center;justify-content:center;margin-bottom:14px;">
         <i class="fas fa-fire" style="color:#ff2d78;"></i>
       </div>
-      <div style="font-family:'Orbitron',monospace;font-size:2rem;font-weight:900;color:#ff2d78;">0</div>
-      <div style="color:rgba(240,234,255,0.4);font-size:0.7rem;font-family:'JetBrains Mono',monospace;">// streak</div>
+      <div style="font-family:'Orbitron',monospace;font-size:2rem;font-weight:900;color:#ff2d78;">{{ current_streak }}</div>
+      <div style="color:rgba(240,234,255,0.4);font-size:0.7rem;font-family:'JetBrains Mono',monospace;">// streak <i class="fas fa-arrow-right" style="font-size:0.6rem;margin-left:4px;"></i></div>
     </div>
+    </a>
   </div>
   <div class="col-6 col-md-3">
     <div class="stat-card anim-in anim-d4">
