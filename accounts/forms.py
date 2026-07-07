@@ -254,6 +254,14 @@ class EditorPreferencesForm(forms.ModelForm):
             'default_language', 'font_size', 'show_line_numbers',
             'word_wrap', 'auto_complete', 'auto_save',
         ]
+        widgets = {
+            'default_language': forms.Select(attrs={'class': 'settings-form-control'}),
+            'font_size': forms.NumberInput(attrs={'class': 'settings-form-control'}),
+            'show_line_numbers': forms.CheckboxInput(),
+            'word_wrap': forms.CheckboxInput(),
+            'auto_complete': forms.CheckboxInput(),
+            'auto_save': forms.CheckboxInput(),
+        }
 
     def clean_font_size(self):
         size = self.cleaned_data.get('font_size')

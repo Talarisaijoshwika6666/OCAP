@@ -1,0 +1,146 @@
+<script>
+  (function () {
+    const tabs = document.querySelectorAll('.settings-tab');
+    const panels = document.querySelectorAll('.settings-panel');
+
+    function activate(tab) {
+      tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+      panels.forEach(p => p.classList.toggle('active', p.id === 'panel-' + tab));
+      const url = new URL(window.location);
+      url.searchParams.set('tab', tab);
+      window.history.replaceState({}, '', url);
+    }
+
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => activate(tab.dataset.tab));
+    });
+
+    const profileInput = document.getElementById('profilePictureInput');
+    const profilePreview = document.getElementById('profilePreview');
+
+    if (profileInput && profilePreview) {
+      profileInput.addEventListener('change', (event) => {
+        const file = event.target.files && event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          profilePreview.innerHTML = '<img src="' + e.target.result + '" alt="Profile preview">';
+        };
+        reader.readAsDataURL(file);
+        markUnsaved(document.getElementById('profileForm'));
+      });
+    }
+
+    // Live-highlight the selected theme card before submit
+    document.querySelectorAll('.theme-option input').forEach(input => {
+      input.addEventListener('change', () => {
+        document.querySelectorAll('.theme-option').forEach(opt => opt.classList.remove('selected'));
+        input.closest('.theme-option').classList.add('selected');
+        markUnsaved(document.getElementById('appearanceForm'));
+      });
+    });
+
+    // Mark form as having unsaved changes
+    function markUnsaved(form) {
+      if (!form) return;
+      form.classList.add('unsaved');
+      const btn = form.querySelector('.settings-save-btn');
+      if (btn) btn.classList.add('unsaved');
+    }
+
+    // Attach change listeners to inputs to mark unsaved
+    document.querySelectorAll('#profileForm input, #profileForm textarea, #notificationsForm input, #appearanceForm input, #editorForm input, #privacyForm input, #passwordForm input, #editorForm select').forEach(el => {
+      el.addEventListener('change', (e) => markUnsaved(el.closest('form')));
+    });
+
+    // Generic AJAX submit handler
+    async function ajaxSubmit(form, btn) {
+      if (!form) return;
+      const spinner = btn.querySelector('.btn-spinner');
+      const label = btn.querySelector('.btn-label');
+      try {
+        btn.disabled = true;
+        if (spinner) spinner.style.display = 'inline-block';
+        if (label) label.style.opacity = '0.6';
+
+        const response = await fetch(window.location.pathname + window.location.search, {
+          method: 'POST',
+          headers: { 'X-Requested-With': 'XMLHttpRequest' },
+          body: new FormData(form)
+        });
+
+        const contentType = response.headers.get('content-type') || '';
+        if (!contentType.includes('application/json')) {
+          // Non-JSON response — fall back to full reload to preserve existing flow
+          window.location.reload();
+          return;
+        }
+
+        const data = await response.json();
+        if (data.success) {
+          showToast(data.message || 'Saved successfully.');
+          // Update username and avatar across the page
+          if (data.username) {
+            const top = document.getElementById('topbarUsername'); if (top) top.textContent = data.username;
+            const side = document.getElementById('sidebarUsername'); if (side) side.textContent = data.username;
+            const profileName = document.getElementById('profileUsername'); if (profileName) profileName.textContent = data.username;
+          }
+          if (data.profile_picture_url) {
+            const avatarImg = document.getElementById('sidebarUserAvatarImg');
+            if (avatarImg) avatarImg.src = data.profile_picture_url;
+            const profileAvatar = document.getElementById('profileAvatarImg'); if (profileAvatar) profileAvatar.src = data.profile_picture_url;
+            const preview = document.getElementById('profilePreview'); if (preview) preview.innerHTML = '<img src="'+data.profile_picture_url+'">';
+          }
+          if (data.theme) {
+            document.documentElement.setAttribute('data-theme', data.theme);
+            try { localStorage.setItem('active_theme', data.theme); } catch (e) {}
+          }
+          // Clear unsaved state
+          form.classList.remove('unsaved');
+          const btnEl = form.querySelector('.settings-save-btn'); if (btnEl) btnEl.classList.remove('unsaved');
+        } else {
+          const errs = data.errors || [data.message] || ['Save failed'];
+          errs.forEach(e => showToast(e, 'error'));
+        }
+      } catch (err) {
+        showToast('An unexpected error occurred.', 'error');
+      } finally {
+        btn.disabled = false;
+        if (spinner) spinner.style.display = 'none';
+        if (label) label.style.opacity = '1';
+      }
+    }
+
+    function showToast(text, type='success') {
+      const stack = document.getElementById('toastStack');
+      if (!stack) return;
+      const div = document.createElement('div');
+      div.className = 'toast-alert' + (type === 'error' ? ' toast-error' : '');
+      div.innerHTML = '<i class="fas ' + (type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-check') + '"></i><span>' + text + '</span>';
+      stack.appendChild(div);
+      setTimeout(() => { div.style.transition = 'opacity 0.4s'; div.style.opacity = '0'; setTimeout(() => div.remove(), 400); }, 3000);
+    }
+
+    // Bind forms
+    const binds = [
+      { formId: 'profileForm', btnId: 'profileSaveBtn' },
+      { formId: 'appearanceForm', btnId: 'appearanceSaveBtn' },
+      { formId: 'passwordForm', btnId: 'passwordSaveBtn' },
+      { formId: 'notificationsForm', btnId: 'notificationsSaveBtn' },
+      { formId: 'editorForm', btnId: 'editorSaveBtn' },
+      { formId: 'privacyForm', btnId: 'privacySaveBtn' }
+    ];
+
+    binds.forEach(b => {
+      const form = document.getElementById(b.formId);
+      const btn = document.getElementById(b.btnId);
+      if (!form || !btn) return;
+      form.addEventListener('submit', (e) => {
+        // Prefer AJAX for profile & appearance; others will fallback to reload
+        e.preventDefault();
+        ajaxSubmit(form, btn);
+      });
+    });
+
+  })();
+</script>
