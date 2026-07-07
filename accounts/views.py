@@ -294,9 +294,11 @@ def settings_view(request):
                     return JsonResponse({'success': False, 'errors': errors}, status=400)
             active_tab = 'privacy'
 
-        return redirect(f'/accounts/settings/?tab={active_tab}')
+        base_path = '/recruiter/settings/' if request.path.startswith('/recruiter/') else '/accounts/settings/'
+        return redirect(f'{base_path}?tab={active_tab}')
 
-    return render(request, 'accounts/settings.html', {
+    template_name = 'recruiter/settings.html' if request.path.startswith('/recruiter/') else 'accounts/settings.html'
+    return render(request, template_name, {
         'user_settings': user_settings,
         'active_tab': active_tab,
         'password_form': SettingsPasswordChangeForm(user),

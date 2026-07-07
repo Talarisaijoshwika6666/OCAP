@@ -24,9 +24,9 @@ def recruiter_dashboard(request):
     avg_score_query = Submission.objects.aggregate(Avg('score'))['score__avg']
     avg_score = round(avg_score_query, 1) if avg_score_query is not None else 0.0
 
-    # Recent Assessments with candidate count
-    recent_assessments = list(Assessment.objects.annotate(
-        candidate_count=Count('results')
+    # Recent Questions (Problem Bank) with submission count
+    recent_questions = list(Question.objects.annotate(
+        submission_count=Count('submission')
     ).order_by('-id')[:5])
 
     # Recruitment Insights
@@ -105,7 +105,7 @@ def recruiter_dashboard(request):
         'total_submissions': total_submissions,
         'active_assessments': active_assessments,
         'avg_score': avg_score,
-        'recent_assessments': recent_assessments,
+        'recent_questions': recent_questions,
         'insights': insights,
         'recent_activity': recent_activity,
     })
