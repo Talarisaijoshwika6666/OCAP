@@ -9,13 +9,81 @@ def quest_view(request):
     topics = Topic.objects.filter(category='quest').order_by('order')
     return render(request, 'quest/quest.html', {'topics': topics})
 
-def explore_view(request):
-    topics = Topic.objects.filter(category='explore').order_by('order')
-    return render(request, 'quest/explore.html', {'topics': topics})
+def study_plan_view(request, topic):
 
-def study_plan_view(request):
-    topics = Topic.objects.filter(category='study_plan').order_by('order')
-    return render(request, 'quest/study_plan.html', {'topics': topics})
+    roadmaps = {
+        "data-structures": {
+            "title": "Data Structures",
+            "beginner": [
+                "Arrays",
+                "Strings",
+                "Hash Maps",
+                "Two Pointers"
+            ],
+            "intermediate": [
+                "Linked Lists",
+                "Stacks",
+                "Queues",
+                "Trees"
+            ],
+            "advanced": [
+                "Graphs",
+                "Dynamic Programming",
+                "Tries",
+                "Segment Trees"
+            ]
+        },
+
+        "database": {
+            "title": "Database",
+            "beginner": [
+                "SQL Basics",
+                "SELECT",
+                "WHERE",
+                "ORDER BY"
+            ],
+            "intermediate": [
+                "Joins",
+                "GROUP BY",
+                "HAVING",
+                "Subqueries"
+            ],
+            "advanced": [
+                "Indexing",
+                "Normalization",
+                "Transactions",
+                "Optimization"
+            ]
+        },
+
+        "system-design": {
+            "title": "System Design",
+            "beginner": [
+                "Scalability",
+                "Client Server",
+                "Caching",
+                "Load Balancer"
+            ],
+            "intermediate": [
+                "Queues",
+                "Replication",
+                "CDN",
+                "Sharding"
+            ],
+            "advanced": [
+                "Microservices",
+                "Distributed Systems",
+                "CAP Theorem",
+                "Consistency"
+            ]
+        }
+    }
+
+    roadmap = roadmaps.get(topic)
+
+    return render(request, "quest/study_plan.html", {
+        "roadmap": roadmap
+    })
 
 def home_view(request):
     return render(request, 'home.html')
