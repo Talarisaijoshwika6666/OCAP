@@ -1,10 +1,896 @@
 {% extends 'base.html' %}
 {% block page_title %}// Settings{% endblock %}
 {% block content %}
-  {% include 'accounts/settings_css.html' %}
-  {% include 'accounts/settings_panels.html' %}
+
+<style>
+  .settings-wrap {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+
+  @media (max-width: 900px) {
+    .settings-wrap { grid-template-columns: 1fr; }
+  }
+
+  /* ── LEFT NAV ── */
+  .settings-menu {
+    position: sticky;
+    top: 76px;
+    padding: 10px;
+    background: var(--surface-card);
+    border: 1px solid var(--surface-border);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .settings-menu-title {
+    font-family: var(--font-display);
+    font-size: 0.72rem;
+    letter-spacing: 2px;
+    color: var(--neon-purple);
+    padding: 6px 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .settings-tab {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    pointer-events: auto;
+    border-radius: 10px;
+    color: var(--text-dim);
+    text-decoration: none;
+    font-size: 0.86rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+  }
+
+  .settings-tab i { width: 18px; text-align: center; }
+
+  .settings-tab:hover {
+    color: var(--neon-cyan);
+    background: rgba(0,255,247,0.06);
+    border-color: rgba(0,255,247,0.15);
+  }
+
+  .settings-tab.active {
+    color: #fff;
+    background: linear-gradient(135deg, rgba(255,45,120,0.18), rgba(176,38,255,0.18));
+    border-color: rgba(255,45,120,0.35);
+    box-shadow: 0 0 15px rgba(176,38,255,0.12);
+  }
+
+  /* ── RIGHT PANEL ── */
+  .settings-panel { display: none; }
+  .settings-panel.active { display: block; }
+  .settings-panel { position: relative; z-index: 1; scroll-margin-top: 100px; }
+  .settings-card { scroll-margin-top: 100px; }
+
+  .settings-card {
+    padding: 28px 30px;
+    margin-bottom: 20px;
+    border: 1px solid var(--surface-border);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .settings-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(176,38,255,0.08);
+  }
+
+  .settings-card-title {
+    font-family: var(--font-display);
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 4px;
+  }
+  .settings-card-title i { color: var(--neon-pink); }
+
+  .settings-card-sub {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    margin-bottom: 22px;
+  }
+
+  .settings-field-label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+    display: block;
+  }
+
+  /* Apply the same visual treatment to both settings-specific controls
+     and any standard `.form-control` elements rendered by Django widgets. */
+  .settings-form-control, .form-control {
+    width: 100%;
+    --settings-control-bg: rgba(255,255,255,0.03);
+    background: var(--settings-control-bg);
+    border: 1px solid var(--surface-border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    font-family: var(--font-body);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  }
+  [data-theme="light"] .settings-form-control, [data-theme="light"] .form-control {
+    --settings-control-bg: rgba(255,255,255,0.95);
+    background: var(--settings-control-bg);
+    color: var(--text-primary);
+  }
+  select.settings-form-control option, select.form-control option {
+    background: var(--surface-card) !important;
+    color: var(--text-primary) !important;
+  }
+  /* Ensure select dropdown and its options follow the active theme colors
+     across browsers. Some browsers render native white dropdowns which
+     make options unreadable in dark mode; enforce theme colors where
+     possible without redesigning the native control. */
+  .settings-form-control option,
+  .form-control option {
+    background: var(--surface-card) !important;
+    color: var(--text-primary) !important;
+  }
+  /* Preserve native select arrow while allowing themed colors */
+  select.settings-form-control, select.form-control { -webkit-appearance: menulist-button; appearance: menulist-button; }
+  /* Chromium/WebKit specific fixes for autofill/text fill color */
+  .settings-form-control:-webkit-autofill,
+  .settings-form-control:-webkit-autofill:focus,
+  .settings-form-control:-webkit-autofill:hover,
+  .settings-form-control:-webkit-autofill:active,
+  .settings-form-control:-webkit-autofill::first-line,
+  .settings-form-control:-internal-autofill-selected,
+  .form-control:-webkit-autofill,
+  .form-control:-webkit-autofill:focus,
+  .form-control:-webkit-autofill:hover,
+  .form-control:-webkit-autofill:active,
+  .form-control:-webkit-autofill::first-line,
+  .form-control:-internal-autofill-selected,
+  input:-webkit-autofill,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:active,
+  input:-webkit-autofill::first-line,
+  input:-internal-autofill-selected,
+  textarea:-webkit-autofill,
+  textarea:-webkit-autofill:focus,
+  textarea:-webkit-autofill:hover,
+  textarea:-webkit-autofill:active,
+  textarea:-webkit-autofill::first-line,
+  textarea:-internal-autofill-selected,
+  select:-webkit-autofill,
+  select:-webkit-autofill:focus,
+  select:-webkit-autofill:hover,
+  select:-webkit-autofill:active,
+  select:-webkit-autofill::first-line,
+  select:-internal-autofill-selected {
+    -webkit-text-fill-color: var(--text-primary) !important;
+    color: var(--text-primary) !important;
+    background-color: var(--settings-control-bg) !important;
+    background-image: none !important;
+    background-clip: padding-box !important;
+    -webkit-background-clip: padding-box !important;
+    -webkit-box-shadow: 0 0 0px 1000px var(--settings-control-bg) inset !important;
+    box-shadow: 0 0 0px 1000px var(--settings-control-bg) inset !important;
+    border-color: var(--surface-border) !important;
+    transition: background-color 5000s ease-in-out 0s !important;
+    caret-color: var(--text-primary) !important;
+  }
+  .settings-form-control::placeholder,
+  .form-control::placeholder {
+    color: var(--text-dim);
+    opacity: 1;
+  }
+  /* Firefox autofill */
+  input:-moz-autofill,
+  textarea:-moz-autofill,
+  select:-moz-autofill,
+  .settings-form-control:-moz-autofill,
+  .form-control:-moz-autofill {
+    box-shadow: 0 0 0px 1000px var(--surface-card) inset !important;
+    -moz-text-fill-color: var(--text-primary) !important;
+    color: var(--text-primary) !important;
+    caret-color: var(--text-primary) !important;
+  }
+  /* IE/Edge value color handling */
+  .settings-form-control::-ms-value, .form-control::-ms-value { color: var(--text-primary); background: var(--surface-card); }
+
+  /* Focus/hover/disabled states for inputs and selects */
+  .settings-form-control:focus, .form-control:focus {
+    outline: none;
+    border-color: var(--neon-purple);
+    box-shadow: 0 0 0 3px rgba(176,38,255,0.12);
+    background: var(--surface-card);
+  }
+  .settings-form-control:hover, .form-control:hover {
+    border-color: rgba(176,38,255,0.25);
+  }
+  .settings-form-control:disabled, .form-control:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background: rgba(255,255,255,0.02);
+  }
+  select.settings-form-control option:hover, select.form-control option:hover {
+    background: rgba(255,255,255,0.04);
+  }
+
+  .settings-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 4px;
+    border-bottom: 1px solid var(--surface-border);
+    gap: 20px;
+  }
+  .settings-row:last-child { border-bottom: none; }
+
+  .settings-row-text .t { font-size: 0.87rem; font-weight: 600; color: var(--text-primary); }
+  .settings-row-text .d { font-size: 0.76rem; color: var(--text-dim); margin-top: 2px; }
+
+  /* ── TOGGLE SWITCH ── */
+  .toggle-switch {
+    position: relative;
+    width: 46px;
+    height: 26px;
+    flex-shrink: 0;
+  }
+  .toggle-switch input { opacity: 0; width: 0; height: 0; }
+  .toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    inset: 0;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid var(--surface-border);
+    border-radius: 30px;
+    transition: 0.25s;
+  }
+  .toggle-slider::before {
+    content: '';
+    position: absolute;
+    height: 18px; width: 18px;
+    left: 3px; top: 50%;
+    transform: translateY(-50%);
+    background: var(--text-dim);
+    border-radius: 50%;
+    transition: 0.25s;
+  }
+  .toggle-switch input:checked + .toggle-slider {
+    background: linear-gradient(135deg, var(--neon-pink), var(--neon-purple));
+    border-color: transparent;
+  }
+  .toggle-switch input:checked + .toggle-slider::before {
+    transform: translate(20px, -50%);
+    background: #fff;
+  }
+
+  /* ── THEME PICKER ── */
+  .theme-options { display: flex; gap: 16px; flex-wrap: wrap; }
+  .theme-option {
+    flex: 1;
+    min-width: 150px;
+    border: 2px solid var(--surface-border);
+    border-radius: 14px;
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+  }
+  .theme-option:hover { border-color: rgba(176,38,255,0.5); }
+  .theme-option.selected {
+    border-color: var(--neon-pink);
+    box-shadow: 0 0 15px rgba(255,45,120,0.2);
+  }
+  .theme-option input { position: absolute; opacity: 0; }
+  .theme-swatch {
+    height: 60px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+  }
+  .theme-swatch.dark { background: linear-gradient(135deg, #0a0a14, #1a0f2e); }
+  .theme-swatch.light { background: linear-gradient(135deg, #f4f2fb, #e5e0f5); border: 1px solid #ddd; }
+  .theme-option-label {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .settings-save-btn { margin-top: 6px; }
+
+  .settings-preview {
+    width: 96px;
+    height: 96px;
+    border-radius: 18px;
+    overflow: hidden;
+    border: 1px solid var(--surface-border);
+    background: var(--surface-1-soft);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    color: var(--text-primary);
+    margin-bottom: 10px;
+  }
+
+  .settings-preview img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+  .settings-inline-note {
+    font-size: 0.73rem;
+    color: var(--text-dim);
+    margin-top: 6px;
+  }
+
+  .about-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 4px;
+    border-bottom: 1px solid var(--surface-border);
+    font-size: 0.85rem;
+  }
+  .about-row:last-child { border-bottom: none; }
+  .about-row .k { color: var(--text-dim); }
+  .about-row .v { color: var(--text-primary); font-weight: 600; }
+</style>
+
+<div class="settings-wrap">
+
+  <!-- ══════════ LEFT NAV ══════════ -->
+  <div class="card-glass settings-menu anim-in">
+    <div class="settings-menu-title"><i class="fas fa-gear"></i> SETTINGS</div>
+
+    <a class="settings-tab {% if active_tab == 'account' %}active{% endif %}" data-tab="account">
+      <i class="fas fa-user"></i> Account
+    </a>
+    <a class="settings-tab {% if active_tab == 'notifications' %}active{% endif %}" data-tab="notifications">
+      <i class="fas fa-bell"></i> Notifications
+    </a>
+    <a class="settings-tab {% if active_tab == 'appearance' %}active{% endif %}" data-tab="appearance">
+      <i class="fas fa-palette"></i> Appearance
+    </a>
+    <a class="settings-tab {% if active_tab == 'editor' %}active{% endif %}" data-tab="editor">
+      <i class="fas fa-code"></i> Editor Preferences
+    </a>
+    <a class="settings-tab {% if active_tab == 'privacy' %}active{% endif %}" data-tab="privacy">
+      <i class="fas fa-lock"></i> Privacy
+    </a>
+    <a class="settings-tab {% if active_tab == 'about' %}active{% endif %}" data-tab="about">
+      <i class="fas fa-circle-info"></i> About
+    </a>
+  </div>
+
+  <!-- ══════════ RIGHT PANEL ══════════ -->
+  <div>
+
+    <!-- ── ACCOUNT ── -->
+    <div class="settings-panel {% if active_tab == 'account' %}active{% endif %}" id="panel-account">
+
+      <div class="card-glass settings-card anim-in">
+        <div class="settings-card-title"><i class="fas fa-user"></i> Profile Information</div>
+        <div class="settings-card-sub">Basic details tied to your account.</div>
+
+        <form method="post" enctype="multipart/form-data" id="profileForm">
+          {% csrf_token %}
+          <input type="hidden" name="section" value="profile">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="settings-field-label">Username</label>
+              <input class="settings-form-control" name="username" value="{{ user.username }}" required>
+            </div>
+            <div class="col-md-6">
+              <label class="settings-field-label">First Name</label>
+              <input class="settings-form-control" name="first_name" value="{{ user.first_name }}">
+            </div>
+            <div class="col-md-6">
+              <label class="settings-field-label">Last Name</label>
+              <input class="settings-form-control" name="last_name" value="{{ user.last_name }}">
+            </div>
+            <div class="col-md-6">
+              <label class="settings-field-label">Full Name</label>
+              <input class="settings-form-control" name="full_name" value="{{ user.full_name }}">
+            </div>
+            <div class="col-md-6">
+              <label class="settings-field-label">Email</label>
+              <input class="settings-form-control" type="email" name="email" value="{{ user.email }}">
+            </div>
+            <div class="col-md-6">
+              <label class="settings-field-label">Mobile</label>
+              <input class="settings-form-control" name="mobile" value="{{ user.mobile|default:'' }}">
+            </div>
+            <div class="col-md-6">
+              <label class="settings-field-label">Profile Picture</label>
+              <div class="settings-preview" id="profilePreview">
+                {% if user.profile_picture %}
+                <img src="{{ user.profile_picture.url }}" alt="Current profile picture">
+                {% else %}
+                {{ user.username|slice:":1"|upper }}
+                {% endif %}
+              </div>
+              <input class="settings-form-control" type="file" name="profile_picture" id="profilePictureInput" accept="image/*">
+              <div class="settings-inline-note">PNG, JPG, WEBP or GIF up to 2MB.</div>
+            </div>
+            <div class="col-md-6">
+              <label class="settings-field-label">Bio</label>
+              <textarea class="settings-form-control" name="bio" rows="3">{{ user.bio }}</textarea>
+            </div>
+            <div class="col-md-6">
+              <label class="settings-field-label">College / Organization</label>
+              <input class="settings-form-control" name="organization" value="{{ user.organization }}">
+            </div>
+            <div class="col-md-6">
+              <label class="settings-field-label">Role</label>
+              <input class="settings-form-control" value="{{ user.get_role_display }}" disabled>
+            </div>
+          </div>
+          <button class="btn-gradient settings-save-btn mt-4" type="submit" id="profileSaveBtn">
+            <span class="btn-spinner" style="display:none;margin-right:8px;">⏳</span>
+            <i class="fas fa-floppy-disk"></i> <span class="btn-label">Save Changes</span>
+          </button>
+        </form>
+      </div>
+
+      <div class="card-glass settings-card anim-in">
+        <div class="settings-card-title"><i class="fas fa-key"></i> Change Password</div>
+        <div class="settings-card-sub">Use a strong password you don't use elsewhere.</div>
+
+        <form method="post" id="passwordForm">
+          {% csrf_token %}
+          <input type="hidden" name="section" value="password">
+          <div class="row g-3">
+            <div class="col-md-12">
+              <label class="settings-field-label">Current Password</label>
+              <input class="settings-form-control" type="password" name="current_password" required>
+            </div>
+            <div class="col-md-6">
+              <label class="settings-field-label">New Password</label>
+              <input class="settings-form-control" type="password" name="new_password" required>
+            </div>
+            <div class="col-md-6">
+              <label class="settings-field-label">Confirm New Password</label>
+              <input class="settings-form-control" type="password" name="confirm_password" required>
+            </div>
+          </div>
+          <button class="btn-gradient settings-save-btn mt-4" type="submit" id="passwordSaveBtn">
+            <span class="btn-spinner" style="display:none;margin-right:8px;">⏳</span>
+            <i class="fas fa-lock"></i> <span class="btn-label">Update Password</span>
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- ── NOTIFICATIONS ── -->
+    <div class="settings-panel {% if active_tab == 'notifications' %}active{% endif %}" id="panel-notifications">
+      <div class="card-glass settings-card anim-in">
+        <div class="settings-card-title"><i class="fas fa-bell"></i> Notifications</div>
+        <div class="settings-card-sub">Choose what LogicLabs should notify you about.</div>
+
+        <form method="post" id="notificationsForm">
+          {% csrf_token %}
+          <input type="hidden" name="section" value="notifications">
+
+          <div class="settings-row">
+            <div class="settings-row-text">
+              <div class="t">Email Notifications</div>
+              <div class="d">Get important updates sent to your email.</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" name="email_notifications" {% if user_settings.email_notifications %}checked{% endif %}>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="settings-row">
+            <div class="settings-row-text">
+              <div class="t">Contest Notifications</div>
+              <div class="d">Alerts when contests start, end, or are announced.</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" name="contest_notifications" {% if user_settings.contest_notifications %}checked{% endif %}>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="settings-row">
+            <div class="settings-row-text">
+              <div class="t">Course Updates</div>
+              <div class="d">New study plan content and course changes.</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" name="course_update_notifications" {% if user_settings.course_update_notifications %}checked{% endif %}>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="settings-row">
+            <div class="settings-row-text">
+              <div class="t">Submission Result Notifications</div>
+              <div class="d">Know as soon as your code finishes judging.</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" name="submission_result_notifications" {% if user_settings.submission_result_notifications %}checked{% endif %}>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="settings-row">
+            <div class="settings-row-text">
+              <div class="t">Team Member Notifications</div>
+              <div class="d">Activity from teammates on shared work.</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" name="team_member_notifications" {% if user_settings.team_member_notifications %}checked{% endif %}>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="settings-row">
+            <div class="settings-row-text">
+              <div class="t">Spam Message Filtering</div>
+              <div class="d">Automatically filter suspected spam from Discuss.</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" name="spam_filtering" {% if user_settings.spam_filtering %}checked{% endif %}>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <button class="btn-gradient settings-save-btn mt-3" type="submit" id="notificationsSaveBtn">
+            <span class="btn-spinner" style="display:none;margin-right:8px;">⏳</span>
+            <i class="fas fa-floppy-disk"></i> <span class="btn-label">Save Changes</span>
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- ── APPEARANCE ── -->
+    <div class="settings-panel {% if active_tab == 'appearance' %}active{% endif %}" id="panel-appearance">
+      <div class="card-glass settings-card anim-in">
+        <div class="settings-card-title"><i class="fas fa-palette"></i> Appearance</div>
+        <div class="settings-card-sub">Pick the theme LogicLabs should use for you.</div>
+
+        <form method="post" id="appearanceForm">
+          {% csrf_token %}
+          <input type="hidden" name="section" value="appearance">
+
+          <div class="theme-options">
+            <label class="theme-option {% if user_settings.theme == 'dark' %}selected{% endif %}">
+              <input type="radio" name="theme" value="dark" {% if user_settings.theme == 'dark' %}checked{% endif %}>
+              <div class="theme-swatch dark"></div>
+              <div class="theme-option-label"><i class="fas fa-moon"></i> Dark Mode</div>
+            </label>
+            <label class="theme-option {% if user_settings.theme == 'light' %}selected{% endif %}">
+              <input type="radio" name="theme" value="light" {% if user_settings.theme == 'light' %}checked{% endif %}>
+              <div class="theme-swatch light"></div>
+              <div class="theme-option-label"><i class="fas fa-sun"></i> Light Mode</div>
+            </label>
+          </div>
+
+          <button class="btn-gradient settings-save-btn mt-4" type="submit" id="appearanceSaveBtn">
+            <span class="btn-spinner" style="display:none;margin-right:8px;">⏳</span>
+            <i class="fas fa-floppy-disk"></i> <span class="btn-label">Save Changes</span>
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- ── EDITOR PREFERENCES ── -->
+    <div class="settings-panel {% if active_tab == 'editor' %}active{% endif %}" id="panel-editor">
+      <div class="card-glass settings-card anim-in">
+        <div class="settings-card-title"><i class="fas fa-code"></i> Editor Preferences</div>
+        <div class="settings-card-sub">These are saved now and will drive the code editor as it's wired up.</div>
+
+        <form method="post" id="editorForm">
+          {% csrf_token %}
+          <input type="hidden" name="section" value="editor">
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="settings-field-label">Default Programming Language</label>
+              <select class="settings-form-control" name="default_language" id="id_default_language">
+                {% for value, label in user_settings.LANGUAGE_CHOICES %}
+                  <option value="{{ value }}" {% if selected_default_language == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="settings-field-label">Font Size (10–24px)</label>
+              <input class="settings-form-control" type="number" min="10" max="24" name="font_size" value="{{ user_settings.font_size }}">
+            </div>
+          </div>
+
+          <div class="settings-row">
+            <div class="settings-row-text"><div class="t">Line Numbers</div></div>
+            <label class="toggle-switch">
+              <input type="checkbox" name="show_line_numbers" {% if user_settings.show_line_numbers %}checked{% endif %}>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="settings-row">
+            <div class="settings-row-text"><div class="t">Word Wrap</div></div>
+            <label class="toggle-switch">
+              <input type="checkbox" name="word_wrap" {% if user_settings.word_wrap %}checked{% endif %}>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="settings-row">
+            <div class="settings-row-text"><div class="t">Auto Complete</div></div>
+            <label class="toggle-switch">
+              <input type="checkbox" name="auto_complete" {% if user_settings.auto_complete %}checked{% endif %}>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="settings-row">
+            <div class="settings-row-text"><div class="t">Auto Save</div></div>
+            <label class="toggle-switch">
+              <input type="checkbox" name="auto_save" {% if user_settings.auto_save %}checked{% endif %}>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <button class="btn-gradient settings-save-btn mt-3" type="submit" id="editorSaveBtn">
+            <span class="btn-spinner" style="display:none;margin-right:8px;">⏳</span>
+            <i class="fas fa-floppy-disk"></i> <span class="btn-label">Save Changes</span>
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- ── PRIVACY ── -->
+    <div class="settings-panel {% if active_tab == 'privacy' %}active{% endif %}" id="panel-privacy">
+      <div class="card-glass settings-card anim-in">
+        <div class="settings-card-title"><i class="fas fa-lock"></i> Privacy</div>
+        <div class="settings-card-sub">Control what other coders can see on your profile.</div>
+
+        <form method="post" id="privacyForm">
+          {% csrf_token %}
+          <input type="hidden" name="section" value="privacy">
+
+          <div class="settings-row">
+            <div class="settings-row-text">
+              <div class="t">Public Profile</div>
+              <div class="d">Let other users view your profile page.</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" name="public_profile" {% if user_settings.public_profile %}checked{% endif %}>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="settings-row">
+            <div class="settings-row-text">
+              <div class="t">Show Solved Problems</div>
+              <div class="d">Display your solved-problems count publicly.</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" name="show_solved_problems" {% if user_settings.show_solved_problems %}checked{% endif %}>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="settings-row">
+            <div class="settings-row-text">
+              <div class="t">Show Contest Ranking</div>
+              <div class="d">Display your contest rank on your profile.</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" name="show_contest_ranking" {% if user_settings.show_contest_ranking %}checked{% endif %}>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="settings-row">
+            <div class="settings-row-text">
+              <div class="t">Show Activity</div>
+              <div class="d">Display recent submissions and activity.</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" name="show_activity" {% if user_settings.show_activity %}checked{% endif %}>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <button class="btn-gradient settings-save-btn mt-3" type="submit" id="privacySaveBtn">
+            <span class="btn-spinner" style="display:none;margin-right:8px;">⏳</span>
+            <i class="fas fa-floppy-disk"></i> <span class="btn-label">Save Changes</span>
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- ── ABOUT ── -->
+    <div class="settings-panel {% if active_tab == 'about' %}active{% endif %}" id="panel-about">
+      <div class="card-glass settings-card anim-in">
+        <div class="settings-card-title"><i class="fas fa-circle-info"></i> About LogicLabs</div>
+        <div class="settings-card-sub">Platform information.</div>
+
+        <div class="about-row"><span class="k">Platform Name</span><span class="v">LogicLabs (OCAP)</span></div>
+        <div class="about-row"><span class="k">Version</span><span class="v">1.0.0</span></div>
+        <div class="about-row"><span class="k">Developer / Team</span><span class="v">Zakiulla &amp; Team</span></div>
+        <div class="about-row"><span class="k">Contact Support</span><span class="v"><a href="mailto:support@logiclabs.dev" style="color:var(--neon-cyan);text-decoration:none;">support@logiclabs.dev</a></span></div>
+        <div class="about-row" style="border-bottom:none;flex-direction:column;align-items:flex-start;gap:6px;">
+          <span class="k">Description</span>
+          <span class="v" style="font-weight:400;line-height:1.6;">
+            LogicLabs is an online coding assessment platform for practicing problems,
+            competing in contests, and tracking growth as a developer.
+          </span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
-  {% include 'accounts/settings_js.html' %}
+<script>
+  (function () {
+    const tabs = document.querySelectorAll('.settings-tab');
+    const panels = document.querySelectorAll('.settings-panel');
+
+    function activate(tab) {
+      tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+      panels.forEach(p => p.classList.toggle('active', p.id === 'panel-' + tab));
+      const activePanel = document.getElementById('panel-' + tab);
+      if (activePanel) {
+        activePanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+      const url = new URL(window.location);
+      url.searchParams.set('tab', tab);
+      window.history.replaceState({}, '', url);
+    }
+
+    tabs.forEach(tab => {
+      tab.addEventListener('click', (event) => {
+        event.preventDefault();
+        activate(tab.dataset.tab);
+      });
+    });
+
+    const profileInput = document.getElementById('profilePictureInput');
+    const profilePreview = document.getElementById('profilePreview');
+
+    if (profileInput && profilePreview) {
+      profileInput.addEventListener('change', (event) => {
+        const file = event.target.files && event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          profilePreview.innerHTML = '<img src="' + e.target.result + '" alt="Profile preview">';
+        };
+        reader.readAsDataURL(file);
+        markUnsaved(document.getElementById('profileForm'));
+      });
+    }
+
+    // Live-highlight the selected theme card before submit
+    document.querySelectorAll('.theme-option input').forEach(input => {
+      input.addEventListener('change', () => {
+        document.querySelectorAll('.theme-option').forEach(opt => opt.classList.remove('selected'));
+        input.closest('.theme-option').classList.add('selected');
+        markUnsaved(document.getElementById('appearanceForm'));
+      });
+    });
+
+    // Mark form as having unsaved changes
+    function markUnsaved(form) {
+      if (!form) return;
+      form.classList.add('unsaved');
+      const btn = form.querySelector('.settings-save-btn');
+      if (btn) btn.classList.add('unsaved');
+    }
+
+    // Attach change listeners to inputs to mark unsaved
+    document.querySelectorAll('#profileForm input, #profileForm textarea, #notificationsForm input, #appearanceForm input, #editorForm input, #privacyForm input, #passwordForm input, #editorForm select').forEach(el => {
+      el.addEventListener('change', (e) => markUnsaved(el.closest('form')));
+    });
+
+    // Generic AJAX submit handler
+    async function ajaxSubmit(form, btn) {
+      if (!form) return;
+      const spinner = btn.querySelector('.btn-spinner');
+      const label = btn.querySelector('.btn-label');
+      const csrfToken = form.querySelector('input[name="csrfmiddlewaretoken"]')?.value || '';
+      try {
+        btn.disabled = true;
+        if (spinner) spinner.style.display = 'inline-block';
+        if (label) label.style.opacity = '0.6';
+        form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        const response = await fetch(window.location.pathname + window.location.search, {
+          method: 'POST',
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': csrfToken,
+          },
+          credentials: 'same-origin',
+          body: new FormData(form)
+        });
+
+        const contentType = response.headers.get('content-type') || '';
+        if (!contentType.includes('application/json')) {
+          // Non-JSON response — fall back to full reload to preserve existing flow
+          window.location.reload();
+          return;
+        }
+
+        const data = await response.json();
+        if (data.success) {
+          showToast(data.message || 'Saved successfully.');
+          // Update username and avatar across the page
+          if (data.username) {
+            const top = document.getElementById('topbarUsername'); if (top) top.textContent = data.username;
+            const side = document.getElementById('sidebarUsername'); if (side) side.textContent = data.username;
+            const profileName = document.getElementById('profileUsername'); if (profileName) profileName.textContent = data.username;
+          }
+          if (data.profile_picture_url) {
+            const avatarImg = document.getElementById('sidebarUserAvatarImg');
+            if (avatarImg) avatarImg.src = data.profile_picture_url;
+            const profileAvatar = document.getElementById('profileAvatarImg'); if (profileAvatar) profileAvatar.src = data.profile_picture_url;
+            const preview = document.getElementById('profilePreview'); if (preview) preview.innerHTML = '<img src="'+data.profile_picture_url+'">';
+          }
+          if (data.theme) {
+            document.documentElement.setAttribute('data-theme', data.theme);
+            try { localStorage.setItem('active_theme', data.theme); } catch (e) {}
+          }
+          // Clear unsaved state
+          form.classList.remove('unsaved');
+          const btnEl = form.querySelector('.settings-save-btn'); if (btnEl) btnEl.classList.remove('unsaved');
+        } else {
+          const errs = data.errors || [data.message] || ['Save failed'];
+          errs.forEach(e => showToast(e, 'error'));
+        }
+      } catch (err) {
+        showToast('An unexpected error occurred.', 'error');
+      } finally {
+        btn.disabled = false;
+        if (spinner) spinner.style.display = 'none';
+        if (label) label.style.opacity = '1';
+      }
+    }
+
+    function showToast(text, type='success') {
+      const stack = document.getElementById('toastStack');
+      if (!stack) return;
+      const div = document.createElement('div');
+      div.className = 'toast-alert' + (type === 'error' ? ' toast-error' : '');
+      div.innerHTML = '<i class="fas ' + (type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-check') + '"></i><span>' + text + '</span>';
+      stack.appendChild(div);
+      setTimeout(() => { div.style.transition = 'opacity 0.4s'; div.style.opacity = '0'; setTimeout(() => div.remove(), 400); }, 3000);
+    }
+
+    // Bind forms
+    const binds = [
+      { formId: 'profileForm', btnId: 'profileSaveBtn' },
+      { formId: 'appearanceForm', btnId: 'appearanceSaveBtn' },
+      { formId: 'passwordForm', btnId: 'passwordSaveBtn' },
+      { formId: 'notificationsForm', btnId: 'notificationsSaveBtn' },
+      { formId: 'editorForm', btnId: 'editorSaveBtn' },
+      { formId: 'privacyForm', btnId: 'privacySaveBtn' }
+    ];
+
+    binds.forEach(b => {
+      const form = document.getElementById(b.formId);
+      const btn = document.getElementById(b.btnId);
+      if (!form || !btn) return;
+      form.addEventListener('submit', (e) => {
+        // Prefer AJAX for profile & appearance; others will fallback to reload
+        e.preventDefault();
+        ajaxSubmit(form, btn);
+      });
+    });
+
+  })();
+</script>
 {% endblock %}
