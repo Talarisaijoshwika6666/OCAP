@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All Submissions | Recruiter Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/all_submissions.css">
+</head>
+<body>
+<div class="page-shell">
+    <aside class="sidebar">
+        <div class="sidebar-logo">
+            <div class="logo-icon">L</div>
+            <div>
+                <div class="logo-title">LogicLabs</div>
+                <div class="logo-subtitle">Recruiter Panel</div>
+            </div>
+        </div>
+        <div class="sidebar-section">Main</div>
+        <a href="/recruiter/dashboard/" class="nav-item"><i class="bi bi-speedometer2"></i> Overview</a>
+        <div class="sidebar-section">Practice</div>
+        <a href="/recruiter/all-submissions/" class="nav-item active"><i class="bi bi-clipboard-data"></i> All Submissions</a>
+        <a href="/recruiter/contest/" class="nav-item"><i class="bi bi-trophy"></i> Contest Results</a>
+        <a href="/recruiter/settings/" class="nav-item"><i class="bi bi-gear"></i> Settings</a>
+    </aside>
+
+    <main class="content">
+        <header class="topbar">
+            <div>
+                <p class="eyebrow">Recruiter Dashboard</p>
+                <h1>All Submissions</h1>
+            </div>
+            <div class="topbar-actions">
+                <div class="user-pill">{{ username }}</div>
+            </div>
+        </header>
+
+        <section class="stats-grid">
+            <div class="stat-card gradient-purple">
+                <div class="stat-icon"><i class="bi bi-journal-bookmark"></i></div>
+                <div>
+                    <h3>{{ stats.total_problems }}</h3>
+                    <p>Total Problems</p>
+                </div>
+            </div>
+            <div class="stat-card gradient-blue">
+                <div class="stat-icon"><i class="bi bi-send-check"></i></div>
+                <div>
+                    <h3>{{ stats.total_submissions }}</h3>
+                    <p>Total Submissions</p>
+                </div>
+            </div>
+            <div class="stat-card gradient-green">
+                <div class="stat-icon"><i class="bi bi-clock-history"></i></div>
+                <div>
+                    <h3>{{ stats.average_submission_time }}s</h3>
+                    <p>Average Submission Time</p>
+                </div>
+            </div>
+            <div class="stat-card gradient-orange">
+                <div class="stat-icon"><i class="bi bi-bar-chart-line"></i></div>
+                <div>
+                    <h3>{{ stats.overall_acceptance_rate }}%</h3>
+                    <p>Overall Acceptance Rate</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="toolbar card">
+            <div class="toolbar-left">
+                <div class="search-box">
+                    <i class="bi bi-search"></i>
+                    <input type="text" id="submissionSearch" placeholder="Search problem, difficulty...">
+                </div>
+                <select id="difficultyFilter" class="form-select">
+                    <option value="all">All Difficulties</option>
+                    <option value="easy">Easy</option>
+                    <option value="medium">Medium</option>
+                    <option value="hard">Hard</option>
+                </select>
+            </div>
+            <div class="toolbar-right">
+                <button class="btn btn-outline-secondary" id="refreshBtn"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
+                <button class="btn btn-primary" id="exportBtn"><i class="bi bi-download"></i> Export CSV</button>
+            </div>
+        </section>
+
+        <section class="card">
+            <div class="table-responsive">
+                <table class="table align-middle table-hover">
+                    <thead>
+                        <tr>
+                            <th><button class="sort-btn" data-sort="title">Problem Title</button></th>
+                            <th>Difficulty</th>
+                            <th><button class="sort-btn" data-sort="submissions">Number of Submissions</button></th>
+                            <th><button class="sort-btn" data-sort="avgtime">Average Time</button></th>
+                            <th>Accepted</th>
+                            <th>Rejected</th>
+                            <th><button class="sort-btn" data-sort="rate">Acceptance Rate</button></th>
+                            <th>Last Submission</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="submissionTableBody">
+                        {% for row in rows %}
+                        <tr>
+                            <td><strong>{{ row.title }}</strong></td>
+                            <td><span class="badge difficulty-badge difficulty-{{ row.difficulty_class }}">{{ row.difficulty }}</span></td>
+                            <td>{{ row.total_submissions }}</td>
+                            <td>{{ row.average_time_display }}</td>
+                            <td><span class="text-success fw-semibold">{{ row.accepted }}</span></td>
+                            <td><span class="text-danger fw-semibold">{{ row.rejected }}</span></td>
+                            <td>
+                                <div class="progress-pill">
+                                    <div class="progress-bar progress-bar-{{ row.acceptance_class }}" style="width: {{ row.acceptance_rate }}%"></div>
+                                </div>
+                                <span class="rate-label">{{ row.acceptance_rate }}%</span>
+                            </td>
+                            <td>{{ row.last_submission_display }}</td>
+                            <td>
+                                <button class="btn btn-outline-primary btn-sm view-details" data-bs-toggle="modal" data-bs-target="#detailsModal" data-title="{{ row.title }}" data-difficulty="{{ row.difficulty }}" data-submissions="{{ row.total_submissions }}" data-accepted="{{ row.accepted }}" data-rejected="{{ row.rejected }}" data-time="{{ row.average_time_display }}" data-highest="{{ row.highest_score }}" data-lowest="{{ row.lowest_score }}" data-last="{{ row.last_submission_display }}">
+                                    <i class="bi bi-eye"></i> View Details
+                                </button>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="9" class="text-center text-muted py-4">No submissions available yet.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <nav class="mt-4 d-flex justify-content-between align-items-center">
+                <div class="text-muted small">Showing 10 rows per page</div>
+                <ul class="pagination pagination-sm mb-0" id="pagination"></ul>
+            </nav>
+        </section>
+
+        <section class="charts-grid mt-4">
+            <div class="card chart-card">
+                <h5>Submissions by Problem</h5>
+                <canvas id="barChart"></canvas>
+            </div>
+            <div class="card chart-card">
+                <h5>Difficulty Distribution</h5>
+                <canvas id="pieChart"></canvas>
+            </div>
+            <div class="card chart-card">
+                <h5>Daily Submission Trend</h5>
+                <canvas id="lineChart"></canvas>
+            </div>
+        </section>
+    </main>
+</div>
+
+<div class="modal fade" id="detailsModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Submission Insights</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="info-card"><span>Problem Name</span><strong id="modalTitle"></strong></div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-card"><span>Difficulty</span><strong id="modalDifficulty"></strong></div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-card"><span>Total Submissions</span><strong id="modalSubmissions"></strong></div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-card"><span>Accepted</span><strong id="modalAccepted"></strong></div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-card"><span>Rejected</span><strong id="modalRejected"></strong></div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-card"><span>Average Time Taken</span><strong id="modalTime"></strong></div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-card"><span>Highest Score</span><strong id="modalHighest"></strong></div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-card"><span>Lowest Score</span><strong id="modalLowest"></strong></div>
+          </div>
+          <div class="col-md-12">
+            <div class="info-card"><span>Latest Submission</span><strong id="modalLast"></strong></div>
+          </div>
+        </div>
+        <div class="mt-4">
+          <canvas id="modalTrendChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
+<script src="/static/js/all_submissions.js"></script>
+<script>
+  window.dashboardData = {
+    submissionsByProblem: {{ submissions_by_problem|safe }},
+    difficultyDistribution: {{ difficulty_distribution|safe }},
+    dailyTrend: {{ daily_trend|safe }}
+  };
+</script>
+</body>
+</html>
