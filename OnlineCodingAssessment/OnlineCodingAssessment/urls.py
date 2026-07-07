@@ -15,7 +15,6 @@ urlpatterns = [
     path('discuss/', include('discuss.urls')),
     path('results/', include('results.urls')),
     path('assessments/', include('assessments.urls')),
-    path('study-plan/', quest_views.study_plan_view, name='study_plan'),
     path('', home_view, name='home'),
     path('home/', home_view, name='home_alt'),
     path('dashboard/', dashboard_view, name='dashboard'),
