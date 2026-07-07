@@ -35,13 +35,28 @@ def login_view(request):
 
         if panel == 'recruiter':
             if username == RECRUITER_USERNAME and password == RECRUITER_PASSWORD:
-                user, _ = User.objects.get_or_create(
+                user, created = User.objects.get_or_create(
                     username=RECRUITER_USERNAME,
-                    defaults={'is_staff': True}
+                    defaults={'is_staff': True, 'role': 'examiner', 'full_name': 'Recruiter'}
                 )
-                if not user.is_staff:
+                if created:
                     user.is_staff = True
-                    user.save()
+                    user.role = 'examiner'
+                    user.full_name = user.full_name or 'Recruiter'
+                    user.save(update_fields=['is_staff', 'role', 'full_name'])
+                else:
+                    changed = False
+                    if not user.is_staff:
+                        user.is_staff = True
+                        changed = True
+                    if user.role not in {'examiner', 'admin'}:
+                        user.role = 'examiner'
+                        changed = True
+                    if not user.full_name:
+                        user.full_name = 'Recruiter'
+                        changed = True
+                    if changed:
+                        user.save(update_fields=['is_staff', 'role', 'full_name'])
                 login(request, user,
                       backend='django.contrib.auth.backends.ModelBackend')
                 return redirect('/recruiter/dashboard/')
@@ -51,15 +66,22 @@ def login_view(request):
                     'panel': 'recruiter'
                 })
         else:
-            # Candidate panel — open to anyone
-            user, created = User.objects.get_or_create(
-                username=username,
-                defaults={'role': 'candidate'}
-            )
-            if created:
-                user.set_password(password)
-                user.save()
-            
+            user = User.objects.filter(username=username).first()
+            if user is None:
+                user = User.objects.create_user(username=username, password=password, role='candidate')
+                login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+                next_url = request.GET.get('next') or request.POST.get('next') or '/dashboard/'
+                if next_url == '/':
+                    next_url = '/dashboard/'
+                return redirect(next_url)
+
+            user = authenticate(request, username=username, password=password)
+            if user is None:
+                return render(request, 'accounts/login.html', {
+                    'error': 'Invalid credentials.',
+                    'panel': 'candidate'
+                })
+
             login(request, user, backend='django.contrib.auth.backends.ModelBackend')
             next_url = request.GET.get('next') or request.POST.get('next') or '/dashboard/'
             if next_url == '/':
@@ -141,6 +163,11 @@ def settings_view(request):
     user = request.user
     user_settings, _ = UserSettings.objects.get_or_create(user=user)
     active_tab = request.GET.get('tab', 'account')
+    selected_default_language = user_settings.default_language or UserSettings._meta.get_field('default_language').get_default()
+    editor_form = EditorPreferencesForm(instance=user_settings)
+    notifications_form = NotificationsSettingsForm(instance=user_settings)
+    appearance_form = AppearanceSettingsForm(instance=user_settings)
+    privacy_form = PrivacySettingsForm(instance=user_settings)
 
     if request.method == 'POST':
         section = request.POST.get('section')
@@ -204,6 +231,7 @@ def settings_view(request):
             form = NotificationsSettingsForm(post_data, instance=user_settings)
             if form.is_valid():
                 form.save()
+                user_settings.refresh_from_db()
                 if is_ajax:
                     return JsonResponse({
                         'success': True,
@@ -225,6 +253,7 @@ def settings_view(request):
             form = AppearanceSettingsForm(request.POST, instance=user_settings)
             if form.is_valid():
                 form.save()
+                user_settings.refresh_from_db()
                 if is_ajax:
                     return JsonResponse({
                         'success': True,
@@ -251,6 +280,8 @@ def settings_view(request):
             form = EditorPreferencesForm(post_data, instance=user_settings)
             if form.is_valid():
                 form.save()
+                user_settings.refresh_from_db()
+                selected_default_language = user_settings.default_language or UserSettings._meta.get_field('default_language').get_default()
                 if is_ajax:
                     return JsonResponse({
                         'success': True,
@@ -277,6 +308,7 @@ def settings_view(request):
             form = PrivacySettingsForm(post_data, instance=user_settings)
             if form.is_valid():
                 form.save()
+                user_settings.refresh_from_db()
                 if is_ajax:
                     return JsonResponse({
                         'success': True,
@@ -300,4 +332,9 @@ def settings_view(request):
         'user_settings': user_settings,
         'active_tab': active_tab,
         'password_form': SettingsPasswordChangeForm(user),
+        'editor_form': editor_form,
+        'notifications_form': notifications_form,
+        'appearance_form': appearance_form,
+        'privacy_form': privacy_form,
+        'selected_default_language': selected_default_language,
     })

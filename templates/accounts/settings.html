@@ -21,6 +21,8 @@
     padding: 10px;
     background: var(--surface-card);
     border: 1px solid var(--surface-border);
+    pointer-events: none;
+    z-index: 1;
   }
 
   .settings-menu-title {
@@ -39,6 +41,7 @@
     align-items: center;
     gap: 12px;
     padding: 12px 14px;
+    pointer-events: auto;
     border-radius: 10px;
     color: var(--text-dim);
     text-decoration: none;
@@ -68,6 +71,8 @@
   /* ── RIGHT PANEL ── */
   .settings-panel { display: none; }
   .settings-panel.active { display: block; }
+  .settings-panel { position: relative; z-index: 1; scroll-margin-top: 100px; }
+  .settings-card { scroll-margin-top: 100px; }
 
   .settings-card {
     padding: 28px 30px;
@@ -596,9 +601,9 @@
           <div class="row g-3 mb-3">
             <div class="col-md-6">
               <label class="settings-field-label">Default Programming Language</label>
-              <select class="settings-form-control" name="default_language">
+              <select class="settings-form-control" name="default_language" id="id_default_language">
                 {% for value, label in user_settings.LANGUAGE_CHOICES %}
-                  <option value="{{ value }}" {% if user_settings.default_language == value %}selected{% endif %}>{{ label }}</option>
+                  <option value="{{ value }}" {% if selected_default_language == value %}selected{% endif %}>{{ label }}</option>
                 {% endfor %}
               </select>
             </div>
@@ -737,13 +742,20 @@
     function activate(tab) {
       tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
       panels.forEach(p => p.classList.toggle('active', p.id === 'panel-' + tab));
+      const activePanel = document.getElementById('panel-' + tab);
+      if (activePanel) {
+        activePanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
       const url = new URL(window.location);
       url.searchParams.set('tab', tab);
       window.history.replaceState({}, '', url);
     }
 
     tabs.forEach(tab => {
-      tab.addEventListener('click', () => activate(tab.dataset.tab));
+      tab.addEventListener('click', (event) => {
+        event.preventDefault();
+        activate(tab.dataset.tab);
+      });
     });
 
     const profileInput = document.getElementById('profilePictureInput');
@@ -789,14 +801,20 @@
       if (!form) return;
       const spinner = btn.querySelector('.btn-spinner');
       const label = btn.querySelector('.btn-label');
+      const csrfToken = form.querySelector('input[name="csrfmiddlewaretoken"]')?.value || '';
       try {
         btn.disabled = true;
         if (spinner) spinner.style.display = 'inline-block';
         if (label) label.style.opacity = '0.6';
+        form.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
         const response = await fetch(window.location.pathname + window.location.search, {
           method: 'POST',
-          headers: { 'X-Requested-With': 'XMLHttpRequest' },
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': csrfToken,
+          },
+          credentials: 'same-origin',
           body: new FormData(form)
         });
 
