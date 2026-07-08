@@ -1,0 +1,1467 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" data-theme="{{ active_theme|default:'dark' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LogicLabs — Reports & Analytics</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    
+    <style>
+        :root {
+            --bg-void: #0a0a14;
+            --neon-pink: #ff2d78;
+            --neon-cyan: #00fff7;
+            --neon-purple: #b026ff;
+            --neon-magenta: #ff00aa;
+            --text-primary: #f0eaff;
+            --text-dim: rgba(240,234,255,0.45);
+            --sidebar-w: 260px;
+            --font-display: 'Orbitron', monospace;
+            --font-body: 'Inter', sans-serif;
+            --font-code: 'JetBrains Mono', monospace;
+            --surface-1: rgba(8, 5, 18, 0.92);
+            --surface-1-soft: rgba(8, 5, 18, 0.8);
+            --surface-card: rgba(12, 8, 28, 0.75);
+            --surface-border: rgba(176, 38, 255, 0.18);
+            --glow-opacity: 1;
+        }
+
+        [data-theme="light"] {
+            --bg-void: #f4f2fb;
+            --neon-pink: #d6006f;
+            --neon-cyan: #0090a8;
+            --neon-purple: #7a1fcc;
+            --neon-magenta: #b0006a;
+            --text-primary: #1c1530;
+            --text-dim: rgba(28,21,48,0.55);
+            --surface-1: rgba(255, 255, 255, 0.9);
+            --surface-1-soft: rgba(255, 255, 255, 0.85);
+            --surface-card: rgba(255, 255, 255, 0.8);
+            --surface-border: rgba(122, 31, 204, 0.18);
+            --glow-opacity: 0.5;
+        }
+
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--font-body);
+            background: var(--bg-void);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            display: flex;
+            position: relative;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+
+        .bg-layer {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            background:
+                radial-gradient(ellipse 700px 500px at 15% 50%, rgba(176,38,255,0.12) 0%, transparent 65%),
+                radial-gradient(ellipse 600px 400px at 85% 30%, rgba(255,45,120,0.10) 0%, transparent 65%),
+                radial-gradient(ellipse 500px 400px at 50% 90%, rgba(0,255,247,0.07) 0%, transparent 65%),
+                radial-gradient(ellipse 400px 300px at 90% 80%, rgba(255,0,170,0.08) 0%, transparent 65%);
+        }
+
+        .bg-layer::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(176,38,255,0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,255,247,0.04) 1px, transparent 1px);
+            background-size: 55px 55px;
+        }
+
+        .main-content {
+            flex: 1;
+            margin-left: var(--sidebar-w);
+            position: relative;
+            z-index: 1;
+            padding: 32px;
+        }
+
+        .page-title {
+            font-family: var(--font-display);
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: var(--neon-cyan);
+            text-shadow: 0 0 20px rgba(0, 255, 247, 0.3);
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+        }
+
+        .page-subtitle {
+            color: var(--text-dim);
+            font-size: 0.95rem;
+            margin-bottom: 40px;
+            font-weight: 300;
+        }
+
+        /* ── SECTION CONTAINER ── */
+        .analytics-section {
+            margin-bottom: 60px;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .section-title {
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--neon-pink);
+            text-shadow: 0 0 15px rgba(255, 45, 120, 0.2);
+            margin-bottom: 24px;
+            letter-spacing: 1px;
+        }
+
+        .analytics-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 24px;
+            align-items: start;
+        }
+
+        /* ── CHART CARD ── */
+        .chart-card {
+            background: linear-gradient(135deg, var(--surface-card) 0%, rgba(12, 8, 28, 0.55) 100%);
+            border: 1px solid var(--surface-border);
+            border-radius: 20px;
+            padding: 28px;
+            backdrop-filter: blur(24px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .chart-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--neon-cyan), transparent);
+            opacity: 0.5;
+        }
+
+        .chart-card:hover {
+            border-color: var(--neon-purple);
+            box-shadow: 0 12px 48px rgba(0, 255, 247, 0.15);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin-bottom: 20px;
+        }
+
+        .chart-loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 400px;
+        }
+
+        .skeleton-loader {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                rgba(176, 38, 255, 0.1) 0%,
+                rgba(0, 255, 247, 0.1) 50%,
+                rgba(176, 38, 255, 0.1) 100%
+            );
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite;
+            border-radius: 12px;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* ── ANALYTICS CARD (Right Side) ── */
+        .analytics-card {
+            background: linear-gradient(135deg, rgba(176, 38, 255, 0.1) 0%, rgba(0, 255, 247, 0.05) 100%);
+            border: 1px solid var(--surface-border);
+            border-radius: 20px;
+            padding: 28px;
+            backdrop-filter: blur(24px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .analytics-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--neon-pink), transparent);
+            opacity: 0.5;
+        }
+
+        .analytics-card:hover {
+            border-color: var(--neon-pink);
+            box-shadow: 0 12px 48px rgba(255, 45, 120, 0.15);
+        }
+
+        .stat-group {
+            margin-bottom: 24px;
+        }
+
+        .stat-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--neon-cyan);
+            font-family: var(--font-code);
+            text-shadow: 0 0 10px rgba(0, 255, 247, 0.2);
+        }
+
+        .stat-value.accent-pink {
+            color: var(--neon-pink);
+        }
+
+        .stat-value.accent-purple {
+            color: var(--neon-purple);
+        }
+
+        .stat-subtext {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            margin-top: 4px;
+            font-weight: 300;
+        }
+
+        /* ── PAGINATION CONTROLS ── */
+        .pagination-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--surface-border);
+        }
+
+        .pagination-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn-pagination {
+            background: linear-gradient(135deg, rgba(0, 255, 247, 0.15) 0%, rgba(176, 38, 255, 0.15) 100%);
+            border: 1px solid var(--neon-cyan);
+            color: var(--neon-cyan);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: var(--font-body);
+        }
+
+        .btn-pagination:hover:not(:disabled) {
+            background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
+            color: var(--bg-void);
+            box-shadow: 0 0 15px rgba(0, 255, 247, 0.3);
+        }
+
+        .btn-pagination:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .pagination-info {
+            color: var(--text-dim);
+            font-size: 0.9rem;
+            text-align: center;
+            flex: 1;
+        }
+
+        /* ── RESPONSIVE DESIGN ── */
+        @media (max-width: 1200px) {
+            .analytics-row {
+                grid-template-columns: 1fr;
+            }
+
+            .main-content {
+                padding: 24px;
+            }
+
+            .page-title {
+                font-size: 2rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            :root {
+                --sidebar-w: 260px;
+            }
+
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+                box-shadow: -5px 0 20px rgba(0, 0, 0, 0.5);
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 16px;
+            }
+
+            .page-title {
+                font-size: 1.5rem;
+            }
+
+            .analytics-row {
+                gap: 16px;
+            }
+
+            .chart-container {
+                height: 300px;
+            }
+
+            .pagination-controls {
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .pagination-buttons {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .pagination-info {
+                order: -1;
+            }
+        }
+
+        /* ── Loading Animation ── */
+        .spinner {
+            border: 3px solid rgba(0, 255, 247, 0.2);
+            border-top: 3px solid var(--neon-cyan);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* ── Distribution Box ── */
+        .distribution-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            font-size: 0.85rem;
+        }
+
+        .distribution-label {
+            color: var(--text-dim);
+        }
+
+        .distribution-bar {
+            flex: 1;
+            height: 6px;
+            background: rgba(176, 38, 255, 0.1);
+            border-radius: 3px;
+            margin: 0 12px;
+            overflow: hidden;
+        }
+
+        .distribution-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--neon-cyan), var(--neon-purple));
+            border-radius: 3px;
+            transition: width 0.6s ease;
+        }
+
+        .distribution-count {
+            color: var(--neon-cyan);
+            font-family: var(--font-code);
+            font-weight: 600;
+            min-width: 40px;
+            text-align: right;
+        }
+
+        /* ──────────────────────────────────────────────────────────
+           SIDEBAR STYLES (Added for consistency with other recruiter pages)
+           ────────────────────────────────────────────────────────── */
+        
+        .sidebar {
+            width: var(--sidebar-w);
+            min-height: 100vh;
+            background: rgba(8, 5, 18, 0.95);
+            border-right: 1px solid rgba(176, 38, 255, 0.2);
+            display: flex;
+            flex-direction: column;
+            padding: 24px 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            backdrop-filter: blur(24px);
+            z-index: 1000;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .sidebar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 1px;
+            height: 100%;
+            background: linear-gradient(180deg,
+                transparent 0%,
+                rgba(0, 255, 247, 0.4) 25%,
+                rgba(176, 38, 255, 0.6) 50%,
+                rgba(0, 255, 247, 0.4) 75%,
+                transparent 100%);
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 0 20px 24px;
+            border-bottom: 1px solid rgba(176, 38, 255, 0.15);
+        }
+
+        .logo-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .logo-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 8px;
+            display: block;
+        }
+
+        .logo-text {
+            font-size: 18px;
+            font-weight: 700;
+            font-family: var(--font-display);
+        }
+
+        .logo-text .logic {
+            color: #fff;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+        }
+
+        .logo-text .labs {
+            background: linear-gradient(90deg, var(--neon-cyan), var(--neon-purple), var(--neon-pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(0 0 8px rgba(176, 38, 255, 0.45));
+        }
+
+        .sidebar-section {
+            padding: 18px 20px 6px;
+            font-size: 10px;
+            letter-spacing: 2px;
+            color: rgba(176, 38, 255, 0.5);
+            text-transform: uppercase;
+            font-family: var(--font-code);
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 11px 20px;
+            color: var(--text-dim);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            border-left: 3px solid transparent;
+            transition: all 0.25s;
+            cursor: pointer;
+            margin: 2px 8px;
+            border-radius: 9px;
+        }
+
+        .nav-item:hover {
+            color: var(--neon-cyan);
+            background: rgba(0, 255, 247, 0.05);
+            border-left-color: var(--neon-cyan);
+            transform: translateX(4px);
+        }
+
+        .nav-item.active {
+            color: var(--neon-purple);
+            background: rgba(176, 38, 255, 0.07);
+            border-left-color: var(--neon-purple);
+        }
+
+        .nav-icon {
+            font-size: 16px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .sidebar-bottom {
+            margin-top: auto;
+            padding: 16px 20px;
+            border-top: 1px solid rgba(176, 38, 255, 0.15);
+        }
+
+        .recruiter-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .recruiter-avatar {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            box-shadow: 0 0 12px rgba(0, 255, 247, 0.4);
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .recruiter-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .recruiter-role {
+            font-size: 11px;
+            font-family: var(--font-code);
+            background: linear-gradient(90deg, var(--neon-cyan), var(--neon-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .btn-logout {
+            width: 100%;
+            padding: 9px;
+            background: rgba(0, 255, 247, 0.05);
+            border: 1px solid rgba(0, 255, 247, 0.2);
+            border-radius: 8px;
+            color: var(--neon-cyan);
+            font-size: 13px;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            display: block;
+            transition: all 0.2s;
+            font-family: var(--font-code);
+        }
+
+        .btn-logout:hover {
+            background: rgba(176, 38, 255, 0.15);
+            border-color: rgba(176, 38, 255, 0.4);
+            box-shadow: 0 0 12px rgba(176, 38, 255, 0.25);
+            color: var(--text-primary);
+        }
+
+        /* ── Smooth Transitions ── */
+        * {
+            transition: color 0.3s ease, background 0.3s ease;
+        }
+
+        canvas {
+            max-height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-layer"></div>
+
+    <!-- SIDEBAR (Fixed left navigation) -->
+    <div class="sidebar">
+        <div class="sidebar-logo">
+            <div class="logo-icon">
+                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTFFJdllY1_vWrWkBGH7nWHv2JdnkgoW9ORVaNHkQkDvQ&s" alt="LogicLabs Logo">
+            </div>
+            <div class="logo-text">
+                <span class="logic">Logic</span><span class="labs">Labs</span>
+            </div>
+        </div>
+
+        <div class="sidebar-section">Main</div>
+
+        <a href="/recruiter/dashboard/" class="nav-item">
+            <span class="nav-icon">📊</span> Overview
+        </a>
+
+        <div class="sidebar-section">Practice</div>
+
+        <a href="/recruiter/problems/" class="nav-item">
+            <span class="nav-icon">💻</span> Problem Bank
+        </a>
+
+        <a href="/recruiter/submissions/" class="nav-item">
+            <span class="nav-icon">📋</span> All Submissions
+        </a>
+
+        <a href="/recruiter/candidates/" class="nav-item">
+            <span class="nav-icon">👥</span> Candidates
+        </a>
+
+        <a href="/recruiter/contest/" class="nav-item">
+            <span class="nav-icon">🏆</span> Contest Results
+        </a>
+
+        <div class="sidebar-section">Manage</div>
+
+        <a href="/recruiter/reports/" class="nav-item active">
+            <span class="nav-icon">📈</span> Reports
+        </a>
+
+        <a href="/recruiter/settings/" class="nav-item">
+            <span class="nav-icon">⚙️</span> Settings
+        </a>
+
+        <div class="sidebar-bottom">
+            <div class="recruiter-info">
+                <div class="recruiter-avatar">🏢</div>
+                <div>
+                    <div class="recruiter-name">{{ username }}</div>
+                    <div class="recruiter-role">Recruiter</div>
+                </div>
+            </div>
+            <a href="/accounts/logout/" class="btn-logout">⎋ Logout</a>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT AREA -->
+    <div class="main-content">
+        <!-- Mobile Menu Toggle (visible on small screens) -->
+        <div style="display: none; margin-bottom: 20px;" class="mobile-menu-toggle" id="mobileMenuToggle">
+            <button onclick="toggleSidebar()" style="background: rgba(0, 255, 247, 0.1); border: 1px solid rgba(0, 255, 247, 0.3); color: var(--neon-cyan); padding: 8px 12px; border-radius: 8px; font-size: 1.2rem; cursor: pointer; transition: all 0.3s ease;">
+                <i class="fas fa-bars"></i> Menu
+            </button>
+        </div>
+
+        <div class="page-title">
+            <i class="fas fa-chart-line"></i> Analytics Dashboard
+        </div>
+        <p class="page-subtitle">Real-time performance insights and contest analytics</p>
+
+        <!-- SECTION 1: CANDIDATE PERFORMANCE -->
+        <div class="analytics-section">
+            <h2 class="section-title">
+                <i class="fas fa-users"></i> Candidate Performance
+            </h2>
+            
+            <div class="analytics-row">
+                <!-- Left: Bar Chart -->
+                <div class="chart-card">
+                    <h4 style="color: var(--text-primary); margin-bottom: 20px; font-weight: 600;">
+                        Candidate Scores
+                    </h4>
+                    <div class="chart-container" id="candidateChartContainer">
+                        <div class="chart-loading">
+                            <div class="spinner"></div>
+                        </div>
+                    </div>
+                    <canvas id="candidateChart" style="display: none;"></canvas>
+                    <div class="pagination-controls">
+                        <div class="pagination-buttons">
+                            <button class="btn-pagination" id="candidatePrevBtn" onclick="prevCandidatePage()">
+                                <i class="fas fa-chevron-left"></i> Previous
+                            </button>
+                            <button class="btn-pagination" id="candidateNextBtn" onclick="nextCandidatePage()">
+                                Next <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </div>
+                        <div class="pagination-info" id="candidatePaginationInfo">
+                            Loading...
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Analytics Card -->
+                <div class="analytics-card">
+                    <h4 style="color: var(--text-primary); margin-bottom: 20px; font-weight: 600;">
+                        Performance Summary
+                    </h4>
+                    
+                    <div class="stat-group">
+                        <div class="stat-label">Total Candidates</div>
+                        <div class="stat-value" id="totalCandidates">--</div>
+                    </div>
+
+                    <div class="stat-group">
+                        <div class="stat-label">Highest Score</div>
+                        <div class="stat-value accent-purple" id="highestScore">--</div>
+                        <div class="stat-subtext" id="highestScorerName">--</div>
+                    </div>
+
+                    <div class="stat-group">
+                        <div class="stat-label">Lowest Score</div>
+                        <div class="stat-value" id="lowestScore">--</div>
+                    </div>
+
+                    <div class="stat-group">
+                        <div class="stat-label">Average Score</div>
+                        <div class="stat-value accent-cyan" id="averageScore">--</div>
+                    </div>
+
+                    <div class="stat-group">
+                        <div class="stat-label">Pass Rate</div>
+                        <div class="stat-value accent-pink" id="passPercentage">--%</div>
+                        <div class="stat-subtext">
+                            <span id="passedCount">--</span> Passed • <span id="failedCount">--</span> Failed
+                        </div>
+                    </div>
+
+                    <div class="stat-group">
+                        <div class="stat-label">Score Distribution</div>
+                        <div id="scoreDistribution" style="margin-top: 12px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 2: CONTEST ANALYTICS -->
+        <div class="analytics-section">
+            <h2 class="section-title">
+                <i class="fas fa-calendar-alt"></i> Contest Analytics
+            </h2>
+            
+            <div class="analytics-row">
+                <!-- Left: Line Chart -->
+                <div class="chart-card">
+                    <h4 style="color: var(--text-primary); margin-bottom: 20px; font-weight: 600;">
+                        Monthly Contest Trends
+                    </h4>
+                    <div class="chart-container" id="contestChartContainer">
+                        <div class="chart-loading">
+                            <div class="spinner"></div>
+                        </div>
+                    </div>
+                    <canvas id="contestChart" style="display: none;"></canvas>
+                </div>
+
+                <!-- Right: Analytics Card -->
+                <div class="analytics-card">
+                    <h4 style="color: var(--text-primary); margin-bottom: 20px; font-weight: 600;">
+                        Contest Summary
+                    </h4>
+                    
+                    <div class="stat-group">
+                        <div class="stat-label">Total Contests</div>
+                        <div class="stat-value" id="totalContests">--</div>
+                    </div>
+
+                    <div class="stat-group">
+                        <div class="stat-label">Current Month</div>
+                        <div class="stat-value accent-purple" id="currentMonthContests">--</div>
+                    </div>
+
+                    <div class="stat-group">
+                        <div class="stat-label">Average per Month</div>
+                        <div class="stat-value" id="avgContestsPerMonth">--</div>
+                    </div>
+
+                    <div class="stat-group">
+                        <div class="stat-label">Most Active Month</div>
+                        <div class="stat-value accent-pink" id="mostActiveMonth">--</div>
+                    </div>
+
+                    <div class="stat-group">
+                        <div class="stat-label">Growth Rate (This Month)</div>
+                        <div class="stat-value" id="growthRate">--%</div>
+                        <div class="stat-subtext" id="growthTrend">--</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 3: CONTEST RESULTS -->
+        <div class="analytics-section">
+            <h2 class="section-title">
+                <i class="fas fa-trophy"></i> Contest Results
+            </h2>
+
+            <div class="analytics-row">
+                <div class="chart-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 20px;">
+                        <h4 style="color: var(--text-primary); margin-bottom: 0; font-weight: 600;">
+                            Past Contest Performance
+                        </h4>
+                        <select id="contestResultsSelect" class="form-select" style="max-width: 280px; background: rgba(8, 5, 18, 0.8); color: var(--text-primary); border: 1px solid var(--surface-border);">
+                            <option>Loading contests...</option>
+                        </select>
+                    </div>
+                    <div class="chart-container" id="contestResultsChartContainer">
+                        <div class="chart-loading">
+                            <div class="spinner"></div>
+                        </div>
+                    </div>
+                    <canvas id="contestResultsChart" style="display: none;"></canvas>
+                </div>
+
+                <div class="analytics-card">
+                    <h4 style="color: var(--text-primary); margin-bottom: 20px; font-weight: 600;">
+                        Ranked Results
+                    </h4>
+                    <div id="contestResultsList" style="margin-top: 12px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let candidateChart = null;
+        let contestChart = null;
+        let contestResultsChart = null;
+        let currentCandidatePage = 1;
+        let candidatePerPage = 15;
+        let totalCandidatePages = 1;
+
+        // Auto-refresh interval (every 30 seconds)
+        const AUTO_REFRESH_INTERVAL = 30000;
+
+        // Sidebar Toggle for Mobile
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            if (sidebar) {
+                sidebar.classList.toggle('active');
+            }
+        }
+
+        // Handle Mobile Menu Button Visibility
+        function handleResponsive() {
+            const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+            const sidebar = document.querySelector('.sidebar');
+            
+            if (window.innerWidth <= 768) {
+                // Show mobile menu button on small screens
+                if (mobileMenuToggle) {
+                    mobileMenuToggle.style.display = 'block';
+                }
+                // Hide sidebar by default on mobile (unless already toggled)
+                if (sidebar && !sidebar.classList.contains('active')) {
+                    sidebar.classList.remove('active');
+                }
+            } else {
+                // Hide mobile menu button on large screens
+                if (mobileMenuToggle) {
+                    mobileMenuToggle.style.display = 'none';
+                }
+                // Show sidebar on desktop
+                if (sidebar) {
+                    sidebar.classList.remove('active');
+                }
+            }
+        }
+
+        // Close sidebar when clicking on a nav link (mobile)
+        function closeSidebarOnNavClick() {
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    if (window.innerWidth <= 768) {
+                        const sidebar = document.querySelector('.sidebar');
+                        if (sidebar) {
+                            sidebar.classList.remove('active');
+                        }
+                    }
+                });
+            });
+        }
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            // Handle responsive behavior
+            handleResponsive();
+            closeSidebarOnNavClick();
+            
+            // Listen for window resize
+            window.addEventListener('resize', handleResponsive);
+
+            document.getElementById('contestResultsSelect').addEventListener('change', function() {
+                loadContestResultsData(this.value);
+            });
+            
+            // Load all data
+            loadAllData();
+            
+            // Auto-refresh every 30 seconds
+            setInterval(loadAllData, AUTO_REFRESH_INTERVAL);
+        });
+
+        // Load all dashboard data
+        async function loadAllData() {
+            try {
+                await Promise.all([
+                    loadCandidateData(),
+                    loadCandidateStats(),
+                    loadContestData(),
+                    loadContestStats(),
+                    loadContestResultsData()
+                ]);
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+            }
+        }
+
+        // Load candidate performance data with pagination
+        async function loadCandidateData() {
+            try {
+                const response = await fetch(
+                    `/recruiter/reports/api/candidate-performance/?page=${currentCandidatePage}&per_page=${candidatePerPage}`
+                );
+                const data = await response.json();
+
+                if (!data.success) {
+                    console.error('Error:', data.error);
+                    return;
+                }
+
+                const candidates = data.candidates;
+                const pagination = data.pagination;
+                totalCandidatePages = pagination.total_pages;
+
+                // Update chart
+                renderCandidateChart(candidates);
+
+                // Update pagination info
+                document.getElementById('candidatePaginationInfo').textContent =
+                    `Showing Candidates ${(currentCandidatePage - 1) * candidatePerPage + 1}–${Math.min(currentCandidatePage * candidatePerPage, pagination.total_candidates)} of ${pagination.total_candidates} | Page ${currentCandidatePage} of ${totalCandidatePages}`;
+
+                // Update button states
+                document.getElementById('candidatePrevBtn').disabled = !pagination.has_previous;
+                document.getElementById('candidateNextBtn').disabled = !pagination.has_next;
+
+            } catch (error) {
+                console.error('Error loading candidate data:', error);
+            }
+        }
+
+        // Render candidate bar chart
+        function renderCandidateChart(candidates) {
+            const ctx = document.getElementById('candidateChart').getContext('2d');
+            const container = document.getElementById('candidateChartContainer');
+            
+            // Show canvas, hide loader
+            const canvas = document.getElementById('candidateChart');
+            if (canvas.style.display === 'none') {
+                canvas.style.display = 'block';
+                container.innerHTML = '';
+                container.appendChild(canvas);
+            }
+
+            // Destroy existing chart
+            if (candidateChart) {
+                candidateChart.destroy();
+            }
+
+            // Prepare data
+            const labels = candidates.map(c => c.name);
+            const scores = candidates.map(c => c.score);
+
+            // Create gradient
+            const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+            gradient.addColorStop(0, 'rgba(0, 255, 247, 0.6)');
+            gradient.addColorStop(1, 'rgba(176, 38, 255, 0.3)');
+
+            candidateChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Score',
+                        data: scores,
+                        backgroundColor: gradient,
+                        borderColor: 'rgba(0, 255, 247, 1)',
+                        borderWidth: 2,
+                        borderRadius: 8,
+                        barPercentage: 0.8,
+                        categoryPercentage: 0.9,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'x',
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: '#00fff7',
+                            bodyColor: '#f0eaff',
+                            borderColor: '#00fff7',
+                            borderWidth: 1,
+                            padding: 12,
+                            displayColors: false,
+                            callbacks: {
+                                label: function(context) {
+                                    return `Score: ${context.parsed.y.toFixed(2)}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: {
+                                color: 'rgba(240, 234, 255, 0.6)',
+                                font: { size: 11 }
+                            },
+                            grid: {
+                                drawBorder: false,
+                                color: 'rgba(176, 38, 255, 0.1)'
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                color: 'rgba(240, 234, 255, 0.6)',
+                                font: { size: 11 }
+                            },
+                            grid: {
+                                color: 'rgba(176, 38, 255, 0.1)',
+                                drawBorder: false
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Animate bars
+            candidateChart.resize();
+        }
+
+        // Load candidate statistics
+        async function loadCandidateStats() {
+            try {
+                const response = await fetch('/recruiter/reports/api/candidate-stats/');
+                const data = await response.json();
+
+                if (!data.success) {
+                    console.error('Error:', data.error);
+                    return;
+                }
+
+                const stats = data.stats;
+
+                // Update stats
+                document.getElementById('totalCandidates').textContent = stats.total_candidates;
+                document.getElementById('highestScore').textContent = stats.highest_score.toFixed(2);
+                document.getElementById('highestScorerName').textContent = `by ${stats.highest_scorer}`;
+                document.getElementById('lowestScore').textContent = stats.lowest_score.toFixed(2);
+                document.getElementById('averageScore').textContent = stats.average_score.toFixed(2);
+                document.getElementById('passPercentage').textContent = stats.pass_percentage.toFixed(1) + '%';
+                document.getElementById('passedCount').textContent = stats.passed_candidates;
+                document.getElementById('failedCount').textContent = stats.failed_candidates;
+
+                // Update score distribution
+                renderScoreDistribution(stats.score_distribution);
+
+            } catch (error) {
+                console.error('Error loading candidate stats:', error);
+            }
+        }
+
+        // Render score distribution
+        function renderScoreDistribution(distribution) {
+            const container = document.getElementById('scoreDistribution');
+            const max = Math.max(...Object.values(distribution));
+
+            let html = '';
+            for (const [range, count] of Object.entries(distribution)) {
+                const percentage = max > 0 ? (count / max) * 100 : 0;
+                html += `
+                    <div class="distribution-item">
+                        <span class="distribution-label">${range}</span>
+                        <div class="distribution-bar">
+                            <div class="distribution-fill" style="width: ${percentage}%"></div>
+                        </div>
+                        <span class="distribution-count">${count}</span>
+                    </div>
+                `;
+            }
+            container.innerHTML = html;
+        }
+
+        // Load contest analytics data
+        async function loadContestData() {
+            try {
+                const response = await fetch('/recruiter/reports/api/contest-analytics/');
+                const data = await response.json();
+
+                if (!data.success) {
+                    console.error('Error:', data.error);
+                    return;
+                }
+
+                renderContestChart(data.data);
+
+            } catch (error) {
+                console.error('Error loading contest data:', error);
+            }
+        }
+
+        // Render contest line chart
+        function renderContestChart(data) {
+            const ctx = document.getElementById('contestChart').getContext('2d');
+            const container = document.getElementById('contestChartContainer');
+            
+            const canvas = document.getElementById('contestChart');
+            if (canvas.style.display === 'none') {
+                canvas.style.display = 'block';
+                container.innerHTML = '';
+                container.appendChild(canvas);
+            }
+
+            if (contestChart) {
+                contestChart.destroy();
+            }
+
+            const labels = data.map(d => d.month);
+            const counts = data.map(d => d.count);
+
+            const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+            gradient.addColorStop(0, 'rgba(255, 45, 120, 0.6)');
+            gradient.addColorStop(1, 'rgba(255, 0, 170, 0.2)');
+
+            contestChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Contests',
+                        data: counts,
+                        borderColor: 'rgba(255, 45, 120, 1)',
+                        backgroundColor: gradient,
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: 'rgba(255, 45, 120, 1)',
+                        pointBorderColor: '#0a0a14',
+                        pointBorderWidth: 2,
+                        pointRadius: 6,
+                        pointHoverRadius: 8,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: '#ff2d78',
+                            bodyColor: '#f0eaff',
+                            borderColor: '#ff2d78',
+                            borderWidth: 1,
+                            padding: 12,
+                            displayColors: false,
+                            callbacks: {
+                                label: function(context) {
+                                    return `Contests: ${context.parsed.y}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: {
+                                color: 'rgba(240, 234, 255, 0.6)',
+                                font: { size: 11 }
+                            },
+                            grid: {
+                                drawBorder: false,
+                                color: 'rgba(176, 38, 255, 0.1)'
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                color: 'rgba(240, 234, 255, 0.6)',
+                                font: { size: 11 }
+                            },
+                            grid: {
+                                color: 'rgba(176, 38, 255, 0.1)',
+                                drawBorder: false
+                            }
+                        }
+                    }
+                }
+            });
+
+            contestChart.resize();
+        }
+
+        // Load contest statistics
+        async function loadContestStats() {
+            try {
+                const response = await fetch('/recruiter/reports/api/contest-stats/');
+                const data = await response.json();
+
+                if (!data.success) {
+                    console.error('Error:', data.error);
+                    return;
+                }
+
+                const stats = data.stats;
+
+                // Update stats
+                document.getElementById('totalContests').textContent = stats.total_contests;
+                document.getElementById('currentMonthContests').textContent = stats.current_month_contests;
+                document.getElementById('avgContestsPerMonth').textContent = stats.avg_contests_per_month.toFixed(1);
+                document.getElementById('mostActiveMonth').textContent = stats.most_active_month;
+                
+                const growthRate = stats.growth_rate;
+                const growthElement = document.getElementById('growthRate');
+                const trendElement = document.getElementById('growthTrend');
+                
+                growthElement.textContent = growthRate.toFixed(1) + '%';
+                
+                if (growthRate > 0) {
+                    growthElement.style.color = 'var(--neon-cyan)';
+                    trendElement.textContent = '<i class="fas fa-arrow-up" style="color: var(--neon-cyan);"></i> Increasing';
+                } else if (growthRate < 0) {
+                    growthElement.style.color = 'var(--neon-pink)';
+                    trendElement.textContent = '<i class="fas fa-arrow-down" style="color: var(--neon-pink);"></i> Decreasing';
+                } else {
+                    trendElement.textContent = 'Stable';
+                }
+
+            } catch (error) {
+                console.error('Error loading contest stats:', error);
+            }
+        }
+
+        // Load contest results data
+        async function loadContestResultsData(contestId = null) {
+            try {
+                const url = contestId
+                    ? `/recruiter/reports/api/contest-results/?contest_id=${contestId}`
+                    : '/recruiter/reports/api/contest-results/';
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (!data.success) {
+                    console.error('Error:', data.error);
+                    return;
+                }
+
+                const select = document.getElementById('contestResultsSelect');
+                select.innerHTML = '';
+                if (data.contests.length > 0) {
+                    data.contests.forEach(function(contest) {
+                        const option = document.createElement('option');
+                        option.value = contest.id;
+                        option.textContent = contest.title;
+                        if (data.selected_contest && contest.id === data.selected_contest.id) {
+                            option.selected = true;
+                        }
+                        select.appendChild(option);
+                    });
+                } else {
+                    const option = document.createElement('option');
+                    option.textContent = 'No past contests found';
+                    select.appendChild(option);
+                }
+
+                renderContestResultsChart(data.selected_contest);
+                renderContestResultsList(data.selected_contest && data.selected_contest.results ? data.selected_contest.results : []);
+            } catch (error) {
+                console.error('Error loading contest results:', error);
+            }
+        }
+
+        // Render contest results bar chart
+        function renderContestResultsChart(selectedContest) {
+            const ctx = document.getElementById('contestResultsChart').getContext('2d');
+            const container = document.getElementById('contestResultsChartContainer');
+            const canvas = document.getElementById('contestResultsChart');
+
+            if (canvas.style.display === 'none') {
+                canvas.style.display = 'block';
+                container.innerHTML = '';
+                container.appendChild(canvas);
+            }
+
+            if (contestResultsChart) {
+                contestResultsChart.destroy();
+            }
+
+            const results = selectedContest && selectedContest.results ? selectedContest.results : [];
+            const labels = results.map(r => r.candidate);
+            const scores = results.map(r => r.score);
+
+            const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+            gradient.addColorStop(0, 'rgba(255, 45, 120, 0.6)');
+            gradient.addColorStop(1, 'rgba(0, 255, 247, 0.2)');
+
+            contestResultsChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Score',
+                        data: scores,
+                        backgroundColor: gradient,
+                        borderColor: 'rgba(255, 45, 120, 1)',
+                        borderWidth: 2,
+                        borderRadius: 8,
+                        barPercentage: 0.8,
+                        categoryPercentage: 0.9,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: '#ff2d78',
+                            bodyColor: '#f0eaff',
+                            borderColor: '#ff2d78',
+                            borderWidth: 1,
+                            padding: 12,
+                            displayColors: false,
+                            callbacks: {
+                                label: function(context) {
+                                    return `Score: ${context.parsed.y}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: {
+                                color: 'rgba(240, 234, 255, 0.6)',
+                                font: { size: 11 }
+                            },
+                            grid: {
+                                drawBorder: false,
+                                color: 'rgba(176, 38, 255, 0.1)'
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                color: 'rgba(240, 234, 255, 0.6)',
+                                font: { size: 11 }
+                            },
+                            grid: {
+                                color: 'rgba(176, 38, 255, 0.1)',
+                                drawBorder: false
+                            }
+                        }
+                    }
+                }
+            });
+
+            contestResultsChart.resize();
+        }
+
+        // Render ranked results list
+        function renderContestResultsList(results) {
+            const container = document.getElementById('contestResultsList');
+            if (!results.length) {
+                container.innerHTML = '<div style="color: var(--text-dim);">No ranked results available for this contest.</div>';
+                return;
+            }
+
+            let html = '';
+            results.forEach(function(result) {
+                html += `
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(176, 38, 255, 0.15);">
+                        <div>
+                            <div style="font-weight: 600; color: var(--text-primary);">#${result.rank} ${result.candidate}</div>
+                        </div>
+                        <div style="font-family: var(--font-code); color: var(--neon-cyan); font-weight: 600;">${result.score}</div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        // Pagination functions
+        function prevCandidatePage() {
+            if (currentCandidatePage > 1) {
+                currentCandidatePage--;
+                loadCandidateData();
+            }
+        }
+
+        function nextCandidatePage() {
+            if (currentCandidatePage < totalCandidatePages) {
+                currentCandidatePage++;
+                loadCandidateData();
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,10 +1,17 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import get_user_model
-from django.db.models import Count, Avg
+from django.db.models import Count, Avg, Q as models_Q
 from django.utils import timezone
+from django.http import JsonResponse
+from django.views.decorators.http import require_http_methods
+from django.utils import timezone
+from datetime import timedelta
+from collections import defaultdict
 from submissions.models import Submission
 from questions.models import Question
 from assessments.models import Assessment
+from results.models import Result
+from contest.models import Contest
 
 User = get_user_model()
 
@@ -110,6 +117,154 @@ def recruiter_dashboard(request):
         'insights': insights,
         'recent_activity': recent_activity,
     })
+
+def _get_contest_results_for_contest(contest):
+    results_qs = Result.objects.filter(assessment__title__icontains=contest.title).order_by('-score', 'submitted_at')
+    results_list = []
+    for idx, r in enumerate(results_qs):
+        rank = r.rank if getattr(r, 'rank', 0) > 0 else (idx + 1)
+        results_list.append({
+            'rank': rank,
+            'candidate': r.candidate.username,
+            'score': r.score
+        })
+    return results_list
+
+
+def recruiter_problem_bank(request):
+    """Problem Bank view for recruiters — mirrors the candidate-facing
+    question list (search / topic / difficulty filters) but adds
+    recruiter-relevant context like per-question submission counts."""
+    if not request.user.is_authenticated or not request.user.is_staff:
+        return redirect('/accounts/login/')
+
+    questions = Question.objects.all().order_by('-id')
+
+    search = request.GET.get('search', '')
+    if search:
+        questions = questions.filter(title__icontains=search)
+
+    difficulty = request.GET.get('difficulty', '')
+    if difficulty:
+        questions = questions.filter(difficulty=difficulty)
+
+    topic = request.GET.get('topic', '')
+    if topic:
+        questions = questions.filter(topic=topic)
+
+    topics = Question.objects.order_by('topic').values_list('topic', flat=True).distinct()
+
+    # Annotate with submission stats so recruiters can see how each
+    # problem is performing across candidates at a glance.
+    questions = questions.annotate(
+        submission_count=Count('submission', distinct=True),
+        solved_count=Count(
+            'submission',
+            filter=models_Q(submission__result__in=['AC', 'Accepted']),
+            distinct=True,
+        ),
+    )
+
+    total_problems = Question.objects.count()
+    easy_count = Question.objects.filter(difficulty='Easy').count()
+    medium_count = Question.objects.filter(difficulty='Medium').count()
+    hard_count = Question.objects.filter(difficulty='Hard').count()
+
+    return render(request, 'recruiter/problems.html', {
+        'username': request.user.username,
+        'questions': questions,
+        'search': search,
+        'difficulty': difficulty,
+        'topic': topic,
+        'topics': topics,
+        'total_problems': total_problems,
+        'easy_count': easy_count,
+        'medium_count': medium_count,
+        'hard_count': hard_count,
+    })
+
+
+def recruiter_delete_problem(request, pk):
+    """Delete a question from the problem bank. Staff-only, POST-only."""
+    if not request.user.is_authenticated or not request.user.is_staff:
+        return redirect('/accounts/login/')
+
+    if request.method == 'POST':
+        question = get_object_or_404(Question, pk=pk)
+        question.delete()
+
+    # Preserve any active filters when redirecting back to the list.
+    querystring = request.POST.get('querystring', '')
+    redirect_url = '/recruiter/problems/'
+    if querystring:
+        redirect_url += f'?{querystring}'
+    return redirect(redirect_url)
+
+
+def recruiter_add_problem(request):
+    """Create a new question in the problem bank. Staff-only."""
+    if not request.user.is_authenticated or not request.user.is_staff:
+        return redirect('/accounts/login/')
+
+    errors = {}
+    form_data = {
+        'title': '',
+        'topic': '',
+        'difficulty': 'Easy',
+        'description': '',
+        'sample_input': '',
+        'sample_output': '',
+        'hint': '',
+        'answer': '',
+        'time_limit': 60,
+    }
+
+    if request.method == 'POST':
+        form_data['title'] = request.POST.get('title', '').strip()
+        form_data['topic'] = request.POST.get('topic', '').strip() or 'General'
+        form_data['difficulty'] = request.POST.get('difficulty', 'Easy')
+        form_data['description'] = request.POST.get('description', '').strip()
+        form_data['sample_input'] = request.POST.get('sample_input', '').strip()
+        form_data['sample_output'] = request.POST.get('sample_output', '').strip()
+        form_data['hint'] = request.POST.get('hint', '').strip()
+        form_data['answer'] = request.POST.get('answer', '').strip()
+        form_data['time_limit'] = request.POST.get('time_limit', '60').strip()
+
+        if not form_data['title']:
+            errors['title'] = 'Title is required.'
+        if not form_data['description']:
+            errors['description'] = 'Description is required.'
+        if form_data['difficulty'] not in dict(Question.DIFFICULTY_CHOICES):
+            errors['difficulty'] = 'Choose a valid difficulty.'
+        try:
+            time_limit_value = int(form_data['time_limit'] or 60)
+            if time_limit_value <= 0:
+                raise ValueError
+        except ValueError:
+            errors['time_limit'] = 'Time limit must be a positive whole number.'
+            time_limit_value = 60
+
+        if not errors:
+            Question.objects.create(
+                title=form_data['title'],
+                topic=form_data['topic'],
+                difficulty=form_data['difficulty'],
+                description=form_data['description'],
+                sample_input=form_data['sample_input'],
+                sample_output=form_data['sample_output'],
+                hint=form_data['hint'],
+                answer=form_data['answer'],
+                time_limit=time_limit_value,
+            )
+            return redirect('/recruiter/problems/')
+
+    return render(request, 'recruiter/problem_form.html', {
+        'username': request.user.username,
+        'form_data': form_data,
+        'errors': errors,
+        'difficulty_choices': Question.DIFFICULTY_CHOICES,
+    })
+
 
 def recruiter_all_submissions(request):
     if not request.user.is_authenticated or not request.user.is_staff:
@@ -236,16 +391,7 @@ def recruiter_contest_results(request):
     past_list = []
     
     for c in past_qs:
-        # Get real results if available
-        results_qs = Result.objects.filter(assessment__title__icontains=c.title).order_by('-score', 'submitted_at')
-        results_list = []
-        for idx, r in enumerate(results_qs):
-            rank = r.rank if r.rank > 0 else (idx + 1)
-            results_list.append({
-                'rank': rank,
-                'candidate': r.candidate.username,
-                'score': r.score
-            })
+        results_list = _get_contest_results_for_contest(c)
         
         # Real registrations (number of unique candidates who submitted tests)
         registrations_count = Result.objects.filter(assessment__title__icontains=c.title).values('candidate').distinct().count()
@@ -266,3 +412,402 @@ def recruiter_contest_results(request):
         'upcoming_contests': upcoming_list,
         'past_contests': past_list
     })
+
+
+def reports_page(request):
+    """Render the main reports dashboard page."""
+    if not request.user.is_authenticated or not request.user.is_staff:
+        return redirect('/accounts/login/')
+    
+    return render(request, 'recruiter/reports.html', {
+        'username': request.user.username,
+    })
+
+
+@require_http_methods(["GET"])
+def contest_results_api(request):
+    """Return past contest options and the selected contest's ranked results."""
+    try:
+        now = timezone.now()
+        contest_id = request.GET.get('contest_id')
+
+        past_contests = Contest.objects.filter(end_time__lt=now).order_by('-end_time')
+        contests = [
+            {'id': contest.id, 'title': contest.title}
+            for contest in past_contests
+        ]
+
+        selected_contest = None
+        if contest_id:
+            selected_contest = past_contests.filter(id=contest_id).first()
+        if selected_contest is None and past_contests.exists():
+            selected_contest = past_contests.first()
+
+        if selected_contest is None:
+            selected_contest_payload = {'id': None, 'title': '', 'results': []}
+        else:
+            selected_contest_payload = {
+                'id': selected_contest.id,
+                'title': selected_contest.title,
+                'results': _get_contest_results_for_contest(selected_contest),
+            }
+
+        return JsonResponse({
+            'success': True,
+            'contests': contests,
+            'selected_contest': selected_contest_payload,
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+@require_http_methods(["GET"])
+def candidate_performance_api(request):
+    """
+    API endpoint for candidate performance data with pagination.
+    Returns sorted candidate scores for bar chart visualization.
+    
+    Query parameters:
+    - page: page number (default: 1)
+    - per_page: candidates per page (default: 15)
+    """
+    try:
+        page = int(request.GET.get('page', 1))
+        per_page = int(request.GET.get('per_page', 15))
+        
+        # Ensure valid pagination parameters
+        if page < 1:
+            page = 1
+        if per_page < 5 or per_page > 100:
+            per_page = 15
+        
+        # Get all candidates with their best scores
+        # Aggregating from both Submission and Result models
+        candidate_scores = {}
+        
+        # From Submissions (coding problems)
+        submission_scores = Submission.objects.values('user__username', 'user__id').annotate(
+            score=Avg('score'),
+            submission_count=Count('id')
+        ).order_by('user__username')
+        
+        for item in submission_scores:
+            username = item['user__username']
+            score = item['score'] if item['score'] is not None else 0
+            candidate_scores[username] = {
+                'user_id': item['user__id'],
+                'score': round(score, 2),
+                'submission_count': item['submission_count'],
+            }
+        
+        # From Results (assessments)
+        result_scores = Result.objects.values('candidate__username', 'candidate__id').annotate(
+            score=Avg('score'),
+            result_count=Count('id')
+        ).order_by('candidate__username')
+        
+        for item in result_scores:
+            username = item['candidate__username']
+            score = item['score'] if item['score'] is not None else 0
+            if username in candidate_scores:
+                # Average both submission and result scores
+                candidate_scores[username]['score'] = round(
+                    (candidate_scores[username]['score'] + score) / 2, 2
+                )
+                candidate_scores[username]['result_count'] = item['result_count']
+            else:
+                candidate_scores[username] = {
+                    'user_id': item['candidate__id'],
+                    'score': round(score, 2),
+                    'result_count': item['result_count'],
+                }
+        
+        # Sort by score (highest first)
+        sorted_candidates = sorted(
+            candidate_scores.items(),
+            key=lambda x: x[1]['score'],
+            reverse=True
+        )
+        
+        # Calculate pagination
+        total_candidates = len(sorted_candidates)
+        total_pages = (total_candidates + per_page - 1) // per_page
+        
+        # Validate page number
+        if page > total_pages and total_pages > 0:
+            page = total_pages
+        
+        # Get page data
+        start_idx = (page - 1) * per_page
+        end_idx = start_idx + per_page
+        page_candidates = sorted_candidates[start_idx:end_idx]
+        
+        # Format response
+        candidates = [
+            {
+                'name': name,
+                'score': score_data['score'],
+                'rank': start_idx + idx + 1,
+            }
+            for idx, (name, score_data) in enumerate(page_candidates)
+        ]
+        
+        return JsonResponse({
+            'success': True,
+            'candidates': candidates,
+            'pagination': {
+                'current_page': page,
+                'total_pages': total_pages,
+                'per_page': per_page,
+                'total_candidates': total_candidates,
+                'has_previous': page > 1,
+                'has_next': page < total_pages,
+            }
+        })
+    
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+@require_http_methods(["GET"])
+def candidate_stats_api(request):
+    """
+    API endpoint for candidate performance statistics.
+    Returns aggregated stats for the analytics card.
+    """
+    try:
+        # Get all candidates
+        all_users = User.objects.filter(is_staff=False, is_superuser=False)
+        total_candidates = all_users.count()
+        
+        # Get all scores from both submissions and results
+        all_scores = []
+        
+        # From Submissions
+        submission_avgs = Submission.objects.values('user__id').annotate(
+            avg_score=Avg('score')
+        )
+        for item in submission_avgs:
+            if item['avg_score'] is not None:
+                all_scores.append(item['avg_score'])
+        
+        # From Results
+        result_avgs = Result.objects.values('candidate__id').annotate(
+            avg_score=Avg('score')
+        )
+        for item in result_avgs:
+            if item['avg_score'] is not None:
+                all_scores.append(item['avg_score'])
+        
+        # Calculate statistics
+        if all_scores:
+            highest_score = max(all_scores)
+            lowest_score = min(all_scores)
+            average_score = sum(all_scores) / len(all_scores)
+        else:
+            highest_score = 0
+            lowest_score = 0
+            average_score = 0
+        
+        # Get highest scorer name
+        highest_scorer_name = "N/A"
+        try:
+            highest_submission = Submission.objects.order_by('-score').first()
+            if highest_submission:
+                highest_scorer_name = highest_submission.user.username
+            else:
+                highest_result = Result.objects.order_by('-score').first()
+                if highest_result:
+                    highest_scorer_name = highest_result.candidate.username
+        except:
+            pass
+        
+        # Count passed/failed candidates (score >= 50)
+        passed_submissions = Submission.objects.filter(score__gte=50).values('user').distinct().count()
+        failed_submissions = Submission.objects.filter(score__lt=50).values('user').distinct().count()
+        
+        passed_results = Result.objects.filter(passed=True).values('candidate').distinct().count()
+        failed_results = Result.objects.filter(passed=False).values('candidate').distinct().count()
+        
+        total_passed = passed_submissions + passed_results
+        total_failed = failed_submissions + failed_results
+        
+        # Calculate pass percentage
+        total_evaluated = total_passed + total_failed
+        pass_percentage = (total_passed / total_evaluated * 100) if total_evaluated > 0 else 0
+        
+        # Score distribution
+        score_distribution = {
+            '0-20': 0,
+            '21-40': 0,
+            '41-60': 0,
+            '61-80': 0,
+            '81-100': 0,
+        }
+        
+        for score in all_scores:
+            if score <= 20:
+                score_distribution['0-20'] += 1
+            elif score <= 40:
+                score_distribution['21-40'] += 1
+            elif score <= 60:
+                score_distribution['41-60'] += 1
+            elif score <= 80:
+                score_distribution['61-80'] += 1
+            else:
+                score_distribution['81-100'] += 1
+        
+        return JsonResponse({
+            'success': True,
+            'stats': {
+                'total_candidates': total_candidates,
+                'highest_score': round(highest_score, 2),
+                'lowest_score': round(lowest_score, 2),
+                'average_score': round(average_score, 2),
+                'highest_scorer': highest_scorer_name,
+                'passed_candidates': total_passed,
+                'failed_candidates': total_failed,
+                'pass_percentage': round(pass_percentage, 2),
+                'score_distribution': score_distribution,
+            }
+        })
+    
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+@require_http_methods(["GET"])
+def contest_analytics_api(request):
+    """
+    API endpoint for contest analytics data.
+    Returns monthly contest counts for line chart.
+    """
+    try:
+        # Get contests grouped by month (last 12 months)
+        now = timezone.now()
+        twelve_months_ago = now - timedelta(days=365)
+        
+        contests = Contest.objects.filter(
+            start_time__gte=twelve_months_ago
+        ).order_by('start_time')
+        
+        # Group by month
+        monthly_data = defaultdict(int)
+        
+        # Initialize all months
+        for i in range(12):
+            month_date = now - timedelta(days=30*i)
+            month_key = month_date.strftime('%b')  # 'Jan', 'Feb', etc.
+            if month_key not in monthly_data:
+                monthly_data[month_key] = 0
+        
+        # Count contests by month
+        for contest in contests:
+            month_key = contest.start_time.strftime('%b')
+            monthly_data[month_key] += 1
+        
+        # Format for chart (in chronological order)
+        months_order = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+                       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+        contest_data = [
+            {'month': month, 'count': monthly_data.get(month, 0)}
+            for month in months_order
+        ]
+        
+        return JsonResponse({
+            'success': True,
+            'data': contest_data,
+        })
+    
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+@require_http_methods(["GET"])
+def contest_stats_api(request):
+    """
+    API endpoint for contest statistics.
+    Returns aggregated stats for the contest analytics card.
+    """
+    try:
+        now = timezone.now()
+        
+        # Total contests
+        total_contests = Contest.objects.count()
+        
+        # Current month contests
+        current_month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        if now.month == 12:
+            next_month_start = now.replace(year=now.year+1, month=1, day=1)
+        else:
+            next_month_start = now.replace(month=now.month+1, day=1)
+        
+        current_month_contests = Contest.objects.filter(
+            start_time__gte=current_month_start,
+            start_time__lt=next_month_start
+        ).count()
+        
+        # Average contests per month (last 12 months)
+        twelve_months_ago = now - timedelta(days=365)
+        contests_last_year = Contest.objects.filter(
+            start_time__gte=twelve_months_ago
+        ).count()
+        avg_contests_per_month = round(contests_last_year / 12, 2) if contests_last_year > 0 else 0
+        
+        # Most active month (last 12 months)
+        monthly_counts = defaultdict(int)
+        for contest in Contest.objects.filter(start_time__gte=twelve_months_ago):
+            month_key = contest.start_time.strftime('%B')  # 'January', etc.
+            monthly_counts[month_key] += 1
+        
+        most_active_month = max(monthly_counts, key=monthly_counts.get) if monthly_counts else "N/A"
+        least_active_month = min(monthly_counts, key=monthly_counts.get) if monthly_counts else "N/A"
+        
+        # Contest growth rate (compare this month vs last month)
+        last_month_start = (current_month_start - timedelta(days=1)).replace(day=1)
+        if current_month_start.month == 1:
+            prev_month_end = current_month_start - timedelta(days=1)
+        else:
+            prev_month_end = current_month_start - timedelta(days=1)
+        
+        last_month_contests = Contest.objects.filter(
+            start_time__gte=last_month_start,
+            start_time__lt=current_month_start
+        ).count()
+        
+        if last_month_contests > 0:
+            growth_rate = round(
+                ((current_month_contests - last_month_contests) / last_month_contests * 100), 2
+            )
+        else:
+            growth_rate = 0.0 if current_month_contests == 0 else 100.0
+        
+        return JsonResponse({
+            'success': True,
+            'stats': {
+                'total_contests': total_contests,
+                'current_month_contests': current_month_contests,
+                'avg_contests_per_month': avg_contests_per_month,
+                'most_active_month': most_active_month,
+                'least_active_month': least_active_month,
+                'growth_rate': growth_rate,
+            }
+        })
+    
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
