@@ -111,7 +111,6 @@ def recruiter_dashboard(request):
         'recent_activity': recent_activity,
     })
 
-<<<<<<< HEAD
 def recruiter_problem_bank(request):
     """Problem Bank view for recruiters — mirrors the candidate-facing
     question list (search / topic / difficulty filters) but adds
@@ -244,7 +243,9 @@ def recruiter_add_problem(request):
         'form_data': form_data,
         'errors': errors,
         'difficulty_choices': Question.DIFFICULTY_CHOICES,
-=======
+    })
+
+
 def recruiter_all_submissions(request):
     if not request.user.is_authenticated or not request.user.is_staff:
         return redirect('/accounts/login/')
@@ -327,7 +328,6 @@ def recruiter_all_submissions(request):
         'difficulty_distribution': difficulty_distribution,
         'submissions_by_problem': submissions_by_problem,
         'daily_trend': daily_trend,
->>>>>>> origin/main
     })
 
 
@@ -401,77 +401,3 @@ def recruiter_contest_results(request):
         'upcoming_contests': upcoming_list,
         'past_contests': past_list
     })
-
-    def recruiter_problem_bank(request):
-        if not request.user.is_authenticated:
-            return redirect('/accounts/login/')
-
-    questions = Question.objects.all().order_by('-created_at')
-
-    search = request.GET.get('search', '')
-    topic = request.GET.get('topic', '')
-    difficulty = request.GET.get('difficulty', '')
-
-    if search:
-        questions = questions.filter(title__icontains=search)
-    if topic:
-        questions = questions.filter(topic__icontains=topic)
-    if difficulty:
-        questions = questions.filter(difficulty=difficulty)
-
-    all_topics = Question.objects.values_list('topic', flat=True).distinct().order_by('topic')
-
-    return render(request, 'recruiter/problems.html', {
-        'username': request.user.username,
-        'questions': questions,
-        'total_questions': Question.objects.count(),
-        'search': search,
-        'topic': topic,
-        'difficulty': difficulty,
-        'all_topics': all_topics,
-    })
-
-
-def recruiter_add_problem(request):
-    if not request.user.is_authenticated:
-        return redirect('/accounts/login/')
-
-    if request.method == 'POST':
-        title = request.POST.get('title')
-        description = request.POST.get('description')
-        topic = request.POST.get('topic') or 'General'
-        difficulty = request.POST.get('difficulty')
-        sample_input = request.POST.get('sample_input', '')
-        sample_output = request.POST.get('sample_output', '')
-        hint = request.POST.get('hint', '')
-        answer = request.POST.get('answer', '')
-        time_limit = request.POST.get('time_limit') or 60
-
-        if title and description and difficulty:
-            Question.objects.create(
-                title=title,
-                description=description,
-                topic=topic,
-                difficulty=difficulty,
-                sample_input=sample_input,
-                sample_output=sample_output,
-                hint=hint,
-                answer=answer,
-                time_limit=time_limit,
-            )
-            return redirect('/recruiter/problems/')
-
-    return render(request, 'recruiter/problem_form.html', {
-        'username': request.user.username,
-    })
-
-
-def recruiter_delete_problem(request, pk):
-    if not request.user.is_authenticated:
-        return redirect('/accounts/login/')
-
-    question = get_object_or_404(Question, pk=pk)
-    if request.method == 'POST':
-        question.delete()
-
-    return redirect('/recruiter/problems/')
