@@ -1,16 +1,5 @@
 import json
-from io import BytesIO
-
-from django.contrib.auth import get_user_model
-from django.core.files.base import ContentFile
-from django.test import Client, TestCase
-from django.urls import reverse
-from unittest.mock import MagicMock, patch
-
-from PIL import Image
-
-from .models import ChatRateLimit, UserSettings
-from django.test import TestCase, Client
+from django.test import TestCase, Client, override_settings
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 from unittest.mock import patch, MagicMock
@@ -18,6 +7,7 @@ from accounts.models import ChatRateLimit
 
 User = get_user_model()
 
+@override_settings(GROQ_API_KEY='test-valid-groq-key')
 class ChatbotTests(TestCase):
     def setUp(self):
         self.client = Client()
@@ -95,12 +85,13 @@ class ChatbotTests(TestCase):
 
     @patch('urllib.request.urlopen')
     def test_chatbot_successful_interaction(self, mock_urlopen):
-        # Mock successful Gemini API response
+        # Mock successful Groq API response
         mock_response = MagicMock()
         mock_response.read.return_value = json.dumps({
-            "candidates": [{
-                "content": {
-                    "parts": [{"text": "Hello, how can I help you debug today?"}]
+            "choices": [{
+                "message": {
+                    "role": "assistant",
+                    "content": "Hello, how can I help you debug today?"
                 }
             }]
         }).encode('utf-8')
@@ -152,7 +143,12 @@ class ChatbotTests(TestCase):
         # Mock response
         mock_response = MagicMock()
         mock_response.read.return_value = json.dumps({
-            "candidates": [{"content": {"parts": [{"text": "Response"}]}}]
+            "choices": [{
+                "message": {
+                    "role": "assistant",
+                    "content": "Response"
+                }
+            }]
         }).encode('utf-8')
         mock_response.__enter__.return_value = mock_response
         mock_urlopen.return_value = mock_response
@@ -209,4 +205,48 @@ class ChatbotTests(TestCase):
         self.assertEqual(response.status_code, 429)
         data = response.json()
         self.assertIn("Rate limit exceeded", data['error'])
+
+
+class RegistrationTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.register_url = reverse('register')
+
+    def test_registration_page_get(self):
+        response = self.client.get(self.register_url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'accounts/register.html')
+
+    def test_registration_successful_post(self):
+        payload = {
+            'username': 'newcoder',
+            'email': 'newcoder@example.com',
+            'password': 'password123',
+            'confirm_password': 'password123'
+        }
+        response = self.client.post(self.register_url, payload)
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(User.objects.filter(username='newcoder').exists())
+
+    def test_registration_mismatched_passwords(self):
+        payload = {
+            'username': 'newcoder',
+            'email': 'newcoder@example.com',
+            'password': 'password123',
+            'confirm_password': 'password124'
+        }
+        response = self.client.post(self.register_url, payload)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Passwords do not match.')
+
+    def test_registration_short_password(self):
+        payload = {
+            'username': 'newcoder',
+            'email': 'newcoder@example.com',
+            'password': '123',
+            'confirm_password': '123'
+        }
+        response = self.client.post(self.register_url, payload)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Password must be at least 8 characters long.')
 
