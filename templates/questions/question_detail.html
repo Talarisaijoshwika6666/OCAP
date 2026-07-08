@@ -37,7 +37,7 @@
   .editor-container { display: flex; gap: 20px; height: calc(100vh - 140px); }
   .problem-panel { width: 40%; overflow-y: auto; }
   .code-panel { width: 60%; display: flex; flex-direction: column; gap: 12px; }
-  #code-editor { width: 100%; height: 100%; min-height: 380px; background: #0a0614; color: #f0eaff; font-family: 'JetBrains Mono', monospace; font-size: 0.88rem; padding: 16px; border: 1px solid rgba(176,38,255,0.3); border-radius: 12px; resize: none; outline: none; line-height: 1.6; }
+  #code-editor { width: 100%; height: 100%; min-height: 380px; max-height: 500px; background: #0a0614; color: #f0eaff; font-family: 'JetBrains Mono', monospace; font-size: 0.88rem; padding: 16px; border: 1px solid rgba(176,38,255,0.3); border-radius: 12px; resize: vertical; outline: none; line-height: 1.6; overflow-y: auto; tab-size: 4; white-space: pre; }
 </style>
 
 <div class="editor-container">
@@ -111,12 +111,12 @@
           </button>
         </div>
         <select id="lang-select" style="background:#0a0614;border:1px solid rgba(176,38,255,0.3);border-radius:8px;color:#f0eaff;padding:4px 10px;font-family:'JetBrains Mono',monospace;font-size:0.8rem;" onchange="changeLanguage(this.value)">
-          <option value="python">Python3</option>
-          <option value="javascript">JavaScript</option>
+          <option value="python">Python 3</option>
           <option value="java">Java</option>
-          <option value="ruby">Ruby</option>
-          <option value="cpp">C++</option>
+          <option value="javascript">JavaScript</option>
           <option value="c">C</option>
+          <option value="cpp">C++</option>
+          <option value="ruby">Ruby</option>
         </select>
         <div style="display:flex;gap:8px;">
           <button onclick="clearEditor()" style="padding:6px 14px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:transparent;color:rgba(240,234,255,0.5);font-size:0.78rem;cursor:pointer;">Clear</button>
@@ -131,8 +131,8 @@
     <!-- Output -->
     <div class="card-glass p-3">
       <div style="font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:#b026ff;letter-spacing:2px;margin-bottom:10px;">// OUTPUT</div>
-      <div id="output-area" style="min-height:80px;background:#0a0614;border-radius:8px;padding:12px;font-family:'JetBrains Mono',monospace;font-size:0.82rem;color:rgba(240,234,255,0.4);">
-        // Run your code to see output here
+      <div id="output-area" style="min-height:80px;max-height:250px;overflow-y:auto;background:#0a0614;border-radius:8px;padding:12px;font-family:'JetBrains Mono',monospace;font-size:0.82rem;color:rgba(240,234,255,0.4);white-space:pre-wrap;word-break:break-all;">
+       // Run your code to see output here
       </div>
       <form method="post" id="submit-form" action="/questions/submit/{{ question.pk }}/" style="margin-top:10px;">
         {% csrf_token %}
@@ -149,12 +149,12 @@
 
 <script>
 const templates = {
-  python:     "print(\"Hello, World!\")",
-  javascript: "console.log(\"Hello, World!\");",
-  java:       "public class Main {\n    public static void main(String[] args) {\n        System.out.println(\"Hello, World!\");\n    }\n}",
-  ruby:       "puts \"Hello, World!\"",
-  cpp:        "#include <iostream>\nusing namespace std;\n\nint main() {\n    cout << \"Hello, World!\" << endl;\n    return 0;\n}",
-  c:          "#include <stdio.h>\n\nint main() {\n    printf(\"Hello, World!\\n\");\n    return 0;\n}",
+  python:     "# Python 3\n\n",
+  java:       "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        \n    }\n}",
+  javascript: "const lines = require('fs').readFileSync('/dev/stdin','utf8').split('\\n');\n\n",
+  c:          "#include <stdio.h>\n\nint main() {\n    \n    return 0;\n}",
+  cpp:        "#include <bits/stdc++.h>\nusing namespace std;\n\nint main() {\n    \n    return 0;\n}",
+  ruby:       "# Ruby\n\n",
 };
 
 function changeLanguage(lang) {
@@ -176,7 +176,17 @@ function submitCode() {
   })
   .then(r => r.json())
   .then(data => {
-    document.getElementById('output-area').innerHTML = `<span style="color:#00ff82;">${data.output}</span>`;
+    const raw = data.output || '// (no output)';
+    const lines = raw.split('\n').map(line => {
+      if (line.startsWith('Test ') && line.includes('✓')) return `<span style="color:#00ff82;font-weight:700;">${line}</span>`;
+      if (line.startsWith('Test ') && line.includes('✗')) return `<span style="color:#ff2d78;font-weight:700;">${line}</span>`;
+      if (line.trim().startsWith('Input:'))    return `<span style="color:rgba(240,234,255,0.5);">${line}</span>`;
+      if (line.trim().startsWith('Expected:')) return `<span style="color:#00fff7;">${line}</span>`;
+      if (line.trim().startsWith('Got:'))      return `<span style="color:#ffc107;">${line}</span>`;
+      if (line.includes('Error') || line.includes('Traceback')) return `<span style="color:#ff2d78;">${line}</span>`;
+      return `<span style="color:rgba(240,234,255,0.8);">${line}</span>`;
+    });
+    document.getElementById('output-area').innerHTML = lines.join('<br>');
   });
 }
 
@@ -239,6 +249,17 @@ function showAnswer() {
     unlockAnswer();
   }
 })();
+
+// Tab key inserts 4 spaces instead of moving focus
+document.getElementById('code-editor').addEventListener('keydown', function(e) {
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    const start = this.selectionStart;
+    const end = this.selectionEnd;
+    this.value = this.value.substring(0, start) + '    ' + this.value.substring(end);
+    this.selectionStart = this.selectionEnd = start + 4;
+  }
+});
 
 // ── Timer ──
 changeLanguage('python');

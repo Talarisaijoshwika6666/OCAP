@@ -10,7 +10,6 @@ urlpatterns = [
     path('questions/', include('questions.urls')),
     path('submissions/', include('submissions.urls')),
     path('leaderboard/', include('leaderboard.urls')),
-    path('recruiter/', include('recruiter.urls')),
     path('contest/', include('contest.urls')),
     path('discuss/', include('discuss.urls')),
     path('study-plan/', quest_views.study_plan_view, name='study_plan'),

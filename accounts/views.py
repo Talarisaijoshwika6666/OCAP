@@ -5,52 +5,23 @@ from submissions.models import Submission
 
 User = get_user_model()
 
-RECRUITER_USERNAME = "recruiter"
-RECRUITER_PASSWORD = "Recruiter@1234"
-
 
 def login_view(request):
-    panel = request.GET.get('panel', 'recruiter')
-
     if request.method == 'POST':
         username = request.POST.get('username', '').strip()
         password = request.POST.get('password', '')
-        panel    = request.POST.get('panel', 'recruiter')
 
-        if panel == 'recruiter':
-            if username == RECRUITER_USERNAME and password == RECRUITER_PASSWORD:
-                user, _ = User.objects.get_or_create(
-                    username=RECRUITER_USERNAME,
-                    defaults={'is_staff': True}
-                )
-                if not user.is_staff:
-                    user.is_staff = True
-                    user.save()
-                login(request, user,
-                      backend='django.contrib.auth.backends.ModelBackend')
-                return redirect('/recruiter/dashboard/')
-            else:
-                return render(request, 'accounts/login.html', {
-                    'error': 'Invalid recruiter credentials.',
-                    'panel': 'recruiter'
-                })
+        user = authenticate(request, username=username, password=password)
+        if user:
+            login(request, user)
+            return redirect('/questions/')
         else:
-            # Candidate panel — open to anyone
-            user, created = User.objects.get_or_create(
-                username=username,
-                defaults={'role': 'candidate'}
-            )
-            if created:
-                user.set_password(password)
-                user.save()
-            
-            login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-            next_url = request.GET.get('next') or request.POST.get('next') or '/dashboard/'
-            if next_url == '/':
-                next_url = '/dashboard/'
-            return redirect(next_url)
+            return render(request, 'accounts/login.html', {
+                'error': 'Invalid username or password.'
+            })
 
-    return render(request, 'accounts/login.html', {'panel': panel})
+    return render(request, 'accounts/login.html', {})
+
 
 def logout_view(request):
     logout(request)
