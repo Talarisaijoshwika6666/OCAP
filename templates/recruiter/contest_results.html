@@ -456,61 +456,7 @@
 <div class="bg-layer"></div>
 
 <!-- Sidebar -->
-<div class="sidebar">
-    <div class="sidebar-logo">
-        <div class="logo-icon">
-            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTFFJdllY1_vWrWkBGH7nWHv2JdnkgoW9ORVaNHkQkDvQ&s" alt="LogicLabs Logo">
-        </div>
-        <div class="logo-text">
-            <span class="logic">Logic</span><span class="labs">Labs</span>
-        </div>
-    </div>
-
-    <div class="sidebar-section">Main</div>
-
-    <a href="/recruiter/dashboard/" class="nav-item">
-        <span class="nav-icon">📊</span> Overview
-    </a>
-
-    <div class="sidebar-section">Practice</div>
-
-    <a href="/recruiter/problems/" class="nav-item">
-        <span class="nav-icon">💻</span> Problem Bank
-    </a>
-
-    <a href="/recruiter/submissions/" class="nav-item">
-        <span class="nav-icon">📋</span> All Submissions
-    </a>
-
-    <a href="/recruiter/candidates/" class="nav-item">
-        <span class="nav-icon">👥</span> Candidates
-    </a>
-
-    <a href="/recruiter/contest/" class="nav-item active">
-        <span class="nav-icon">🏆</span> Contest Results
-    </a>
-
-    <div class="sidebar-section">Manage</div>
-
-    <a href="/recruiter/reports/" class="nav-item">
-        <span class="nav-icon">📈</span> Reports
-    </a>
-
-    <a href="/recruiter/settings/" class="nav-item">
-        <span class="nav-icon">⚙️</span> Settings
-    </a>
-
-    <div class="sidebar-bottom">
-        <div class="recruiter-info">
-            <div class="recruiter-avatar">🏢</div>
-            <div>
-                <div class="recruiter-name">{{ username }}</div>
-                <div class="recruiter-role">Recruiter</div>
-            </div>
-        </div>
-        <a href="/accounts/logout/" class="btn-logout">⎋ Logout</a>
-    </div>
-</div>
+{% include 'recruiter/sidebar.html' with active_page='contest' %}
 
 <!-- Main Content -->
 <div class="main">
