@@ -689,10 +689,7 @@
       <span class="nav-badge">LIVE</span>
     </a>
 
-    <a href="/study-plan/" class="nav-item-side {% if 'study-plan' in request.path %}active{% endif %}">
-      <div class="nav-icon"><i class="fas fa-graduation-cap"></i></div>
-      Study Plan
-    </a>
+    
     <div class="sidebar-section">// COMPETE</div>
 <a href="/leaderboard/" class="nav-item-side {% if 'leaderboard' in request.path %}active{% endif %}">
   <div class="nav-icon"><i class="fas fa-trophy"></i></div>
@@ -708,11 +705,6 @@
 <a href="/quest/quest/" class="nav-item-side {% if request.path == '/quest/quest/'%}active{% endif %}">
   <div class="nav-icon"><i class="fas fa-fire"></i></div>
   Quest
-</a>
-
-<a href="/quest/explore/" class="nav-item-side {% if '/explore/' in request.path %}active{% endif %}">
-  <div class="nav-icon"><i class="fas fa-compass"></i></div>
-  Explore
 </a>
 
     <a href="/discuss/" class="nav-item-side {% if 'discuss' in request.path %}active{% endif %}">
