@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LogicLabs — Delete Candidate</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: #0a0a1a;
+            color: #fff;
+            font-family: 'Segoe UI', sans-serif;
+            padding: 40px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .wrap { width: 100%; max-width: 480px; }
+
+        .card {
+            background: rgba(15,15,35,0.8);
+            border: 1px solid rgba(239,68,68,0.25);
+            border-radius: 14px;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .icon {
+            width: 56px; height: 56px;
+            border-radius: 50%;
+            background: rgba(239,68,68,0.12);
+            color: #f87171;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            margin: 0 auto 18px;
+        }
+
+        h2 { font-size: 19px; margin-bottom: 10px; }
+
+        p { color: #9ca3af; font-size: 14px; line-height: 1.5; margin-bottom: 4px; }
+        .candidate-name { color: #fff; font-weight: 600; }
+
+        .warning {
+            color: #facc15;
+            font-size: 12px;
+            margin-top: 12px;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 26px;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 11px 22px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .btn-delete {
+            background: linear-gradient(135deg, #ef4444, #b91c1c);
+            color: #fff;
+        }
+
+        .btn-cancel {
+            background: rgba(255,255,255,0.06);
+            color: #9ca3af;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+    </style>
+</head>
+<body>
+
+<div class="wrap">
+    <div class="card">
+        <div class="icon">🗑️</div>
+        <h2>Delete Candidate?</h2>
+        <p>Are you sure you want to delete <span class="candidate-name">{{ candidate.get_full_name }}</span> ({{ candidate.email }})?</p>
+        <p class="warning">This will permanently remove their account, results, and submissions. This action cannot be undone.</p>
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-actions">
+                <button type="submit" class="btn btn-delete">Yes, Delete</button>
+                <a href="/recruiter/candidates/" class="btn btn-cancel">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+</body>
+</html>
