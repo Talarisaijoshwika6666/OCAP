@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% block page_title %}// Problem Bank{% endblock %}
+{% block content %}
+
+
+<div class="card-glass anim-in">
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:20px 24px;border-bottom:1px solid rgba(176,38,255,0.15);">
+    <div style="font-family:'Orbitron',monospace;font-size:0.82rem;font-weight:700;color:#f0eaff;letter-spacing:1px;">
+      <i class="fas fa-code" style="color:#b026ff;margin-right:8px;"></i>PROBLEM_BANK
+    </div>
+    <div class="d-flex gap-2">
+      <span style="background:rgba(0,255,130,0.15);color:#00ff82;padding:4px 12px;border-radius:20px;font-size:0.72rem;font-weight:700;border:1px solid rgba(0,255,130,0.4);">Easy</span>
+      <span style="background:rgba(255,193,7,0.15);color:#ffc107;padding:4px 12px;border-radius:20px;font-size:0.72rem;font-weight:700;border:1px solid rgba(255,193,7,0.4);">Med</span>
+      <span style="background:rgba(255,45,120,0.15);color:#ff2d78;padding:4px 12px;border-radius:20px;font-size:0.72rem;font-weight:700;border:1px solid rgba(255,45,120,0.4);">Hard</span>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table mb-0" style="background:#0c081c;">
+      <thead>
+        <tr style="background:rgba(176,38,255,0.1);">
+          <th style="color:#b026ff;padding:13px 22px;border-bottom:1px solid rgba(176,38,255,0.2);font-size:0.7rem;letter-spacing:2px;font-family:'JetBrains Mono',monospace;border-top:none;background:rgba(176,38,255,0.1);">#</th>
+          <th style="color:#b026ff;padding:13px 22px;border-bottom:1px solid rgba(176,38,255,0.2);font-size:0.7rem;letter-spacing:2px;font-family:'JetBrains Mono',monospace;border-top:none;background:rgba(176,38,255,0.1);">TITLE</th>
+          <th style="color:#b026ff;padding:13px 22px;border-bottom:1px solid rgba(176,38,255,0.2);font-size:0.7rem;letter-spacing:2px;font-family:'JetBrains Mono',monospace;border-top:none;background:rgba(176,38,255,0.1);">DIFFICULTY</th>
+          <th style="color:#b026ff;padding:13px 22px;border-bottom:1px solid rgba(176,38,255,0.2);font-size:0.7rem;letter-spacing:2px;font-family:'JetBrains Mono',monospace;border-top:none;background:rgba(176,38,255,0.1);">ACTION</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for q in questions %}
+        <tr style="border-bottom:1px solid rgba(176,38,255,0.1);transition:background 0.2s;background:#0c081c;"
+            onmouseover="this.style.background='rgba(176,38,255,0.08)'"
+            onmouseout="this.style.background='#0c081c'">
+          <td style="padding:14px 22px;color:rgba(176,38,255,0.6);font-family:'JetBrains Mono',monospace;font-size:0.8rem;background:transparent;">{{ forloop.counter }}</td>
+          <td style="padding:14px 22px;background:transparent;">
+            <a href="/questions/{{ q.pk }}/"
+               style="color:#ffffff;font-weight:700;text-decoration:none;font-size:0.92rem;"
+               onmouseover="this.style.color='#ff2d78'"
+               onmouseout="this.style.color='#ffffff'">
+              {{ q.title }}
+            </a>
+            <div style="font-size: 0.78rem; color: rgba(240,234,255,0.45); font-weight: normal; margin-top: 4px; line-height: 1.4; max-width: 600px;">
+              {{ q.description }}
+            </div>
+          </td>
+          <td style="padding:14px 22px;background:transparent;">
+            {% if q.difficulty == 'Easy' %}
+              <span style="background:rgba(0,255,130,0.15);color:#00ff82;padding:4px 14px;border-radius:20px;font-size:0.75rem;font-weight:700;border:1px solid rgba(0,255,130,0.4);">● Easy</span>
+            {% elif q.difficulty == 'Medium' %}
+              <span style="background:rgba(255,193,7,0.15);color:#ffc107;padding:4px 14px;border-radius:20px;font-size:0.75rem;font-weight:700;border:1px solid rgba(255,193,7,0.4);">● Medium</span>
+            {% else %}
+              <span style="background:rgba(255,45,120,0.15);color:#ff2d78;padding:4px 14px;border-radius:20px;font-size:0.75rem;font-weight:700;border:1px solid rgba(255,45,120,0.4);">● Hard</span>
+            {% endif %}
+          </td>
+          <td style="padding:14px 22px;background:transparent;">
+            <a href="/questions/{{ q.pk }}/" style="display:inline-flex;align-items:center;gap:6px;padding:6px 16px;font-size:0.78rem;border:1px solid #00fff7;color:#00fff7;border-radius:8px;text-decoration:none;font-weight:700;">
+              <i class="fas fa-play"></i> Solve
+            </a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="4" style="padding:50px;text-align:center;color:rgba(240,234,255,0.4);background:transparent;">
+            <i class="fas fa-code" style="font-size:2rem;display:block;margin-bottom:12px;opacity:0.3;"></i>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:0.8rem;">// no problems yet</span>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

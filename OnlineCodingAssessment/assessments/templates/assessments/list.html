@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Assessments</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="container mt-4">
+    <h2>📋 Available Assessments</h2>
+    <div class="row">
+        {% for a in assessments %}
+        <div class="col-md-4 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">{{ a.title }}</h5>
+                    <p>⏱ Duration: {{ a.duration }} mins</p>
+                    <p>🎯 Marks: {{ a.total_marks }}</p>
+                    <p>📊 Level: {{ a.difficulty }}</p>
+                    <a href="/assessments/{{ a.pk }}/take/" class="btn btn-primary">Start Test</a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <p>No assessments available yet.</p>
+        {% endfor %}
+    </div>
+</div>
+</body>
+</html>

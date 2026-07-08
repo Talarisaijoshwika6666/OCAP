@@ -1,19 +1,28 @@
 {% extends 'base.html' %}
 {% block page_title %}// {{ question.title }}{% endblock %}
 {% block content %}
+<<<<<<< HEAD
 
 {% include 'includes/back_button.html' with fallback_url='/questions/' %}
 
 {% if request.GET.result %}
 
 {% if request.GET.result and request.GET.result != 'Accepted' %}
+=======
+
+{% if request.GET.result and request.GET.result != 'Accepted' %}
+{% include 'includes/back_button.html' with fallback_url='/questions/' %}
+{% endif %}
+
+{% if request.GET.result %}
+>>>>>>> origin/main
 <div style="margin-bottom:16px;padding:14px 20px;border-radius:12px;
   background:rgba(255,45,120,0.1);border:1px solid rgba(255,45,120,0.4);color:#ff2d78;
   font-family:'Orbitron',monospace;font-size:0.9rem;font-weight:700;display:flex;align-items:center;gap:10px;">
   <i class="fas fa-times-circle"></i> {{ request.GET.result }}
 </div>
 {% endif %}
-
+{% endif %}
 {% if request.GET.result == 'Accepted' %}
 <div id="congrats-overlay" style="position:fixed;inset:0;background:rgba(10,6,20,0.85);z-index:9999;display:flex;align-items:center;justify-content:center;">
   <div style="background:#13091f;border:1px solid rgba(0,255,130,0.4);border-radius:16px;padding:40px 50px;text-align:center;box-shadow:0 0 40px rgba(0,255,130,0.2);">
@@ -29,6 +38,7 @@
   sessionStorage.setItem('justSolvedQuestionId', '{{ question.pk }}');
   {% endif %}
 </script>
+
 {% endif %}
 
 <style>
@@ -316,3 +326,5 @@ timerInterval = setInterval(tickTimer, 1000);
 {% endif %}
 
 {% endblock %}
+
+{% block chatbot_widget %}{% endblock %}
