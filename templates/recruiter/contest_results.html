@@ -1361,63 +1361,7 @@
         });
     }
 
-    // Modal leaderboard actions
-    const leaderboardData = JSON.parse(document.getElementById('leaderboard-data').textContent);
-
-    function showLeaderboard(contestId) {
-        const data = leaderboardData[contestId];
-        if (!data) return;
-
-        document.getElementById('modalContestTitle').innerText = data.title;
-        const tbody = document.getElementById('modalTableBody');
-        tbody.innerHTML = '';
-
-        if (!data.results || data.results.length === 0) {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="3" class="text-center py-4 text-dim" style="font-family: var(--font-code);">
-                        No candidates participated in this contest
-                    </td>
-                </tr>
-            `;
-        } else {
-            data.results.forEach(r => {
-                tbody.innerHTML += `
-                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.03); font-size: 0.85rem;">
-                        <td class="ps-0 py-3 fw-bold" style="color: var(--text-primary); font-family: var(--font-display);">
-                            #${r.rank}
-                        </td>
-                        <td class="py-3" style="font-family: var(--font-code); color: var(--neon-cyan);">
-                            <i class="far fa-user" style="margin-right: 6px;"></i>${r.candidate}
-                        </td>
-                        <td class="py-3 text-end pe-0">
-                            <span class="badge-score" style="background: rgba(0, 255, 130, 0.08); border: 1px solid rgba(0, 255, 130, 0.25); color: #00ff82; padding: 4px 12px; border-radius: 20px; font-size: 0.72rem; font-family: var(--font-code); font-weight: 600;">${r.score} pts</span>
-                        </td>
-                    </tr>
-                `;
-            });
-        }
-
-        const modal = document.getElementById('leaderboardModal');
-        modal.style.display = 'flex';
-        // Force reflow
-        modal.offsetHeight;
-        modal.classList.add('show');
-    }
-
-    function closeLeaderboard() {
-        const modal = document.getElementById('leaderboardModal');
-        modal.classList.remove('show');
-        setTimeout(() => {
-            modal.style.display = 'none';
-        }, 300);
-    }
-
-    document.getElementById('leaderboardModal').addEventListener('click', function(e) {
-        if (e.target === this) {
-            closeLeaderboard();
-        }
-    });
+  
 </script>
 </body>
 </html>
