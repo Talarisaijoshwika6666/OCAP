@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block page_title %}// Discuss{% endblock %}
+{% block content %}
+
+<div class="anim-in" style="margin-bottom:28px;">
+  <div style="font-family:'JetBrains Mono',monospace;font-size:0.68rem;letter-spacing:3px;color:#b026ff;margin-bottom:8px;">// COMMUNITY</div>
+  <h2 style="font-family:'Orbitron',monospace;font-size:1.7rem;font-weight:900;color:#f0eaff;">
+    <i class="fas fa-comments" style="color:#00fff7;margin-right:10px;"></i>
+    <span style="background:linear-gradient(90deg,#00fff7,#b026ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Discuss</span>
+  </h2>
+  <p style="color:rgba(240,234,255,0.45);margin-top:6px;">Ask questions, share solutions, learn together</p>
+</div>
+
+<div class="d-flex gap-2 flex-wrap mb-4 anim-in anim-d1">
+  <a href="?tag=" class="btn-neon {% if not request.GET.tag %}active{% endif %}" style="padding:6px 16px;font-size:0.78rem;">All</a>
+  {% for tag in tags %}
+  <a href="?tag={{ tag }}" class="btn-neon" style="padding:6px 16px;font-size:0.78rem;">{{ tag }}</a>
+  {% empty %}
+  <a href="?tag=Question" class="btn-neon" style="padding:6px 16px;font-size:0.78rem;">Question</a>
+  <a href="?tag=Solution" class="btn-neon" style="padding:6px 16px;font-size:0.78rem;">Solution</a>
+  <a href="?tag=Debug+Help" class="btn-neon" style="padding:6px 16px;font-size:0.78rem;">Debug Help</a>
+  <a href="?tag=Interviews" class="btn-neon" style="padding:6px 16px;font-size:0.78rem;">Interviews</a>
+  <a href="?tag=General" class="btn-neon" style="padding:6px 16px;font-size:0.78rem;">General</a>
+  {% endfor %}
+  <a href="/discuss/new/" class="btn-gradient ms-auto" style="padding:6px 18px;font-size:0.78rem;">
+    <i class="fas fa-plus"></i> New Post
+  </a>
+</div>
+
+<div class="anim-in anim-d2">
+  {% for post in posts %}
+  <div class="card-glass p-4 mb-3" style="cursor:pointer;"
+       onclick="window.location='/discuss/{{ post.pk }}/'">
+    <div style="display:flex;justify-content:space-between;align-items:start;gap:12px;">
+      <div style="flex:1;">
+        <h5 style="font-family:'Orbitron',monospace;font-size:0.9rem;font-weight:700;color:#f0eaff;margin-bottom:8px;">{{ post.title }}</h5>
+        <p style="color:rgba(240,234,255,0.45);font-size:0.82rem;margin-bottom:10px;">{{ post.body|truncatewords:20 }}</p>
+        <div style="display:flex;gap:12px;align-items:center;">
+          <span style="color:#b026ff;font-size:0.72rem;font-family:'JetBrains Mono',monospace;">{{ post.author.username }}</span>
+          <span style="color:rgba(240,234,255,0.3);font-size:0.72rem;font-family:'JetBrains Mono',monospace;">{{ post.created_at|date:"d M Y" }}</span>
+          {% if post.tag %}<span style="background:rgba(0,255,247,0.08);color:#00fff7;padding:2px 10px;border-radius:20px;font-size:0.68rem;border:1px solid rgba(0,255,247,0.2);">{{ post.tag }}</span>{% endif %}
+        </div>
+      </div>
+      <i class="fas fa-chevron-right" style="color:rgba(176,38,255,0.4);margin-top:4px;"></i>
+    </div>
+  </div>
+  {% empty %}
+  <div class="card-glass p-5" style="text-align:center;">
+    <i class="fas fa-comments" style="font-size:3rem;color:rgba(176,38,255,0.2);display:block;margin-bottom:16px;"></i>
+    <p style="color:rgba(240,234,255,0.3);font-family:'JetBrains Mono',monospace;font-size:0.85rem;">// No posts yet. Be the first to start a discussion!</p>
+    <a href="/discuss/new/" class="btn-gradient" style="margin-top:12px;display:inline-flex;">
+      <i class="fas fa-plus"></i> Create First Post
+    </a>
+  </div>
+  {% endfor %}
+</div>
+
+{% endblock %}

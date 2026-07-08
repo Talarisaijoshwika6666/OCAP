@@ -14,6 +14,12 @@ class Result(models.Model):
     )
     score = models.FloatField(default=0)
     rank = models.IntegerField(default=0)
+    total_questions = models.IntegerField(default=0)
+    correct_answers = models.IntegerField(default=0)
+    wrong_answers = models.IntegerField(default=0)
+    total_marks = models.IntegerField(default=0)
+    percentage = models.FloatField(default=0)
+    passed = models.BooleanField(default=False)
     submitted_at = models.DateTimeField(auto_now_add=True)
 
     total_questions = models.PositiveIntegerField(default=0)

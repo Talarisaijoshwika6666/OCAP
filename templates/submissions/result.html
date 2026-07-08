@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% block content %}
 <div class="container mt-5" style="max-width:800px;">
+{% include 'includes/back_button.html' with fallback_url='/submissions/my-submissions/' %}
 
   <!-- Score Card -->
   <div class="card-dark p-4 text-center mb-4"

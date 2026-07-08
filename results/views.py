@@ -72,7 +72,28 @@ def submit_test(request, assessment_id):
     wrong_answers = 0
     total_score = 0.0
     total_marks = sum(q.marks for q in questions)
- 
+    answered_questions = []
+
+    for question in questions:
+        selected = request.POST.get(f'question_{question.id}')
+        if selected:
+            is_correct = (selected.lower() == question.correct_option.lower())
+            if is_correct:
+                correct_answers += 1
+                total_score += question.marks
+            else:
+                wrong_answers += 1
+            answered_questions.append({
+                'question': question,
+                'selected': selected,
+                'is_correct': is_correct,
+            })
+
+    # Calculate percentage
+    percentage = (total_score / total_marks * 100) if total_marks > 0 else 0
+    passed = percentage >= 50  # Pass mark is 50%
+
+    # Save result to database
     result = Result.objects.create(
         candidate=request.user,
         assessment=assessment,

@@ -27,6 +27,7 @@ class Assessment(models.Model):
     duration = models.IntegerField(default=60)
     total_marks = models.IntegerField(default=100)
     difficulty = models.CharField(max_length=20, choices=DIFFICULTY, default='Beginner')
+    is_active = models.BooleanField(default=True)
 
     def __str__(self):
         return self.title
@@ -55,6 +56,18 @@ class Question(models.Model):
     time_limit = models.PositiveIntegerField(default=60, help_text="Time limit in minutes for this question")
     marks = models.PositiveIntegerField(default=10)
     created_at = models.DateTimeField(auto_now_add=True, null=True)
+
+    def get_options(self):
+        options = []
+        if self.option_a:
+            options.append(('A', self.option_a))
+        if self.option_b:
+            options.append(('B', self.option_b))
+        if self.option_c:
+            options.append(('C', self.option_c))
+        if self.option_d:
+            options.append(('D', self.option_d))
+        return options
 
     def __str__(self):
         return self.title or self.text

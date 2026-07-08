@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Leaderboard - CodeAssess</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #1a1a2e; color: #fff; }
+        .navbar { background: #0f3460; padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; }
+        .logo { color: #ffa116; font-weight: 700; font-size: 20px; }
+        .nav-links a { color: #ccc; text-decoration: none; margin-left: 20px; font-size: 14px; }
+        .nav-links a:hover { color: #ffa116; }
+        .container { max-width: 800px; margin: 40px auto; padding: 0 20px; }
+        h1 { color: #ffa116; margin-bottom: 8px; font-size: 28px; }
+        .subtitle { color: #888; margin-bottom: 30px; font-size: 14px; }
+        table { width: 100%; border-collapse: collapse; background: #16213e; border-radius: 10px; overflow: hidden; }
+        th { background: #0f3460; padding: 14px 16px; text-align: left; color: #ffa116; font-size: 13px; }
+        td { padding: 14px 16px; border-bottom: 1px solid #0f3460; font-size: 14px; color: #ccc; }
+        tr:last-child td { border-bottom: none; }
+        .rank-1 td { background: rgba(255,215,0,0.08); }
+        .rank-2 td { background: rgba(192,192,192,0.06); }
+        .rank-3 td { background: rgba(205,127,50,0.06); }
+        .medal { font-size: 20px; }
+        .username { color: #fff; font-weight: 600; }
+        .total-score { color: #52b788; font-weight: 700; font-size: 16px; }
+        .back-btn { display: inline-block; margin-bottom: 20px; color: #ccc; text-decoration: none; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <span class="logo">⚡ CodeAssess</span>
+        <div class="nav-links">
+            <a href="/dashboard/">Dashboard</a>
+            <a href="/submissions/my-submissions/">My Submissions</a>
+            <a href="/accounts/logout/">Logout</a>
+        </div>
+    </div>
+    <div class="container">
+        <a href="/dashboard/" class="back-btn">← Back to Dashboard</a>
+        <h1>🏆 Leaderboard</h1>
+        <p class="subtitle">Top performers ranked by total score</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>User</th>
+                    <th>Total Score</th>
+                    <th>Submissions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in scores %}
+                <tr class="rank-{{ forloop.counter }}">
+                    <td>
+                        {% if forloop.counter == 1 %}<span class="medal">🥇</span>
+                        {% elif forloop.counter == 2 %}<span class="medal">🥈</span>
+                        {% elif forloop.counter == 3 %}<span class="medal">🥉</span>
+                        {% else %}{{ forloop.counter }}{% endif %}
+                    </td>
+                    <td class="username">{{ s.user__username }}</td>
+                    <td class="total-score">{{ s.total|floatformat:1 }}</td>
+                    <td>{{ s.count }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4" style="text-align:center;color:#888;padding:40px">No submissions yet!</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
