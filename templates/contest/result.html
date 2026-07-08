@@ -15,10 +15,15 @@
   .neon-table td { padding: 15px 22px; background: transparent; }
 </style>
  
-<div class="anim-in" style="margin-bottom:24px;">
+<div class="anim-in" style="margin-bottom:24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
   <a href="/contest/" class="btn-neon" style="font-size:0.78rem;display:inline-flex;align-items:center;gap:8px;">
     <i class="fas fa-arrow-left"></i> Back to Contests
   </a>
+  {% if my_row %}
+  <a href="{% url 'contest_my_result' contest.pk %}" class="btn-gradient" style="font-size:0.78rem;display:inline-flex;align-items:center;gap:8px;">
+    <i class="fas fa-file-lines"></i> Results
+  </a>
+  {% endif %}
 </div>
 
 {% if auto_submitted_notice %}
@@ -55,10 +60,10 @@
     <div style="width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,#00fff7,#b026ff);display:flex;align-items:center;justify-content:center;font-family:'Orbitron',monospace;font-weight:900;color:#000;">#{{ my_row.rank }}</div>
     <div>
       <div style="color:#f0eaff;font-weight:700;font-size:0.95rem;">Your Standing</div>
-      <div style="color:rgba(240,234,255,0.45);font-size:0.78rem;font-family:'JetBrains Mono',monospace;">{{ my_row.solved }} solved · {{ my_row.total_score }} points</div>
+      <div style="color:rgba(240,234,255,0.45);font-size:0.78rem;font-family:'JetBrains Mono',monospace;">{{ my_row.solved }} solved · {{ my_row.total_score }} points <span style="opacity:0.7;">({{ my_row.programming_score }} coding + {{ my_row.mcq_score }} MCQ)</span></div>
     </div>
   </div>
-  {% if not auto_submitted_notice %}
+  {% if not locked_out %}
   <a href="{% url 'contest_take_test' contest.pk %}" class="btn-neon" style="font-size:0.78rem;">
     <i class="fas fa-laptop-code"></i> {% if is_live %}Keep Solving{% else %}Review Problems{% endif %}
   </a>

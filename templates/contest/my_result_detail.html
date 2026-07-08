@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% block page_title %}// {{ contest.title }} — My Result{% endblock %}
+{% block content %}
+
+<style>
+  .answer-correct { border-left: 3px solid #00ff82; }
+  .answer-incorrect { border-left: 3px solid #ff2d78; }
+</style>
+
+<div class="card-glass p-5 anim-in" style="text-align:center;margin-bottom:28px;">
+  {% if percentage >= 50 %}
+    <div style="font-size:2.6rem;margin-bottom:10px;">🎉</div>
+    <h2 style="font-family:'Orbitron',monospace;font-weight:900;color:#00ff82;text-shadow:0 0 16px rgba(0,255,130,0.4);letter-spacing:1px;">TEST SUBMITTED — Nice Work!</h2>
+  {% else %}
+    <div style="font-size:2.6rem;margin-bottom:10px;">📝</div>
+    <h2 style="font-family:'Orbitron',monospace;font-weight:900;color:#ff2d78;text-shadow:0 0 16px rgba(255,45,120,0.4);letter-spacing:1px;">TEST SUBMITTED</h2>
+  {% endif %}
+
+  <div style="font-family:'JetBrains Mono',monospace;font-size:1.5rem;color:#f0eaff;margin-top:14px;">{{ total_score }} / {{ total_possible }}</div>
+  <div style="color:rgba(240,234,255,0.45);font-size:0.95rem;margin-top:4px;">{{ percentage }}%</div>
+
+  <div style="display:flex;justify-content:center;gap:16px;margin-top:28px;flex-wrap:wrap;">
+    <div class="stat-card" style="--card-accent:#00ff82;min-width:110px;">
+      <div style="font-family:'Orbitron',monospace;font-size:1.6rem;font-weight:900;color:#00ff82;">{{ correct_count }}</div>
+      <div style="color:rgba(240,234,255,0.5);font-size:0.78rem;margin-top:4px;">Correct</div>
+    </div>
+    <div class="stat-card" style="--card-accent:#ff2d78;min-width:110px;">
+      <div style="font-family:'Orbitron',monospace;font-size:1.6rem;font-weight:900;color:#ff2d78;">{{ wrong_count }}</div>
+      <div style="color:rgba(240,234,255,0.5);font-size:0.78rem;margin-top:4px;">Wrong</div>
+    </div>
+    <div class="stat-card" style="--card-accent:#b026ff;min-width:110px;">
+      <div style="font-family:'Orbitron',monospace;font-size:1.6rem;font-weight:900;color:#b026ff;">{{ total_count }}</div>
+      <div style="color:rgba(240,234,255,0.5);font-size:0.78rem;margin-top:4px;">Total</div>
+    </div>
+  </div>
+</div>
+
+<div class="anim-in anim-d1" style="margin-bottom:16px;">
+  <div style="font-family:'Orbitron',monospace;font-size:0.9rem;font-weight:800;color:#f0eaff;letter-spacing:1px;">
+    <i class="fas fa-list-ul" style="color:#b026ff;margin-right:8px;"></i>ANSWER REVIEW
+  </div>
+</div>
+
+{% for row in review_rows %}
+<div class="card-glass p-4 anim-in {% if row.is_correct %}answer-correct{% else %}answer-incorrect{% endif %}" style="margin-bottom:14px;">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;">
+    <div style="flex:1;min-width:220px;">
+      <div style="font-family:'Orbitron',monospace;font-weight:800;color:#f0eaff;font-size:1rem;margin-bottom:8px;">
+        {{ forloop.counter }}. {{ row.title }}
+      </div>
+
+      {% if row.kind == 'coding' %}
+        <div style="color:rgba(240,234,255,0.55);font-size:0.85rem;line-height:1.8;">
+          {% if row.attempted %}
+          Language: <span style="color:#00fff7;font-family:'JetBrains Mono',monospace;">{{ row.language }}</span>
+          &nbsp;|&nbsp; Test cases passed: <span style="color:#f0eaff;font-family:'JetBrains Mono',monospace;">{{ row.passed_cases }}/{{ row.total_cases }}</span>
+          &nbsp;|&nbsp; Marks awarded: <span style="color:#b026ff;font-family:'JetBrains Mono',monospace;">{{ row.marks_awarded }}/{{ row.marks_total }}</span>
+          {% else %}
+          <span style="color:rgba(240,234,255,0.4);">Not attempted</span> &nbsp;|&nbsp; Marks awarded: <span style="color:#b026ff;font-family:'JetBrains Mono',monospace;">0/{{ row.marks_total }}</span>
+          {% endif %}
+        </div>
+        {% if row.code %}
+        <pre style="background:#0a0614;border-radius:8px;padding:12px 16px;margin-top:10px;color:rgba(240,234,255,0.7);font-family:'JetBrains Mono',monospace;font-size:0.82rem;overflow-x:auto;">{{ row.code }}</pre>
+        {% endif %}
+      {% else %}
+        <div style="color:rgba(240,234,255,0.55);font-size:0.85rem;">
+          Your answer: <b style="color:#f0eaff;">{{ row.selected_option|default:"—" }}</b>
+          &nbsp;|&nbsp; Correct answer: <b style="color:#00ff82;">{{ row.correct_option }}</b>
+          &nbsp;|&nbsp; Marks awarded: <b style="color:#b026ff;">{{ row.marks_awarded }}/{{ row.marks_total }}</b>
+        </div>
+      {% endif %}
+    </div>
+
+    <div>
+      {% if row.is_correct %}
+        <span style="color:#00ff82;background:rgba(0,255,130,0.1);border:1px solid rgba(0,255,130,0.35);padding:4px 14px;border-radius:20px;font-size:0.78rem;font-weight:700;"><i class="fas fa-check-circle"></i> Correct</span>
+      {% elif row.attempted %}
+        <span style="color:#ff2d78;background:rgba(255,45,120,0.1);border:1px solid rgba(255,45,120,0.35);padding:4px 14px;border-radius:20px;font-size:0.78rem;font-weight:700;"><i class="fas fa-times-circle"></i> Wrong</span>
+      {% else %}
+        <span style="color:rgba(240,234,255,0.4);background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);padding:4px 14px;border-radius:20px;font-size:0.78rem;font-weight:700;">Not Attempted</span>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% empty %}
+<div class="card-glass p-4 anim-in" style="text-align:center;color:rgba(240,234,255,0.4);">No MCQs or programming questions in this contest.</div>
+{% endfor %}
+
+<div class="anim-in" style="text-align:center;margin-top:28px;display:flex;gap:14px;justify-content:center;flex-wrap:wrap;">
+  <a href="{% url 'contest_result' contest.pk %}" class="btn-gradient">Leaderboard</a>
+  <a href="/contest/" class="btn-neon">Back to Contests</a>
+</div>
+
+{% endblock %}

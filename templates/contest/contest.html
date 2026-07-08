@@ -315,7 +315,7 @@
             <h5 class="task-title-tooltip" style="font-family:'Orbitron',monospace;font-weight:700;color:#f0eaff;font-size:0.95rem;margin:0;" tabindex="0" data-tooltip="{{ contest.description|default:'No additional details provided for this contest.' }}" onmouseenter="showTaskTooltip(this)" onmouseleave="hideTaskTooltip()" onfocus="showTaskTooltip(this)" onblur="hideTaskTooltip()">{{ contest.title }}</h5>
             <span style="background:linear-gradient(135deg,#ff2d78,#b026ff);color:#fff;padding:3px 12px;border-radius:20px;font-size:0.68rem;font-family:'JetBrains Mono',monospace;flex-shrink:0;margin-left:8px;">LIVE</span>
           </div>
-          <p style="color:rgba(240,234,255,0.45);font-size:0.82rem;margin-bottom:12px;">{{ contest.problem_count }} problems · {{ contest.time_range }}</p>
+          <p style="color:rgba(240,234,255,0.45);font-size:0.82rem;margin-bottom:12px;">{{ contest.total_question_count }} question{{ contest.total_question_count|pluralize }} · {{ contest.time_range }}</p>
           <div style="color:#b026ff;font-size:0.78rem;font-family:'JetBrains Mono',monospace;margin-bottom:12px;">
             <i class="fas fa-clock" style="margin-right:6px;"></i>Ends {{ contest.end_time|date:"D d M, H:i" }}
           </div>
@@ -365,7 +365,7 @@
             <h5 class="task-title-tooltip" style="font-family:'Orbitron',monospace;font-weight:700;color:#f0eaff;font-size:0.95rem;margin:0;" tabindex="0" data-tooltip="{{ contest.description|default:'No additional details provided for this contest.' }}" onmouseenter="showTaskTooltip(this)" onmouseleave="hideTaskTooltip()" onfocus="showTaskTooltip(this)" onblur="hideTaskTooltip()">{{ contest.title }}</h5>
             <span style="background:rgba(0,255,247,0.1);color:#00fff7;padding:3px 12px;border-radius:20px;font-size:0.68rem;font-family:'JetBrains Mono',monospace;border:1px solid rgba(0,255,247,0.3);flex-shrink:0;margin-left:8px;">Upcoming</span>
           </div>
-          <p style="color:rgba(240,234,255,0.45);font-size:0.82rem;margin-bottom:12px;">{{ contest.problem_count }} problems · 90 minutes · All levels</p>
+          <p style="color:rgba(240,234,255,0.45);font-size:0.82rem;margin-bottom:12px;">{{ contest.total_question_count }} question{{ contest.total_question_count|pluralize }} · {{ contest.duration_minutes }} minutes{% if contest.topic %} · {{ contest.topic }}{% endif %}</p>
           <div style="color:#b026ff;font-size:0.78rem;font-family:'JetBrains Mono',monospace;margin-bottom:12px;">
             <i class="fas fa-calendar" style="margin-right:6px;"></i>{{ contest.start_time|date:"D d M, H:i" }}
           </div>
@@ -423,42 +423,16 @@
             <td><span class="contest-date">{{ contest.date }}</span></td>
             <td><span class="badge-finished">Finished</span></td>
             <td>
-              {% if contest.pk in my_submitted_ids %}
               <a href="{% url 'contest_result' contest.pk %}" class="btn-neon" style="font-size:0.72rem;padding:6px 14px;"><i class="fas fa-eye"></i> View</a>
-              {% else %}
-              <span style="color:rgba(240,234,255,0.3);font-size:0.78rem;font-family:'JetBrains Mono',monospace;">Not attempted</span>
-              {% endif %}
             </td>
           </tr>
           {% empty %}
-          <!-- demo tasks -->
           <tr>
-            <td><span class="row-index">1</span></td>
-            <td><span class="contest-name"><i class="fas fa-flag-checkered"></i>LogicLabs Weekly #41</span></td>
-            <td><span class="contest-date">Sun 21 Jun, 20:00</span></td>
-            <td><span class="badge-finished">Finished</span></td>
-            <td><a href="#" class="btn-neon" style="font-size:0.72rem;padding:6px 14px;"><i class="fas fa-eye"></i> View</a></td>
-          </tr>
-          <tr>
-            <td><span class="row-index">2</span></td>
-            <td><span class="contest-name"><i class="fas fa-flag-checkered"></i>LogicLabs Biweekly #20</span></td>
-            <td><span class="contest-date">Sat 13 Jun, 20:00</span></td>
-            <td><span class="badge-finished">Finished</span></td>
-            <td><a href="#" class="btn-neon" style="font-size:0.72rem;padding:6px 14px;"><i class="fas fa-eye"></i> View</a></td>
-          </tr>
-          <tr>
-            <td><span class="row-index">3</span></td>
-            <td><span class="contest-name"><i class="fas fa-flag-checkered"></i>LogicLabs Weekly #40</span></td>
-            <td><span class="contest-date">Sun 14 Jun, 20:00</span></td>
-            <td><span class="badge-finished">Finished</span></td>
-            <td><a href="#" class="btn-neon" style="font-size:0.72rem;padding:6px 14px;"><i class="fas fa-eye"></i> View</a></td>
-          </tr>
-          <tr>
-            <td><span class="row-index">4</span></td>
-            <td><span class="contest-name"><i class="fas fa-flag-checkered"></i>LogicLabs Biweekly #19</span></td>
-            <td><span class="contest-date">Sat 30 May, 20:00</span></td>
-            <td><span class="badge-finished">Finished</span></td>
-            <td><a href="#" class="btn-neon" style="font-size:0.72rem;padding:6px 14px;"><i class="fas fa-eye"></i> View</a></td>
+            <td colspan="5" style="text-align:center;padding:32px 16px;">
+              <i class="fas fa-flag-checkered" style="font-size:1.6rem;color:rgba(176,38,255,0.35);display:block;margin-bottom:10px;"></i>
+              <span style="color:rgba(240,234,255,0.5);font-size:0.9rem;">No past contests yet.</span>
+              <span style="color:rgba(240,234,255,0.35);font-size:0.8rem;display:block;margin-top:4px;">Contests you register for and submit will show up here once they finish.</span>
+            </td>
           </tr>
           {% endfor %}
         </tbody>
@@ -758,4 +732,3 @@
   });
 </script>
 {% endblock %}
- 

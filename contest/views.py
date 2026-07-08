@@ -11,7 +11,7 @@ from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
-from .models import Contest, ContestRegistration
+from .models import Contest, ContestRegistration, ContestMCQ, ContestMCQAnswer
 from submissions.models import Submission
 from submissions.executor import run_code as execute_code
 
@@ -51,6 +51,28 @@ def _get_live_contest_and_question(request, pk, question_pk):
         return contest, question, registration, redirect('contest_result', pk=contest.pk)
 
     return contest, question, registration, None
+
+
+def _get_live_contest_and_mcq(request, pk, mcq_pk):
+    """Same guard as `_get_live_contest_and_question`, but for a contest
+    MCQ instead of a programming question."""
+    contest = get_object_or_404(Contest, pk=pk)
+    mcq = get_object_or_404(contest.mcqs, pk=mcq_pk)
+
+    registration = ContestRegistration.objects.filter(contest=contest, user=request.user).first()
+    if registration is None:
+        return contest, mcq, None, redirect('contest')
+
+    if registration.auto_submitted:
+        return contest, mcq, registration, _auto_submitted_result_redirect(contest)
+
+    now = timezone.now()
+    if now < contest.start_time:
+        return contest, mcq, registration, redirect('contest')
+    if now > contest.end_time:
+        return contest, mcq, registration, redirect('contest_result', pk=contest.pk)
+
+    return contest, mcq, registration, None
 
 
 SUPPORTED_LANGUAGES = [
@@ -152,24 +174,47 @@ def contest_view(request):
     now = timezone.now()
     upcoming = Contest.objects.filter(is_active=True, start_time__gt=now).order_by('start_time')
     active_all = Contest.objects.filter(is_active=True, start_time__lte=now, end_time__gte=now)
-    past = Contest.objects.filter(end_time__lt=now).order_by('-end_time')[:10]
 
     registered_ids = []
     my_submitted_ids = []
+    past = Contest.objects.none()
 
     if request.user.is_authenticated:
         registered_ids = list(
             ContestRegistration.objects.filter(user=request.user).values_list('contest_id', flat=True)
         )
-        for c in past:
+
+        # Only contests this user registered for can ever land in "Past
+        # Contests" for them — a live contest ending doesn't automatically
+        # make it "past" for everyone, only for the people who were actually
+        # in it.
+        ended_registered = Contest.objects.filter(
+            end_time__lt=now, pk__in=registered_ids
+        ).order_by('-end_time')
+
+        for c in ended_registered:
             solved_any = Submission.objects.filter(
                 user=request.user,
                 question__in=c.questions.all(),
                 submitted_at__gte=c.start_time,
                 submitted_at__lte=c.end_time,
             ).exists()
-            if solved_any:
+            # A candidate who only answered MCQs (no programming
+            # submissions) still attempted the contest -- without this,
+            # MCQ-only or MCQ-heavy contests they took never show up in
+            # "Past Contests" at all.
+            answered_mcq = ContestMCQAnswer.objects.filter(
+                user=request.user,
+                mcq__contest=c,
+            ).exists()
+            if solved_any or answered_mcq:
                 my_submitted_ids.append(c.pk)
+
+        # And of those, only the ones they actually attempted + submitted
+        # move into "Past Contests" (so they can view results). A contest
+        # they registered for but never opened/submitted just disappears
+        # once it ends, instead of sitting there as clutter.
+        past = ended_registered.filter(pk__in=my_submitted_ids)[:10]
 
     # A contest only moves into "Live Now" for candidates who registered
     # while it was still upcoming — unregistered candidates aren't allowed
@@ -310,6 +355,82 @@ def contest_report_violation(request, pk):
 
 
 @login_required
+@require_POST
+def contest_answer_mcq(request, pk, mcq_pk):
+    """Saves/updates a candidate's selected answer for one contest MCQ.
+    Same trust model as the code editor's autosave: the latest selection
+    always wins, no answer history is kept."""
+    contest = get_object_or_404(Contest, pk=pk)
+    mcq = get_object_or_404(ContestMCQ, pk=mcq_pk, contest=contest)
+
+    registration = ContestRegistration.objects.filter(contest=contest, user=request.user).first()
+    if registration is None or registration.auto_submitted:
+        return JsonResponse({'ok': False, 'error': 'Not allowed.'}, status=403)
+
+    now = timezone.now()
+    if not (contest.start_time <= now <= contest.end_time):
+        return JsonResponse({'ok': False, 'error': 'Contest is not currently live.'}, status=403)
+
+    try:
+        data = json.loads(request.body or '{}')
+    except json.JSONDecodeError:
+        return JsonResponse({'ok': False, 'error': 'Invalid request body.'}, status=400)
+
+    selected = (data.get('selected_option') or '').strip().upper()
+    if selected not in dict(ContestMCQ.OPTION_CHOICES):
+        return JsonResponse({'ok': False, 'error': 'Invalid option.'}, status=400)
+
+    is_correct = (selected == mcq.correct_option)
+    ContestMCQAnswer.objects.update_or_create(
+        mcq=mcq, user=request.user,
+        defaults={'selected_option': selected, 'is_correct': is_correct},
+    )
+
+    return JsonResponse({'ok': True, 'selected_option': selected})
+
+
+@login_required
+def contest_solve_mcq(request, pk, mcq_pk):
+    """One-MCQ-at-a-time 'Solve' view — mirrors contest_solve's layout and
+    navigation (prev/next/submit test) but for a multiple-choice question
+    instead of a programming one. Selecting an option still autosaves via
+    contest_answer_mcq; this view just supplies the single-question shell
+    and prev/next MCQ links around it."""
+    contest, mcq, registration, guard = _get_live_contest_and_mcq(request, pk, mcq_pk)
+    if guard:
+        return guard
+
+    mcqs = list(contest.mcqs.all())
+    questions = list(contest.questions.all().order_by('id'))
+
+    my_mcq_answers = {
+        a.mcq_id: a.selected_option
+        for a in ContestMCQAnswer.objects.filter(mcq__contest=contest, user=request.user)
+    }
+
+    current_index = next((i for i, m in enumerate(mcqs) if m.pk == mcq.pk), 0)
+    prev_mcq = mcqs[current_index - 1] if current_index > 0 else None
+    next_mcq = mcqs[current_index + 1] if current_index < len(mcqs) - 1 else None
+
+    return render(request, 'contest/solve_mcq.html', {
+        'contest': contest,
+        'mcq': mcq,
+        'questions': questions,
+        'mcq_number': current_index + 1,
+        'total_mcqs': len(mcqs),
+        'prev_mcq': prev_mcq,
+        'next_mcq': next_mcq,
+        'selected_option': my_mcq_answers.get(mcq.pk),
+        'answered_count': len(my_mcq_answers),
+        # Proctoring: restore the candidate's current warning count so a
+        # page refresh doesn't reset it back to zero on the client.
+        'initial_violation_count': registration.violation_count,
+        # Nav-lock: same reasoning as contest_take_test / contest_solve.
+        'contest_lock': True,
+    })
+
+
+@login_required
 def contest_take_test(request, pk):
     """The 'test page' — the live problem set for a contest a user has registered for."""
     contest = get_object_or_404(Contest, pk=pk)
@@ -355,12 +476,20 @@ def contest_take_test(request, pk):
         ).values_list('question_id', flat=True)
     )
 
+    mcqs = contest.mcqs.all()
+    my_mcq_answers = {
+        a.mcq_id: a.selected_option
+        for a in ContestMCQAnswer.objects.filter(mcq__contest=contest, user=request.user)
+    }
+
     return render(request, 'contest/take_test.html', {
         'contest': contest,
         'questions': questions,
         'solved_ids': solved_ids,
         'attempted_ids': attempted_ids,
         'now': now,
+        'mcqs': mcqs,
+        'my_mcq_answers': my_mcq_answers,
         # Nav-lock: this view already guarantees the contest is live,
         # registered, and not auto-submitted by this point — so it's
         # exactly the right moment to lock sidebar/topbar navigation.
@@ -384,8 +513,10 @@ def contest_result(request, pk):
         submitted_at__lte=window_end,
     ).select_related('user', 'question').order_by('submitted_at')
 
-    best_scores = {}       # user_id -> {question_id: score}
-    last_submission = {}   # user_id -> latest submitted_at counted
+    questions_by_id = {q.pk: q for q in questions}
+
+    best_scores = {}       # user_id -> {question_id: pct_score (0-100)}
+    last_submission = {}   # user_id -> latest submitted_at/answered_at counted
     usernames = {}
 
     for s in subs:
@@ -397,16 +528,46 @@ def contest_result(request, pk):
         if uid not in last_submission or s.submitted_at > last_submission[uid]:
             last_submission[uid] = s.submitted_at
 
+    # MCQ marks earned per user — only correctly-answered MCQs count, and
+    # only answers given while the contest window was actually open (same
+    # filter as programming submissions above).
+    mcq_marks_by_user = {}
+    mcq_answers = ContestMCQAnswer.objects.filter(
+        mcq__contest=contest, is_correct=True,
+        answered_at__gte=contest.start_time, answered_at__lte=window_end,
+    ).select_related('user', 'mcq')
+    for a in mcq_answers:
+        uid = a.user_id
+        usernames.setdefault(uid, a.user.username)
+        mcq_marks_by_user[uid] = mcq_marks_by_user.get(uid, 0) + a.mcq.marks
+        if uid not in last_submission or a.answered_at > last_submission[uid]:
+            last_submission[uid] = a.answered_at
+
     leaderboard = []
-    for uid, qscores in best_scores.items():
-        total_score = sum(qscores.values())
+    for uid in set(best_scores) | set(mcq_marks_by_user):
+        qscores = best_scores.get(uid, {})
+
+        # Weight each question's percentage score by its marks. marks==0
+        # means an older question that never had contest marks set (or a
+        # Problem-Bank question attached the old way) — fall back to the
+        # raw percentage so pre-existing contests score exactly as they
+        # always have, unaffected by this change.
+        programming_total = sum(
+            (pct / 100.0) * (questions_by_id[qid].marks or 100)
+            for qid, pct in qscores.items()
+        )
+        mcq_total = mcq_marks_by_user.get(uid, 0)
+        total_score = programming_total + mcq_total
         solved = sum(1 for v in qscores.values() if v == 100)
+
         leaderboard.append({
             'user_id': uid,
             'username': usernames[uid],
             'total_score': round(total_score, 1),
+            'programming_score': round(programming_total, 1),
+            'mcq_score': mcq_total,
             'solved': solved,
-            'last_submission': last_submission.get(uid),
+            'last_submission': last_submission.get(uid, now),
             'is_me': uid == request.user.id,
         })
 
@@ -416,13 +577,22 @@ def contest_result(request, pk):
 
     my_row = next((r for r in leaderboard if r['is_me']), None)
 
-    # Proctoring: whether this candidate is permanently locked out of the
-    # arena because they were auto-submitted (3rd violation). Read from
-    # the persisted registration row — not the one-time '?auto_submitted=1'
-    # query param — so the banner/lockout stay correct even if the
-    # candidate reloads this page later without that param in the URL.
+    # These two are deliberately different signals:
+    #
+    # - `locked_out` is permanent (read from the DB) — once a candidate
+    #   hits 3 violations they can never re-enter the arena for this
+    #   contest again, no matter how they reach this page later. Used to
+    #   keep "Keep Solving" hidden for good.
+    #
+    # - `auto_submitted_notice` is one-time — it's only true on the exact
+    #   page load right after the proctor's own auto-submit redirect
+    #   (?auto_submitted=1). A candidate who submits manually via the
+    #   "Submit Test" button never gets this param, so they never see
+    #   the red "Test auto-submitted" banner, even if (separately, at
+    #   some earlier point) they'd already used up their violations.
     registration = ContestRegistration.objects.filter(contest=contest, user=request.user).first()
-    auto_submitted_notice = bool(registration and registration.auto_submitted)
+    locked_out = bool(registration and registration.auto_submitted)
+    auto_submitted_notice = request.GET.get('auto_submitted') == '1'
 
     return render(request, 'contest/result.html', {
         'contest': contest,
@@ -430,7 +600,101 @@ def contest_result(request, pk):
         'my_row': my_row,
         'total_problems': total_problems,
         'is_live': contest.status == 'live',
+        'locked_out': locked_out,
         'auto_submitted_notice': auto_submitted_notice,
+    })
+
+
+@login_required
+def contest_my_result(request, pk):
+    """Detailed personal answer review for one contest — the MCQ
+    'your answer vs. correct answer' breakdown plus each programming
+    question's language/test cases/marks/code, reached via the 'Results'
+    button on the leaderboard page (contest_result)."""
+    contest = get_object_or_404(Contest, pk=pk)
+    now = timezone.now()
+    window_end = min(now, contest.end_time)
+
+    review_rows = []
+    correct_count = 0
+    wrong_count = 0
+    total_score = 0.0
+    total_possible = 0.0
+
+    # MCQs first — same order they're presented in during the test.
+    my_mcq_answers = {
+        a.mcq_id: a
+        for a in ContestMCQAnswer.objects.filter(mcq__contest=contest, user=request.user)
+    }
+    for mcq in contest.mcqs.all():
+        answer = my_mcq_answers.get(mcq.pk)
+        is_correct = bool(answer and answer.is_correct)
+        marks_awarded = mcq.marks if is_correct else 0
+        total_possible += mcq.marks
+        total_score += marks_awarded
+        if answer:
+            correct_count += 1 if is_correct else 0
+            wrong_count += 0 if is_correct else 1
+        review_rows.append({
+            'kind': 'mcq',
+            'title': mcq.question_text,
+            'selected_option': answer.selected_option if answer else None,
+            'correct_option': mcq.correct_option,
+            'is_correct': is_correct,
+            'attempted': answer is not None,
+            'marks_awarded': marks_awarded,
+            'marks_total': mcq.marks,
+        })
+
+    # Programming questions — best submission made during the contest window.
+    subs_by_question = {}
+    subs = Submission.objects.filter(
+        user=request.user,
+        question__in=contest.questions.all(),
+        submitted_at__gte=contest.start_time,
+        submitted_at__lte=window_end,
+    ).order_by('-score', '-submitted_at')
+    for s in subs:
+        subs_by_question.setdefault(s.question_id, s)  # first hit = best (score desc, then latest)
+
+    for question in contest.questions.all():
+        marks = question.marks or 100
+        total_possible += marks
+        best = subs_by_question.get(question.pk)
+        if best:
+            pct = best.score or 0
+            marks_awarded = round((pct / 100.0) * marks, 1)
+            is_correct = pct == 100
+            total_score += marks_awarded
+            correct_count += 1 if is_correct else 0
+            wrong_count += 0 if is_correct else 1
+        else:
+            marks_awarded = 0
+            is_correct = False
+        review_rows.append({
+            'kind': 'coding',
+            'title': question.title,
+            'attempted': best is not None,
+            'language': best.language if best else None,
+            'passed_cases': best.passed_cases if best else 0,
+            'total_cases': best.total_cases if best else question.test_cases.count(),
+            'code': best.code if best else '',
+            'is_correct': is_correct,
+            'marks_awarded': marks_awarded,
+            'marks_total': marks,
+        })
+
+    percentage = round((total_score / total_possible) * 100, 1) if total_possible else 0
+
+    return render(request, 'contest/my_result_detail.html', {
+        'contest': contest,
+        'review_rows': review_rows,
+        'total_score': round(total_score, 1),
+        'total_possible': round(total_possible, 1),
+        'percentage': percentage,
+        'correct_count': correct_count,
+        'wrong_count': wrong_count,
+        'total_count': len(review_rows),
     })
 
 
@@ -503,6 +767,8 @@ def contest_run_code(request, pk, question_pk):
 
     code = data.get('code', '')
     language = data.get('language', 'python')
+    if language not in contest.runnable_languages_list:
+        return JsonResponse({'error': 'That language is not allowed for this contest.'}, status=403)
     sample_input = question.sample_input or ''
 
     stdout, stderr = execute_code(code, language, sample_input)
@@ -532,6 +798,8 @@ def contest_submit_solution(request, pk, question_pk):
 
     code = data.get('code', '')
     language = data.get('language', 'python')
+    if language not in contest.runnable_languages_list:
+        return JsonResponse({'error': 'That language is not allowed for this contest.'}, status=403)
 
     test_cases = list(question.test_cases.all())
     if not test_cases:
@@ -587,5 +855,3 @@ def contest_submit_solution(request, pk, question_pk):
         'total': total,
         'cases': case_results,
     })
- 
- 

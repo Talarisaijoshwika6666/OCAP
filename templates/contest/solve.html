@@ -121,10 +121,12 @@
   .ct-case-chip.pass { background:rgba(0,255,130,0.12); color:#00ff82; border:1px solid rgba(0,255,130,0.4); }
   .ct-case-chip.fail { background:rgba(255,45,120,0.12); color:var(--neon-pink); border:1px solid rgba(255,45,120,0.4); }
 
-  /* ── Bottom nav ── */
+  /* ── Bottom nav — padding/divider matched to .ct-topbar above and to
+     the MCQ solve page's .ct-bottom-nav, so the button bar looks
+     consistent everywhere in the contest arena. ── */
   .ct-bottom-nav {
-    display:flex; align-items:center; justify-content:flex-end; gap:10px; padding:16px 4px;
-    background:transparent;
+    display:flex; align-items:center; justify-content:flex-end; gap:10px; padding:16px 24px;
+    background:transparent; border-top:1px solid rgba(176,38,255,0.12);
   }
   .ct-nav-btn {
     border:1px solid rgba(255,255,255,0.15); border-radius:8px; padding:9px 20px; font-size:0.82rem; font-weight:700;
@@ -235,10 +237,15 @@
           <div class="ct-file-tab"><i class="fas fa-file-code" style="color:var(--neon-purple);"></i> <span id="ct-filename">solution.py</span></div>
           <div style="display:flex;align-items:center;gap:10px;">
             <select id="ct-lang" class="ct-lang-select">
-              <option value="python">Python 3</option>
-              <option value="javascript">JavaScript</option>
-              <option value="java">Java</option>
-              <option value="cpp">C++</option>
+              {% for lang in contest.runnable_languages_list %}
+                {% if lang == 'python' %}<option value="python">Python 3</option>
+                {% elif lang == 'javascript' %}<option value="javascript">JavaScript</option>
+                {% elif lang == 'java' %}<option value="java">Java</option>
+                {% elif lang == 'cpp' %}<option value="cpp">C++</option>
+                {% endif %}
+              {% empty %}
+                <option value="python">Python 3</option>
+              {% endfor %}
             </select>
             <button class="ct-mini-submit" id="ct-mini-submit-btn"><i class="fas fa-check"></i> Submit</button>
           </div>
@@ -268,21 +275,21 @@
   <!-- ── Bottom nav ── -->
   <div class="ct-bottom-nav">
     {% if prev_question %}
-      <a href="{% url 'contest_solve' contest.pk prev_question.pk %}" class="ct-nav-btn ct-nav-prev"><i class="fas fa-chevron-left"></i> Prev</a>
+      <a href="{% url 'contest_solve' contest.pk prev_question.pk %}" id="ct-nav-prev-btn" class="ct-nav-btn ct-nav-prev"><i class="fas fa-chevron-left"></i> Prev</a>
     {% else %}
-      <a href="{% url 'contest_take_test' contest.pk %}" class="ct-nav-btn ct-nav-prev"><i class="fas fa-chevron-left"></i> Prev</a>
+      <a href="{% url 'contest_take_test' contest.pk %}" id="ct-nav-prev-btn" class="ct-nav-btn ct-nav-prev"><i class="fas fa-chevron-left"></i> Prev</a>
     {% endif %}
     <button class="ct-nav-btn ct-nav-reset" id="ct-reset-btn">Reset</button>
     <button class="ct-nav-btn ct-nav-submit" id="ct-submit-btn" title="Submit the entire test"><i class="fas fa-flag-checkered"></i> Submit Test</button>
     {% if next_question %}
-      <a href="{% url 'contest_solve' contest.pk next_question.pk %}" class="ct-nav-btn ct-nav-next">Next <i class="fas fa-chevron-right"></i></a>
+      <a href="{% url 'contest_solve' contest.pk next_question.pk %}" id="ct-nav-next-btn" class="ct-nav-btn ct-nav-next">Next <i class="fas fa-chevron-right"></i></a>
     {% else %}
-      <a href="{% url 'contest_take_test' contest.pk %}" class="ct-nav-btn ct-nav-next">Finish <i class="fas fa-chevron-right"></i></a>
+      <a href="{% url 'contest_take_test' contest.pk %}" id="ct-nav-next-btn" class="ct-nav-btn ct-nav-next">Submit <i class="fas fa-chevron-right"></i></a>
     {% endif %}
   </div>
 </div>
 <div class="ct-footer-counter">Question {{ question_number }} of {{ total_questions }}</div>
- 
+
 <!-- ── Proctoring warning modal ──────────────────────────────────────
      Reused for both violation warnings (1 of 2 / 2 of 2, with an
      "I Understand" button the candidate must click to resume) and the
@@ -326,8 +333,15 @@
     const raw = `{% for q in questions %}{{ q.pk }}{% if not forloop.last %},{% endif %}{% endfor %}`;
     return raw ? raw.split(',').map(Number) : [];
   })();
-  const STORE_KEY = "arena_code_{{ contest.pk }}_{{ question.pk }}";
-  const FLAG_KEY = "arena_flag_{{ contest.pk }}_{{ question.pk }}";
+  // @ts-ignore
+  const USER_ID = Number(`{{ user.pk }}`) || 0;
+  const STORE_KEY = `arena_code_${USER_ID}_{{ contest.pk }}_{{ question.pk }}`;
+  const FLAG_KEY = `arena_flag_${USER_ID}_{{ contest.pk }}_{{ question.pk }}`;
+
+  // Declared up-front (rather than down in the proctoring section) so
+  // the Prev/Next nav handlers can pause detection before they navigate
+  // — see the note next to those handlers for why this matters.
+  let proctorPaused = false;
 
   const templates = {
     python: "def solution():\n    pass\n",
@@ -351,6 +365,8 @@
     autofocus: true,
   });
 
+  let prevLang = langSelect.value;
+
   function loadStored() {
     const saved = localStorage.getItem(STORE_KEY);
     if (saved) {
@@ -360,11 +376,13 @@
         editor.setOption('mode', cmModes[langSelect.value]);
         editor.setValue(obj.code || templates[langSelect.value]);
         filenameEl.textContent = extensions[langSelect.value];
+        prevLang = langSelect.value;
         return;
       } catch (e) {}
     }
     editor.setValue(templates[langSelect.value]);
     filenameEl.textContent = extensions[langSelect.value];
+    prevLang = langSelect.value;
   }
   loadStored();
 
@@ -373,10 +391,30 @@
   }
   editor.on('change', persist);
 
+  // Switching languages needs to actually swap the editor's contents to
+  // that language's starter template — not just retint the syntax
+  // highlighting on code written in a different language (which is the
+  // bug this fixes: previously we only changed the CodeMirror 'mode',
+  // so old Python code stayed in the box and just got mis-highlighted
+  // as if it were Java/C++, which looked like nothing had switched).
   langSelect.addEventListener('change', function() {
-    editor.setOption('mode', cmModes[langSelect.value]);
-    filenameEl.textContent = extensions[langSelect.value];
-    if (!editor.getValue().trim()) editor.setValue(templates[langSelect.value]);
+    const newLang = langSelect.value;
+    const currentCode = editor.getValue();
+    const isBoilerplate = !currentCode.trim() || Object.values(templates).includes(currentCode);
+
+    if (!isBoilerplate) {
+      const langLabel = langSelect.options[langSelect.selectedIndex].text;
+      const ok = confirm(`Switching to ${langLabel} will replace your current code with a ${langLabel} starter template. Continue?`);
+      if (!ok) {
+        langSelect.value = prevLang; // revert the dropdown, leave the code as-is
+        return;
+      }
+    }
+
+    editor.setOption('mode', cmModes[newLang]);
+    filenameEl.textContent = extensions[newLang];
+    editor.setValue(templates[newLang]);
+    prevLang = newLang;
     persist();
   });
 
@@ -483,7 +521,7 @@
     // violation — same grading path as a manual "Submit Test" click,
     // just without the confirm() prompt and tagged so the results page
     // shows the auto-submit banner.
-    if (!auto && !confirm("Submit the entire test? This will grade every question in this contest and you won't be able to change your answers after this.")) {
+    if (!auto && !safeConfirm("Submit the entire test? This will grade every question in this contest and you won't be able to change your answers after this.")) {
       return;
     }
 
@@ -507,7 +545,7 @@
         code = editor.getValue();
         language = langSelect.value;
       } else {
-        const saved = localStorage.getItem(`arena_code_${CONTEST_PK}_${qid}`);
+        const saved = localStorage.getItem(`arena_code_${USER_ID}_${CONTEST_PK}_${qid}`);
         if (!saved) return Promise.resolve({ qid, skipped: true });
         try {
           const obj = JSON.parse(saved);
@@ -538,17 +576,19 @@
       html += '<div style="color:rgba(240,234,255,0.5);font-size:0.8rem;">Redirecting you to the results page…</div>';
       panel.innerHTML = html;
 
-      // The auto-submitted banner and the removal of "Keep Solving" on
-      // the results page are both driven by the persisted registration
-      // state (checked server-side), so a plain redirect is enough here.
-      setTimeout(() => { window.location.href = RESULT_URL; }, 900);
+      // Only tag the redirect when this was a genuine proctoring
+      // auto-submit (3rd violation) — a manual "Submit Test" click must
+      // never show the red "Test auto-submitted" banner, even if this
+      // candidate happened to rack up violations earlier in the session.
+      const redirectUrl = auto ? (RESULT_URL + (RESULT_URL.indexOf('?') === -1 ? '?' : '&') + 'auto_submitted=1') : RESULT_URL;
+      setTimeout(() => { window.location.href = redirectUrl; }, 900);
     });
   }
   document.getElementById('ct-submit-btn').addEventListener('click', function() { submitEntireTest(false); });
 
   // ── Reset ──
   document.getElementById('ct-reset-btn').addEventListener('click', function() {
-    if (!confirm('Reset your code back to the starter template for this question?')) return;
+    if (!safeConfirm('Reset your code back to the starter template for this question?')) return;
     editor.setValue(templates[langSelect.value]);
     persist();
     document.getElementById('ct-terminal-output').innerHTML = '// Run your code against the sample input to see output here';
@@ -583,13 +623,62 @@
   });
 
   document.getElementById('ct-link-btn').addEventListener('click', function() {
+    // navigator.clipboard.writeText() can trigger a native clipboard-
+    // permission prompt in some browsers/contexts if permission hasn't
+    // already been granted — that prompt steals window focus just like
+    // switching tabs does, so pause proctoring around it the same way
+    // safeConfirm() does for window.confirm().
+    const wasPaused = proctorPaused;
+    proctorPaused = true;
     navigator.clipboard.writeText(window.location.href).then(() => {
       const el = this;
       const original = el.innerHTML;
       el.innerHTML = '<i class="fas fa-check"></i>';
       setTimeout(() => { el.innerHTML = original; }, 1200);
+    }).finally(() => {
+      setTimeout(function() {
+        if (!wasPaused) proctorPaused = false;
+      }, 500);
     });
   });
+
+  // Prev/Next/Submit navigation must pause proctoring detection first — a
+  // plain page navigation (window.location.href / <a href>) can itself
+  // trigger a `blur` and/or `visibilitychange` event in some browsers,
+  // exactly like switching tabs does. Without this guard, simply moving
+  // between questions could get misreported as a tab-switch violation
+  // and — if the candidate already had 2 prior warnings — silently
+  // auto-submit the whole test. This is the same protection "Submit
+  // Test" / "Reset" already get via safeConfirm().
+  //
+  // Each also calls persist() explicitly right before navigating, so the
+  // solution in the editor is guaranteed saved to localStorage at the
+  // moment of the click — rather than relying purely on the
+  // on-keystroke autosave (editor.on('change', persist) above), which
+  // could in principle miss the very last edit if the click follows
+  // immediately after typing.
+  const prevBtn = document.getElementById('ct-nav-prev-btn');
+  if (prevBtn) {
+    prevBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      proctorPaused = true;
+      persist();
+      window.location.href = prevBtn.getAttribute('href');
+    });
+  }
+  // Same button/handler for both "Next" (more questions remain) and
+  // "Submit" (the label shown on the last question — it saves this
+  // solution and takes the candidate to the test overview page, same
+  // as clicking Next would take them to the next question).
+  const nextNavBtn = document.getElementById('ct-nav-next-btn');
+  if (nextNavBtn) {
+    nextNavBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      proctorPaused = true;
+      persist();
+      window.location.href = nextNavBtn.getAttribute('href');
+    });
+  }
 
   // ─────────────────────────────────────────────────────────────
   // Proctoring — anti-tab-switching
@@ -608,18 +697,35 @@
   const proctorMessageEl = document.getElementById('proctor-message');
   const proctorNextEl = document.getElementById('proctor-next');
   const proctorAckBtn = document.getElementById('proctor-ack-btn');
- 
+
   // Restored from the server so a page refresh doesn't let a candidate
   // pretend they never got any warnings — purely informational here,
   // since the server re-validates the real count on every report anyway.
   let knownViolationCount = parseInt('{{ initial_violation_count|default:0 }}', 10) || 0;
- 
+
   // Paused while the modal is showing (or a report is in flight) so a
   // single tab-switch can't be reported twice (blur + visibilitychange
   // both fire) and so the candidate can't rack up violations while
   // they're stuck reading the warning.
-  let proctorPaused = false;
- 
+
+  // window.confirm() steals focus while it's open, which fires the same
+  // blur / visibilitychange events used to detect tab-switching. Without
+  // this, clicking "Submit Test" (or "Reset") would trigger the browser's
+  // own confirm dialog and immediately get flagged as a proctoring
+  // violation. Pause detection around any app-triggered confirm(), with a
+  // short grace period afterwards since different browsers fire the
+  // focus-restore events at slightly different times relative to confirm()
+  // returning.
+  function safeConfirm(message) {
+    const wasPaused = proctorPaused;
+    proctorPaused = true;
+    const result = window.confirm(message);
+    setTimeout(function() {
+      if (!wasPaused) proctorPaused = false;
+    }, 500);
+    return result;
+  }
+
   function openProctorModal(title, message, next, showAck) {
     proctorTitleEl.textContent = title;
     proctorMessageEl.textContent = message;
@@ -627,20 +733,20 @@
     proctorAckBtn.style.display = showAck ? 'inline-block' : 'none';
     proctorOverlay.style.display = 'flex';
   }
- 
+
   function closeProctorModal() {
     proctorOverlay.style.display = 'none';
   }
- 
+
   proctorAckBtn.addEventListener('click', function() {
     closeProctorModal();
     proctorPaused = false; // resume watching for further violations
   });
- 
+
   function reportViolation() {
     if (proctorPaused) return;
     proctorPaused = true;
- 
+
     fetch(REPORT_VIOLATION_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
@@ -654,9 +760,9 @@
           proctorPaused = false;
           return;
         }
- 
+
         knownViolationCount = data.violation_count;
- 
+
         if (data.auto_submit) {
           // 3rd violation — server has already flagged this
           // registration as auto-submitted. Show a non-dismissible
@@ -671,7 +777,7 @@
           submitEntireTest(true);
           return;
         }
- 
+
         if (knownViolationCount <= 1) {
           openProctorModal(
             'Warning 1 of 2',
@@ -695,16 +801,16 @@
         proctorPaused = false;
       });
   }
- 
+
   // Fires when the tab is switched, the window is minimized, or the OS
   // switches to a different application.
   document.addEventListener('visibilitychange', function() {
     if (document.hidden) reportViolation();
   });
- 
+
   // Belt-and-braces: catches focus loss that visibilitychange can miss.
   window.addEventListener('blur', reportViolation);
- 
+
   // ── Shared contest countdown ──
   const timerEl = document.getElementById('ct-timer');
   let remaining = parseInt(timerEl.dataset.remaining, 10) || 0;
@@ -730,5 +836,3 @@
 </script>
 
 {% endblock %}
- 
-

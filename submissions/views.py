@@ -57,8 +57,14 @@ def submit_code(request, question_id):
 
 @login_required
 def my_submissions(request):
+    # Only Problem Bank submissions belong here — the same rule the
+    # Problem Bank itself uses to decide what counts as a "Problem Bank
+    # question" (questions.views: contests__isnull=True), so a question
+    # only shows up here if it isn't attached to any contest at all.
+    # Contest attempts have their own results page (contest_result).
     submissions = Submission.objects.filter(
-        user=request.user
+        user=request.user,
+        question__contests__isnull=True,
     ).select_related('question').order_by('-submitted_at')[:20]
     return render(request, 'submissions/my_submissions.html', {
         'submissions': submissions

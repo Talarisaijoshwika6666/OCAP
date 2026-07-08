@@ -14,6 +14,14 @@ class Question(models.Model):
     hint = models.TextField(blank=True, help_text="Hint shown to candidates")
     answer = models.TextField(blank=True, help_text="Reference solution shown after 3 failed attempts")
     time_limit = models.PositiveIntegerField(default=60, help_text="Time limit in minutes for this question")
+    # --- Contest-authoring fields (recruiter 'Add Programming Questions' form) ---
+    # All optional/blank so existing Problem Bank questions (created before
+    # this feature existed) keep working exactly as before.
+    constraints = models.TextField(blank=True, default='')
+    input_format = models.TextField(blank=True, default='')
+    output_format = models.TextField(blank=True, default='')
+    memory_limit_mb = models.PositiveIntegerField(default=256, help_text='Memory limit in MB for this question')
+    marks = models.PositiveIntegerField(default=0, help_text='Marks this question is worth in a contest (0 = untracked / Problem Bank question)')
     created_at = models.DateTimeField(auto_now_add=True)
     def __str__(self):
         return self.title
