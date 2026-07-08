@@ -508,20 +508,19 @@ def recruiter_contest_results(request):
         })
 
     return render(request, 'recruiter/contest_results.html', {
-        'username': request.user.username,
-        'upcoming_contests': upcoming_list,
-        'past_contests': past_list
-        'username': request.user.username,
-        'total_candidates': total_candidates,
-        'total_assessments': total_assessments,
-        'total_problems': total_problems,
-        'total_submissions': total_submissions,
-        'active_assessments': active_assessments,
-        'avg_score': avg_score,
-        'recent_questions': recent_questions,
-        'insights': insights,
-        'recent_activity': recent_activity,
-    })
+    'username': request.user.username,
+    'upcoming_contests': upcoming_list,
+    'past_contests': past_list,
+    'total_candidates': total_candidates,
+    'total_assessments': total_assessments,
+    'total_problems': total_problems,
+    'total_submissions': total_submissions,
+    'active_assessments': active_assessments,
+    'avg_score': avg_score,
+    'recent_questions': recent_questions,
+    'insights': insights,
+    'recent_activity': recent_activity,
+})
 
 def recruiter_all_submissions(request):
     if not request.user.is_authenticated or not request.user.is_staff:
