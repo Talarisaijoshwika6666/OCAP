@@ -151,7 +151,17 @@ function initCharts() {
         labels: (data.submissionsByProblem || []).map(item => item.title),
         datasets: [{ label: 'Submissions', data: (data.submissionsByProblem || []).map(item => item.count), backgroundColor: '#4f46e5' }]
       },
-      options: { responsive: true, plugins: { legend: { display: false } } }
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          tooltip: { titleColor: '#f8fbff', bodyColor: '#f8fbff' }
+        },
+        scales: {
+          x: { ticks: { color: '#cbd5e1' }, grid: { color: 'rgba(255,255,255,0.08)' } },
+          y: { ticks: { color: '#cbd5e1' }, grid: { color: 'rgba(255,255,255,0.08)' } }
+        }
+      }
     });
   }
 
@@ -162,7 +172,13 @@ function initCharts() {
         labels: Object.keys(data.difficultyDistribution || {}),
         datasets: [{ data: Object.values(data.difficultyDistribution || {}), backgroundColor: ['#22c55e', '#f59e0b', '#ef4444'] }]
       },
-      options: { responsive: true }
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { labels: { color: '#f8fbff' } },
+          tooltip: { titleColor: '#f8fbff', bodyColor: '#f8fbff' }
+        }
+      }
     });
   }
 
@@ -171,9 +187,19 @@ function initCharts() {
       type: 'line',
       data: {
         labels: (data.dailyTrend || []).map(item => item.label),
-        datasets: [{ label: 'Daily Submissions', data: (data.dailyTrend || []).map(item => item.count), borderColor: '#2563eb', fill: false, tension: .35 }]
+        datasets: [{ label: 'Daily Submissions', data: (data.dailyTrend || []).map(item => item.count), borderColor: '#22d3ee', backgroundColor: 'rgba(34,211,238,0.18)', fill: true, tension: .35 }]
       },
-      options: { responsive: true }
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { labels: { color: '#f8fbff' } },
+          tooltip: { titleColor: '#f8fbff', bodyColor: '#f8fbff' }
+        },
+        scales: {
+          x: { ticks: { color: '#cbd5e1' }, grid: { color: 'rgba(255,255,255,0.08)' } },
+          y: { ticks: { color: '#cbd5e1' }, grid: { color: 'rgba(255,255,255,0.08)' } }
+        }
+      }
     });
   }
 
@@ -182,9 +208,19 @@ function initCharts() {
       type: 'line',
       data: {
         labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-        datasets: [{ label: 'Trend', data: [6, 9, 7, 11, 10, 14, 13], borderColor: '#4f46e5', fill: false, tension: .35 }]
+        datasets: [{ label: 'Trend', data: [6, 9, 7, 11, 10, 14, 13], borderColor: '#ff4ecd', backgroundColor: 'rgba(255,78,205,0.16)', fill: true, tension: .35 }]
       },
-      options: { responsive: true }
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { labels: { color: '#f8fbff' } },
+          tooltip: { titleColor: '#f8fbff', bodyColor: '#f8fbff' }
+        },
+        scales: {
+          x: { ticks: { color: '#cbd5e1' }, grid: { color: 'rgba(255,255,255,0.08)' } },
+          y: { ticks: { color: '#cbd5e1' }, grid: { color: 'rgba(255,255,255,0.08)' } }
+        }
+      }
     });
   }
 }
