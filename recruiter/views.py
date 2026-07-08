@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import get_user_model
-from django.db.models import Sum, Count, Avg
+from django.db.models import Count, Avg
+from django.utils import timezone
 from submissions.models import Submission
 from questions.models import Question
 from assessments.models import Assessment
@@ -109,6 +110,91 @@ def recruiter_dashboard(request):
         'insights': insights,
         'recent_activity': recent_activity,
     })
+
+def recruiter_all_submissions(request):
+    if not request.user.is_authenticated or not request.user.is_staff:
+        return redirect('/accounts/login/')
+
+    def format_duration(seconds):
+        if seconds is None:
+            return '0m 0s'
+        total_seconds = int(seconds)
+        hours, remainder = divmod(total_seconds, 3600)
+        minutes, secs = divmod(remainder, 60)
+        parts = []
+        if hours:
+            parts.append(f'{hours}h')
+        if minutes:
+            parts.append(f'{minutes}m')
+        if secs or not parts:
+            parts.append(f'{secs}s')
+        return ' '.join(parts)
+
+    questions = Question.objects.all().order_by('title')
+    rows = []
+
+    for question in questions:
+        submissions = Submission.objects.filter(question=question)
+        total_submissions = submissions.count()
+        accepted = submissions.filter(result__icontains='accepted').count()
+        rejected = total_submissions - accepted
+        acceptance_rate = round((accepted / total_submissions) * 100, 1) if total_submissions else 0.0
+        average_time_seconds = submissions.aggregate(Avg('time_taken_seconds'))['time_taken_seconds__avg'] or 0
+        latest_submission = submissions.order_by('-submitted_at').first()
+        highest_score = submissions.order_by('-score').first().score if submissions.exists() else 0
+        lowest_score = submissions.order_by('score').first().score if submissions.exists() else 0
+
+        rows.append({
+            'id': question.id,
+            'title': question.title,
+            'difficulty': question.difficulty,
+            'difficulty_class': question.difficulty.lower(),
+            'total_submissions': total_submissions,
+            'average_time_seconds': int(average_time_seconds),
+            'average_time_display': format_duration(average_time_seconds),
+            'accepted': accepted,
+            'rejected': rejected,
+            'acceptance_rate': acceptance_rate,
+            'acceptance_class': 'success' if acceptance_rate >= 70 else 'warning' if acceptance_rate >= 40 else 'danger',
+            'last_submission': latest_submission.submitted_at if latest_submission else None,
+            'last_submission_display': latest_submission.submitted_at.strftime('%b %d, %Y %H:%M') if latest_submission else 'No submissions',
+            'highest_score': int(highest_score) if isinstance(highest_score, (int, float)) else 0,
+            'lowest_score': int(lowest_score) if isinstance(lowest_score, (int, float)) else 0,
+        })
+
+    total_problems = len(rows)
+    total_submissions = sum(item['total_submissions'] for item in rows)
+    overall_accepted = sum(item['accepted'] for item in rows)
+    overall_acceptance_rate = round((overall_accepted / total_submissions) * 100, 1) if total_submissions else 0.0
+    average_submission_time = round(Submission.objects.aggregate(Avg('time_taken_seconds'))['time_taken_seconds__avg'] or 0, 1)
+    difficulty_distribution = {
+        'Easy': Submission.objects.filter(question__difficulty='Easy').count(),
+        'Medium': Submission.objects.filter(question__difficulty='Medium').count(),
+        'Hard': Submission.objects.filter(question__difficulty='Hard').count(),
+    }
+    submissions_by_problem = [
+        {'title': item['title'], 'count': item['total_submissions']} for item in rows if item['total_submissions'] > 0
+    ]
+    daily_trend = []
+    for offset in range(6, -1, -1):
+        day = timezone.now().date() - timezone.timedelta(days=offset)
+        count = Submission.objects.filter(submitted_at__date=day).count()
+        daily_trend.append({'label': day.strftime('%b %d'), 'count': count})
+
+    return render(request, 'recruiter/all_submissions.html', {
+        'username': request.user.username,
+        'rows': rows,
+        'stats': {
+            'total_problems': total_problems,
+            'total_submissions': total_submissions,
+            'average_submission_time': int(average_submission_time),
+            'overall_acceptance_rate': overall_acceptance_rate,
+        },
+        'difficulty_distribution': difficulty_distribution,
+        'submissions_by_problem': submissions_by_problem,
+        'daily_trend': daily_trend,
+    })
+
 
 def recruiter_contest_results(request):
     if not request.user.is_authenticated or not request.user.is_staff:
