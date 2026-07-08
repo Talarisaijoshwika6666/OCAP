@@ -6,9 +6,15 @@ urlpatterns = [
     path('quest/', views.quest_view, name='quest'),
 
     path(
-        'study-plan/<str:topic>/',
+        'study-plan/',
         views.study_plan_view,
         name='study_plan'
+    ),
+
+    path(
+        'study-plan/<str:topic>/',
+        views.study_plan_view,
+        name='study_plan_topic'
     ),
 
     path(

@@ -12,6 +12,7 @@ from submissions.models import Submission
 from questions.models import Question, TestCase
 from assessments.models import Assessment
 from contest.models import Contest, ContestMCQ, ContestRegistration
+from results.models import Result
 User = get_user_model()
 
 def recruiter_dashboard(request):
@@ -88,8 +89,6 @@ def recruiter_dashboard(request):
                 result=s.result
             )
         )
-        .order_by('-total_score')[:10]
-    )
 
     # Question list (read-only, no solve button) — Problem Bank only,
     # excludes any question that belongs to a contest.
@@ -101,13 +100,22 @@ def recruiter_dashboard(request):
         .order_by('-submitted_at')[:20]
     )
 
+    recent_activity = sorted(real_activity, key=lambda item: item.submitted_at, reverse=True)[:8]
+
     return render(request, 'recruiter/dashboard.html', {
+        'username': request.user.username,
         'total_questions':    total_questions,
         'total_candidates':   total_candidates,
+        'total_assessments':  total_assessments,
+        'total_problems':     total_problems,
         'total_submissions':  total_submissions,
-        'top_candidates':     top_candidates,
+        'active_assessments': active_assessments,
+        'avg_score':          avg_score,
         'questions':          questions,
+        'recent_questions':   recent_questions,
         'recent_submissions': recent_submissions,
+        'recent_activity':    recent_activity,
+        'insights':           insights,
     })
 
 
@@ -123,7 +131,6 @@ def recruiter_contests(request):
         return _create_contest(request)
 
     contests = Contest.objects.all().order_by('-start_time')
-    # Annotate registration counts for the management list.
     contest_rows = []
     for c in contests:
         contest_rows.append({
@@ -133,6 +140,7 @@ def recruiter_contests(request):
 
     return render(request, 'recruiter/contests.html', {
         'username': request.user.username,
+        'active_page': 'contests',
         'contest_rows': contest_rows,
         'language_choices': Contest.LANGUAGE_CHOICES,
         'difficulty_choices': ContestMCQ.DIFFICULTY_CHOICES,
@@ -316,6 +324,69 @@ def _create_contest(request):
         'insights': insights,
         'recent_activity': recent_activity,
     })
+
+def recruiter_candidates(request):
+    if not request.user.is_authenticated or not request.user.is_staff:
+        return redirect('/accounts/login/')
+
+    candidates = User.objects.filter(is_staff=False, is_superuser=False).order_by('-date_joined')
+    candidate_rows = []
+
+    for candidate in candidates:
+        submissions = Submission.objects.filter(user=candidate)
+        results = Result.objects.filter(candidate=candidate).order_by('-submitted_at')
+        latest_result = results.first()
+        candidate_rows.append({
+            'user': candidate,
+            'display_name': candidate.get_full_name() or candidate.username,
+            'submission_count': submissions.count(),
+            'last_score': latest_result.score if latest_result else 0,
+            'passed': latest_result.passed if latest_result else False,
+            'last_submission': submissions.order_by('-submitted_at').first(),
+            'latest_result': latest_result,
+        })
+
+    return render(request, 'recruiter/candidates.html', {
+        'username': request.user.username,
+        'candidates': candidate_rows,
+        'active_page': 'candidates',
+    })
+
+
+def recruiter_reports(request):
+    if not request.user.is_authenticated or not request.user.is_staff:
+        return redirect('/accounts/login/')
+
+    recent_results = Result.objects.select_related('candidate', 'assessment').order_by('-submitted_at')[:10]
+    total_results = Result.objects.count()
+    total_candidates = User.objects.filter(is_staff=False, is_superuser=False).count()
+    passed_results = Result.objects.filter(passed=True).count()
+    pass_rate = round((passed_results / total_results * 100), 1) if total_results else 0.0
+    average_score = round(Result.objects.aggregate(Avg('score'))['score__avg'] or 0, 1)
+
+    assessment_breakdown = []
+    for assessment in Assessment.objects.all().order_by('title'):
+        result_count = assessment.results.count()
+        if result_count:
+            assessment_breakdown.append({
+                'title': assessment.title,
+                'result_count': result_count,
+                'average_score': round(assessment.results.aggregate(Avg('score'))['score__avg'] or 0, 1),
+            })
+
+    return render(request, 'recruiter/reports.html', {
+        'username': request.user.username,
+        'active_page': 'reports',
+        'stats': {
+            'total_results': total_results,
+            'total_candidates': total_candidates,
+            'pass_rate': pass_rate,
+            'average_score': average_score,
+        },
+        'results': recent_results,
+        'assessment_breakdown': assessment_breakdown,
+    })
+
 
 def recruiter_problem_bank(request):
     """Problem Bank view for recruiters — mirrors the candidate-facing
@@ -541,13 +612,8 @@ def recruiter_contest_results(request):
     if not request.user.is_authenticated or not request.user.is_staff:
         return redirect('/accounts/login/')
 
-    from django.utils import timezone
-    from contest.models import Contest
-    from results.models import Result
-
     now = timezone.now()
 
-    # 1. Fetch upcoming contests
     upcoming_qs = Contest.objects.filter(start_time__gt=now).order_by('start_time')
     upcoming_list = []
     for c in upcoming_qs:
@@ -556,54 +622,46 @@ def recruiter_contest_results(request):
             'title': c.title,
             'start_time': c.start_time,
         })
-    
-    # Fallback to display mock upcoming contests if DB is empty
-    if not upcoming_list:
-        upcoming_list = [
-            {
-                'id': 101,
-                'title': 'LogicLabs Weekly Contest #43',
-                'start_time': timezone.now() + timezone.timedelta(days=6 - timezone.now().weekday() if timezone.now().weekday() < 6 else 6, hours=20 - timezone.now().hour), # Sunday 8 PM
-            },
-            {
-                'id': 102,
-                'title': 'LogicLabs Biweekly Contest #22',
-                'start_time': timezone.now() + timezone.timedelta(days=12 - timezone.now().weekday() if timezone.now().weekday() < 5 else 5, hours=20 - timezone.now().hour), # Next Saturday 8 PM
-            }
-        ]
 
-    # 2. Fetch past contests (strict real data from database only)
     past_qs = Contest.objects.filter(end_time__lt=now).order_by('-end_time')
     past_list = []
-    
     for c in past_qs:
-        # Get real results if available
-        results_qs = Result.objects.filter(assessment__title__icontains=c.title).order_by('-score', 'submitted_at')
-        results_list = []
-        for idx, r in enumerate(results_qs):
-            rank = r.rank if r.rank > 0 else (idx + 1)
-            results_list.append({
-                'rank': rank,
-                'candidate': r.candidate.username,
-                'score': r.score
+        contest_results = []
+        registrations = ContestRegistration.objects.filter(contest=c).select_related('user')
+        for registration in registrations:
+            best_submission = Submission.objects.filter(
+                user=registration.user,
+                question__in=c.questions.all(),
+                submitted_at__gte=c.start_time,
+                submitted_at__lte=c.end_time,
+            ).order_by('-score', 'submitted_at').first()
+            score = best_submission.score if best_submission else 0
+            contest_results.append({
+                'rank': 0,
+                'candidate': registration.user.get_full_name() or registration.user.username,
+                'score': round(score, 1),
             })
-        
-        # Real registrations (number of unique candidates who submitted tests)
-        registrations_count = Result.objects.filter(assessment__title__icontains=c.title).values('candidate').distinct().count()
-        # Real submissions (total test submissions)
-        submissions_count = Result.objects.filter(assessment__title__icontains=c.title).count()
+
+        contest_results.sort(key=lambda item: (-item['score'], item['candidate']))
+        for idx, item in enumerate(contest_results, start=1):
+            item['rank'] = idx
 
         past_list.append({
             'id': c.id,
             'title': c.title,
             'start_time': c.start_time,
-            'registrations': registrations_count,
-            'submissions': submissions_count,
-            'results': results_list
+            'registrations': registrations.count(),
+            'submissions': Submission.objects.filter(
+                question__in=c.questions.all(),
+                submitted_at__gte=c.start_time,
+                submitted_at__lte=c.end_time,
+            ).count(),
+            'results': contest_results,
         })
 
     return render(request, 'recruiter/contest_results.html', {
         'username': request.user.username,
+        'active_page': 'contest',
         'upcoming_contests': upcoming_list,
-        'past_contests': past_list
+        'past_contests': past_list,
     })

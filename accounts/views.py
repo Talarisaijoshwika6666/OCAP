@@ -70,9 +70,9 @@ def login_view(request):
             if user is None:
                 user = User.objects.create_user(username=username, password=password, role='candidate')
                 login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-                next_url = request.GET.get('next') or request.POST.get('next') or '/dashboard/'
+                next_url = request.GET.get('next') or request.POST.get('next') or '/candidates/dashboard/'
                 if next_url == '/':
-                    next_url = '/dashboard/'
+                    next_url = '/candidates/dashboard/'
                 return redirect(next_url)
 
             user = authenticate(request, username=username, password=password)
@@ -83,9 +83,9 @@ def login_view(request):
                 })
 
             login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-            next_url = request.GET.get('next') or request.POST.get('next') or '/dashboard/'
+            next_url = request.GET.get('next') or request.POST.get('next') or '/candidates/dashboard/'
             if next_url == '/':
-                next_url = '/dashboard/'
+                next_url = '/candidates/dashboard/'
             return redirect(next_url)
 
     return render(request, 'accounts/login.html', {'panel': panel})

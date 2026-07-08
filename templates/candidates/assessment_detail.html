@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block page_title %}// Assessment Details{% endblock %}
+{% block content %}
+<div class="card-glass p-4" style="margin-bottom:20px;">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:#b026ff;letter-spacing:2px;margin-bottom:8px;">// ASSESSMENT</div>
+    <h2 style="font-family:'Orbitron',monospace;font-weight:900;color:#f0eaff;margin-bottom:10px;">{{ assessment.title }}</h2>
+    <div style="color:rgba(240,234,255,0.55);font-size:0.9rem;margin-bottom:16px;">
+        <span><i class="fas fa-clock" style="color:#00fff7;margin-right:6px;"></i>{{ assessment.duration }} mins</span>
+        <span style="margin-left:16px;"><i class="fas fa-star" style="color:#ffc107;margin-right:6px;"></i>{{ assessment.total_marks }} marks</span>
+    </div>
+    <a href="{% url 'start_assessment' assessment.id %}" class="btn-gradient">Start Assessment</a>
+</div>
+
+{% if questions %}
+<div class="card-glass p-4">
+    <div style="font-family:'Orbitron',monospace;font-size:0.92rem;font-weight:700;color:#f0eaff;margin-bottom:14px;">Questions</div>
+    {% for question in questions %}
+    <div style="padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
+        <div style="color:#f0eaff;font-size:0.95rem;">{{ forloop.counter }}. {{ question.title|default:question.text }}</div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card-glass p-4" style="color:rgba(240,234,255,0.4);text-align:center;">
+    No questions are available for this assessment yet.
+</div>
+{% endif %}
+{% endblock %}

@@ -35,13 +35,6 @@ def take_assessment(request, pk):
     """Entry point kept for backwards-compat URLs — hands off to the real test-taking flow."""
     get_object_or_404(Assessment, pk=pk)
     return redirect('take_test', assessment_id=pk)
- 
-        'questions': questions
-    })
-
-@login_required
-def take_assessment(request, pk):
-    return redirect('take_test', assessment_id=pk)
 
 def leaderboard(request):
     scores = Submission.objects.values('user__username').annotate(total=Sum('score')).order_by('-total')

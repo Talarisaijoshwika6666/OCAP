@@ -2,8 +2,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Avg
-from assessments.models import Assessment
-from assessments.models import Question
+from assessments.models import Assessment, Question as AssessmentQuestion
+from questions.models import Question as ProblemQuestion
 from results.models import Result
 from submissions.models import Submission
 
@@ -25,8 +25,8 @@ def candidate_dashboard(request):
     avg_score = Result.objects.filter(candidate=user).aggregate(Avg('score'))['score__avg'] or 0
     best_rank = Result.objects.filter(candidate=user).order_by('rank').first()
 
-    submissions = Submission.objects.filter(candidate=user)
-    questions = Question.objects.filter(id__in=submissions.values_list('question_id', flat=True)).distinct()
+    submissions = Submission.objects.filter(user=user)
+    questions = ProblemQuestion.objects.filter(id__in=submissions.values_list('question_id', flat=True)).distinct()
     total_submissions = submissions.count()
     best_score = Result.objects.filter(candidate=user).aggregate(Avg('score'))['score__avg'] or 0
 
@@ -56,7 +56,7 @@ def candidate_dashboard(request):
 def assessment_detail(request, assessment_id):
     """View assessment details"""
     assessment = get_object_or_404(Assessment, id=assessment_id)
-    questions = Question.objects.filter(assessment=assessment)
+    questions = AssessmentQuestion.objects.filter(assessment=assessment)
     
     context = {
         'assessment': assessment,
@@ -75,7 +75,7 @@ def start_assessment(request, assessment_id):
         messages.warning(request, 'You have already attempted this assessment!')
         return redirect('candidate_dashboard')
     
-    questions = Question.objects.filter(assessment=assessment)
+    questions = AssessmentQuestion.objects.filter(assessment=assessment)
     
     context = {
         'assessment': assessment,

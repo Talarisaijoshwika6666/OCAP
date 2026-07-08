@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block page_title %}Take Assessment{% endblock %}
+{% block content %}
+<div class="card-glass p-4" style="margin-bottom:20px;">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:#b026ff;letter-spacing:2px;margin-bottom:8px;">// LIVE ASSESSMENT</div>
+    <h2 style="font-family:'Orbitron',monospace;font-weight:900;color:#f0eaff;margin-bottom:10px;">{{ assessment.title }}</h2>
+    <div style="color:rgba(240,234,255,0.55);font-size:0.9rem;margin-bottom:16px;">You can answer the questions below and submit your assessment when ready.</div>
+</div>
+
+<form method="post">
+    {% csrf_token %}
+    {% for question in questions %}
+    <div class="card-glass p-4" style="margin-bottom:16px;">
+        <div style="color:#f0eaff;font-size:0.95rem;font-weight:700;margin-bottom:10px;">{{ forloop.counter }}. {{ question.title|default:question.text }}</div>
+        <textarea name="answer_{{ question.id }}" class="form-control" rows="4" placeholder="Type your answer here..."></textarea>
+    </div>
+    {% endfor %}
+    <button type="submit" class="btn-gradient">Submit Assessment</button>
+</form>
+{% endblock %}

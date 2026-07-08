@@ -280,7 +280,16 @@ def update_topic_progress(request, subject, topic_slug):
     })
 
 
-def study_plan_view(request, topic):
+def study_plan_view(request, topic=None):
+
+    if topic is None:
+        topic = 'database'
+
+    topic_key = (topic or '').strip().lower()
+    if topic_key in {'data-structures', 'database', 'system-design'}:
+        selected_topic = topic_key
+    else:
+        selected_topic = 'database'
 
     roadmaps = {
         "data-structures": {
@@ -350,10 +359,18 @@ def study_plan_view(request, topic):
         }
     }
 
-    roadmap = roadmaps.get(topic)
+    roadmap = roadmaps.get(selected_topic)
+    if roadmap is None:
+        roadmap = {
+            "title": "Study Plan",
+            "beginner": [],
+            "intermediate": [],
+            "advanced": [],
+        }
 
     return render(request, "quest/study_plan.html", {
-        "roadmap": roadmap
+        "roadmap": roadmap,
+        "topic": selected_topic,
     })
 
 def home_view(request):

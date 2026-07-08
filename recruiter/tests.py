@@ -33,3 +33,45 @@ class RecruiterSettingsTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'All Submissions')
+
+    def test_recruiter_candidates_route_renders_page(self):
+        user = User.objects.create_user(
+            username='recruiter_candidates',
+            email='recruiter_candidates@example.com',
+            password='StrongPass123!',
+            is_staff=True,
+        )
+        self.client.force_login(user)
+
+        response = self.client.get(reverse('recruiter_candidates'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Candidates')
+
+    def test_recruiter_reports_route_renders_page(self):
+        user = User.objects.create_user(
+            username='recruiter_reports',
+            email='recruiter_reports@example.com',
+            password='StrongPass123!',
+            is_staff=True,
+        )
+        self.client.force_login(user)
+
+        response = self.client.get(reverse('recruiter_reports'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Reports')
+
+    def test_recruiter_contest_results_route_renders_page(self):
+        user = User.objects.create_user(
+            username='recruiter_contest_results',
+            email='recruiter_contest_results@example.com',
+            password='StrongPass123!',
+            is_staff=True,
+        )
+        self.client.force_login(user)
+
+        response = self.client.get(reverse('recruiter_contest_results'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Contest Results')

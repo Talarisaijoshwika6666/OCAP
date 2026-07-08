@@ -528,7 +528,7 @@
                     </thead>
                     <tbody class="resultsTableBody">
                         {% for contest in past_contests %}
-                        <tr class="past-contest-row" onclick="showLeaderboard('{{ contest.id }}')" style="border-bottom: 1px solid rgba(255,255,255,0.03); font-size: 0.85rem;">
+                        <tr class="past-contest-row" onclick="showLeaderboard('{{ contest.id }}')" style="border-bottom: 1px solid rgba(255,255,255,0.03); font-size: 0.85rem; cursor: pointer;">
                             <td class="ps-0 py-3 fw-bold" style="color: var(--text-primary);">
                                 {{ contest.title }}
                             </td>
@@ -540,6 +540,11 @@
                             </td>
                             <td class="py-3 text-center" style="font-family: var(--font-code); color: var(--text-dim);">
                                 {{ contest.start_time|date:"d M Y, H:i" }}
+                            </td>
+                            <td class="py-3 text-end pe-0">
+                                <button type="button" class="btn btn-sm" onclick="event.stopPropagation(); showLeaderboard('{{ contest.id }}');" style="background: rgba(0,255,247,0.12); color: #00fff7; border: 1px solid rgba(0,255,247,0.25); border-radius: 999px; font-family: var(--font-code); font-size: 0.72rem;">
+                                    View Leaderboard
+                                </button>
                             </td>
                         </tr>
                         {% empty %}
