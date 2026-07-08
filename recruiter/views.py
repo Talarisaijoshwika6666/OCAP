@@ -1,6 +1,7 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import get_user_model
-from django.db.models import Sum, Count, Avg
+from django.db.models import Sum, Count, Avg, Q as models_Q
+from urllib3 import request
 from submissions.models import Submission
 from questions.models import Question
 from assessments.models import Assessment
@@ -110,6 +111,141 @@ def recruiter_dashboard(request):
         'recent_activity': recent_activity,
     })
 
+def recruiter_problem_bank(request):
+    """Problem Bank view for recruiters — mirrors the candidate-facing
+    question list (search / topic / difficulty filters) but adds
+    recruiter-relevant context like per-question submission counts."""
+    if not request.user.is_authenticated or not request.user.is_staff:
+        return redirect('/accounts/login/')
+
+    questions = Question.objects.all().order_by('-id')
+
+    search = request.GET.get('search', '')
+    if search:
+        questions = questions.filter(title__icontains=search)
+
+    difficulty = request.GET.get('difficulty', '')
+    if difficulty:
+        questions = questions.filter(difficulty=difficulty)
+
+    topic = request.GET.get('topic', '')
+    if topic:
+        questions = questions.filter(topic=topic)
+
+    topics = Question.objects.order_by('topic').values_list('topic', flat=True).distinct()
+
+    # Annotate with submission stats so recruiters can see how each
+    # problem is performing across candidates at a glance.
+    questions = questions.annotate(
+        submission_count=Count('submission', distinct=True),
+        solved_count=Count(
+            'submission',
+            filter=models_Q(submission__result__in=['AC', 'Accepted']),
+            distinct=True,
+        ),
+    )
+
+    total_problems = Question.objects.count()
+    easy_count = Question.objects.filter(difficulty='Easy').count()
+    medium_count = Question.objects.filter(difficulty='Medium').count()
+    hard_count = Question.objects.filter(difficulty='Hard').count()
+
+    return render(request, 'recruiter/problems.html', {
+        'username': request.user.username,
+        'questions': questions,
+        'search': search,
+        'difficulty': difficulty,
+        'topic': topic,
+        'topics': topics,
+        'total_problems': total_problems,
+        'easy_count': easy_count,
+        'medium_count': medium_count,
+        'hard_count': hard_count,
+    })
+
+
+def recruiter_delete_problem(request, pk):
+    """Delete a question from the problem bank. Staff-only, POST-only."""
+    if not request.user.is_authenticated or not request.user.is_staff:
+        return redirect('/accounts/login/')
+
+    if request.method == 'POST':
+        question = get_object_or_404(Question, pk=pk)
+        question.delete()
+
+    # Preserve any active filters when redirecting back to the list.
+    querystring = request.POST.get('querystring', '')
+    redirect_url = '/recruiter/problems/'
+    if querystring:
+        redirect_url += f'?{querystring}'
+    return redirect(redirect_url)
+
+
+def recruiter_add_problem(request):
+    """Create a new question in the problem bank. Staff-only."""
+    if not request.user.is_authenticated or not request.user.is_staff:
+        return redirect('/accounts/login/')
+
+    errors = {}
+    form_data = {
+        'title': '',
+        'topic': '',
+        'difficulty': 'Easy',
+        'description': '',
+        'sample_input': '',
+        'sample_output': '',
+        'hint': '',
+        'answer': '',
+        'time_limit': 60,
+    }
+
+    if request.method == 'POST':
+        form_data['title'] = request.POST.get('title', '').strip()
+        form_data['topic'] = request.POST.get('topic', '').strip() or 'General'
+        form_data['difficulty'] = request.POST.get('difficulty', 'Easy')
+        form_data['description'] = request.POST.get('description', '').strip()
+        form_data['sample_input'] = request.POST.get('sample_input', '').strip()
+        form_data['sample_output'] = request.POST.get('sample_output', '').strip()
+        form_data['hint'] = request.POST.get('hint', '').strip()
+        form_data['answer'] = request.POST.get('answer', '').strip()
+        form_data['time_limit'] = request.POST.get('time_limit', '60').strip()
+
+        if not form_data['title']:
+            errors['title'] = 'Title is required.'
+        if not form_data['description']:
+            errors['description'] = 'Description is required.'
+        if form_data['difficulty'] not in dict(Question.DIFFICULTY_CHOICES):
+            errors['difficulty'] = 'Choose a valid difficulty.'
+        try:
+            time_limit_value = int(form_data['time_limit'] or 60)
+            if time_limit_value <= 0:
+                raise ValueError
+        except ValueError:
+            errors['time_limit'] = 'Time limit must be a positive whole number.'
+            time_limit_value = 60
+
+        if not errors:
+            Question.objects.create(
+                title=form_data['title'],
+                topic=form_data['topic'],
+                difficulty=form_data['difficulty'],
+                description=form_data['description'],
+                sample_input=form_data['sample_input'],
+                sample_output=form_data['sample_output'],
+                hint=form_data['hint'],
+                answer=form_data['answer'],
+                time_limit=time_limit_value,
+            )
+            return redirect('/recruiter/problems/')
+
+    return render(request, 'recruiter/problem_form.html', {
+        'username': request.user.username,
+        'form_data': form_data,
+        'errors': errors,
+        'difficulty_choices': Question.DIFFICULTY_CHOICES,
+    })
+
+
 def recruiter_contest_results(request):
     if not request.user.is_authenticated or not request.user.is_staff:
         return redirect('/accounts/login/')
@@ -180,3 +316,77 @@ def recruiter_contest_results(request):
         'upcoming_contests': upcoming_list,
         'past_contests': past_list
     })
+
+    def recruiter_problem_bank(request):
+        if not request.user.is_authenticated:
+            return redirect('/accounts/login/')
+
+    questions = Question.objects.all().order_by('-created_at')
+
+    search = request.GET.get('search', '')
+    topic = request.GET.get('topic', '')
+    difficulty = request.GET.get('difficulty', '')
+
+    if search:
+        questions = questions.filter(title__icontains=search)
+    if topic:
+        questions = questions.filter(topic__icontains=topic)
+    if difficulty:
+        questions = questions.filter(difficulty=difficulty)
+
+    all_topics = Question.objects.values_list('topic', flat=True).distinct().order_by('topic')
+
+    return render(request, 'recruiter/problems.html', {
+        'username': request.user.username,
+        'questions': questions,
+        'total_questions': Question.objects.count(),
+        'search': search,
+        'topic': topic,
+        'difficulty': difficulty,
+        'all_topics': all_topics,
+    })
+
+
+def recruiter_add_problem(request):
+    if not request.user.is_authenticated:
+        return redirect('/accounts/login/')
+
+    if request.method == 'POST':
+        title = request.POST.get('title')
+        description = request.POST.get('description')
+        topic = request.POST.get('topic') or 'General'
+        difficulty = request.POST.get('difficulty')
+        sample_input = request.POST.get('sample_input', '')
+        sample_output = request.POST.get('sample_output', '')
+        hint = request.POST.get('hint', '')
+        answer = request.POST.get('answer', '')
+        time_limit = request.POST.get('time_limit') or 60
+
+        if title and description and difficulty:
+            Question.objects.create(
+                title=title,
+                description=description,
+                topic=topic,
+                difficulty=difficulty,
+                sample_input=sample_input,
+                sample_output=sample_output,
+                hint=hint,
+                answer=answer,
+                time_limit=time_limit,
+            )
+            return redirect('/recruiter/problems/')
+
+    return render(request, 'recruiter/problem_form.html', {
+        'username': request.user.username,
+    })
+
+
+def recruiter_delete_problem(request, pk):
+    if not request.user.is_authenticated:
+        return redirect('/accounts/login/')
+
+    question = get_object_or_404(Question, pk=pk)
+    if request.method == 'POST':
+        question.delete()
+
+    return redirect('/recruiter/problems/')
