@@ -13,6 +13,7 @@ class Submission(models.Model):
     passed_cases = models.IntegerField(default=0)
     total_cases = models.IntegerField(default=0)
     result = models.TextField(blank=True)
+    time_taken_seconds = models.PositiveIntegerField(default=0, help_text='Time taken by the candidate in seconds')
     submitted_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
