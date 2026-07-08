@@ -102,6 +102,8 @@ def _module_completion(annotated_topics):
 def quest_view(request):
     topics = Topic.objects.filter(category='quest').order_by('order')
 
+def study_plan_view(request, topic):
+
     # Short display labels shown on the Quest overview cards where they
     # differ from the full topic title used on the Learning Path / Topic
     # pages (e.g. "Query Optimization" -> "Optimization" here), keyed by
@@ -281,7 +283,6 @@ def update_topic_progress(request, subject, topic_slug):
 
 
 def study_plan_view(request, topic):
-
     roadmaps = {
         "data-structures": {
             "title": "Data Structures",
