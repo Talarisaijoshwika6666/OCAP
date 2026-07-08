@@ -1,8 +1,13 @@
 from django.urls import path
+
+from accounts.views import settings_view as account_settings_view
 from . import views
 
 urlpatterns = [
     path('dashboard/', views.recruiter_dashboard, name='recruiter_dashboard'),
+    path('all-submissions/', views.recruiter_all_submissions, name='recruiter_all_submissions'),
+    path('settings/', account_settings_view, name='recruiter_settings'),
+    path('contest/', views.recruiter_contest_results, name='recruiter_contest_results'),
     path('candidates/', views.recruiter_candidates, name='recruiter_candidates'),
     path('candidates/<int:candidate_id>/view/', views.recruiter_candidate_view, name='recruiter_candidate_view'),
     path('candidates/<int:candidate_id>/edit/', views.recruiter_candidate_edit, name='recruiter_candidate_edit'),
