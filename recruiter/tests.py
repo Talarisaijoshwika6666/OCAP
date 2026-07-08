@@ -19,3 +19,17 @@ class RecruiterSettingsTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Profile Information')
+
+    def test_recruiter_all_submissions_route_renders_page(self):
+        user = User.objects.create_user(
+            username='recruiter_submissions',
+            email='recruiter_submissions@example.com',
+            password='StrongPass123!',
+            is_staff=True,
+        )
+        self.client.force_login(user)
+
+        response = self.client.get(reverse('recruiter_all_submissions'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'All Submissions')
