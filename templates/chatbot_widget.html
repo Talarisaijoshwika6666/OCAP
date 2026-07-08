@@ -527,10 +527,10 @@
         <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTFFJdllY1_vWrWkBGH7nWHv2JdnkgoW9ORVaNHkQkDvQ&s" alt="LogicLabs Logo" class="header-logo-img">
       </div>
       <div>
-        <div class="chat-header-title">Dev Companion</div>
+        <div class="chat-header-title">echo</div>
         <div class="chat-status">
           <div class="chat-status-dot"></div>
-          <span>Online (v2.5)</span>
+          <span>Online (v3)</span>
         </div>
       </div>
     </div>
@@ -633,7 +633,7 @@
   });
 
   function addSystemWelcome() {
-    const welcomeText = "Hello! I am your **LogicLabs Dev Companion**. 🚀\n\nI can help you debug logic errors, explain algorithms, or teach programming concepts step-by-step. \n\n*Note: To help you learn, I will guide you with hints and advice rather than giving away complete answers directly!*";
+    const welcomeText = "Hello! I am your **echo**. 🚀\n\nI can help you debug logic errors, explain algorithms, or teach programming concepts step-by-step. \n\n*Note: To help you learn, I will guide you with hints and advice rather than giving away complete answers directly!*";
     
     // Add to HTML list only (not session history to keep context clean)
     appendMessageHTML('model', welcomeText, false);
@@ -812,7 +812,12 @@
     })
     .then(async response => {
       chatLoader.style.display = 'none';
-      const data = await response.json();
+      let data = {};
+      try {
+        data = await response.json();
+      } catch (err) {
+        data = { error: `Server error (${response.status}). Please try again later.` };
+      }
       
       if (response.ok) {
         // Successful response
