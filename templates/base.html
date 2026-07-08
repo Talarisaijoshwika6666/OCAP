@@ -30,7 +30,10 @@
       --glow-opacity: 1;
     }
 
+<<<<<<< HEAD
     /* ── LIGHT THEME ── */
+=======
+>>>>>>> ef3edc206dec91ad8c214385f4ee6d90d6f17feb
     [data-theme="light"] {
       --bg-void: #f4f2fb;
       --neon-pink: #d6006f;
@@ -189,8 +192,9 @@
     /* ── NAV SECTION LABELS ── */
     .sidebar-section {
       padding: 16px 20px 5px;
-      font-size: 0.58rem;
-      color: rgba(176,38,255,0.5);
+      font-size: 0.65rem;
+      color: var(--neon-cyan);
+      font-weight: 700;
       letter-spacing: 3px;
       text-transform: uppercase;
       font-family: var(--font-code);
@@ -214,7 +218,7 @@
       color: var(--text-dim);
       text-decoration: none;
       font-size: 0.84rem;
-      font-weight: 500;
+      font-weight: 700;
       margin: 2px 8px;
       border-radius: 9px;
       transition: all 0.25s;
@@ -615,12 +619,28 @@
       border-radius: 3px;
     }
 
+    /* ── BACK BUTTON ── */
+    .back-btn {
+      margin-bottom: 18px;
+    }
+    .back-btn:active {
+      transform: scale(0.96);
+    }
+    .back-btn:focus-visible {
+      outline: 2px solid var(--neon-cyan);
+      outline-offset: 3px;
+    }
+
     /* ── MOBILE ── */
     @media (max-width: 768px) {
       .sidebar { transform: translateX(-100%); }
       .sidebar.open { transform: translateX(0); }
       .main-content { margin-left: 0; }
       .page-content { padding: 16px; }
+      .back-btn {
+        padding: 10px 20px;
+        min-height: 42px;
+      }
     }
   </style>
 </head>
@@ -673,10 +693,7 @@
       <span class="nav-badge">LIVE</span>
     </a>
 
-    <a href="/study-plan/" class="nav-item-side {% if 'study-plan' in request.path %}active{% endif %}">
-      <div class="nav-icon"><i class="fas fa-graduation-cap"></i></div>
-      Study Plan
-    </a>
+    
     <div class="sidebar-section">// COMPETE</div>
 <a href="/leaderboard/" class="nav-item-side {% if 'leaderboard' in request.path %}active{% endif %}">
   <div class="nav-icon"><i class="fas fa-trophy"></i></div>
@@ -692,11 +709,6 @@
 <a href="/quest/quest/" class="nav-item-side {% if request.path == '/quest/quest/'%}active{% endif %}">
   <div class="nav-icon"><i class="fas fa-fire"></i></div>
   Quest
-</a>
-
-<a href="/quest/explore/" class="nav-item-side {% if '/explore/' in request.path %}active{% endif %}">
-  <div class="nav-icon"><i class="fas fa-compass"></i></div>
-  Explore
 </a>
 
     <a href="/discuss/" class="nav-item-side {% if 'discuss' in request.path %}active{% endif %}">
@@ -797,6 +809,16 @@
     document.getElementById('sidebar').classList.toggle('open');
   }
 
+  // Shared handler for every "← Back" button (see templates/includes/back_button.html).
+  // Uses browser history when available, otherwise falls back to a safe, page-appropriate URL.
+  function goBack(fallbackUrl) {
+    if (window.history.length > 1) {
+      window.history.back();
+    } else {
+      window.location.href = fallbackUrl || '/';
+    }
+  }
+
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(e => {
       if (e.isIntersecting) {
@@ -824,5 +846,10 @@
   });
 </script>
 {% block extra_js %}{% endblock %}
+{% block chatbot_widget %}
+{% if user.is_authenticated %}
+  {% include 'chatbot_widget.html' %}
+{% endif %}
+{% endblock %}
 </body>
 </html>

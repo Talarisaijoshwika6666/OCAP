@@ -21,6 +21,11 @@
     padding: 10px;
     background: var(--surface-card);
     border: 1px solid var(--surface-border);
+<<<<<<< HEAD
+=======
+    pointer-events: none;
+    z-index: 1;
+>>>>>>> ef3edc206dec91ad8c214385f4ee6d90d6f17feb
   }
 
   .settings-menu-title {
@@ -39,6 +44,10 @@
     align-items: center;
     gap: 12px;
     padding: 12px 14px;
+<<<<<<< HEAD
+=======
+    pointer-events: auto;
+>>>>>>> ef3edc206dec91ad8c214385f4ee6d90d6f17feb
     border-radius: 10px;
     color: var(--text-dim);
     text-decoration: none;
@@ -68,6 +77,11 @@
   /* ── RIGHT PANEL ── */
   .settings-panel { display: none; }
   .settings-panel.active { display: block; }
+<<<<<<< HEAD
+=======
+  .settings-panel { position: relative; z-index: 1; scroll-margin-top: 100px; }
+  .settings-card { scroll-margin-top: 100px; }
+>>>>>>> ef3edc206dec91ad8c214385f4ee6d90d6f17feb
 
   .settings-card {
     padding: 28px 30px;
@@ -107,9 +121,18 @@
     display: block;
   }
 
+<<<<<<< HEAD
   .settings-form-control {
     width: 100%;
     background: rgba(255,255,255,0.03);
+=======
+  /* Apply the same visual treatment to both settings-specific controls
+     and any standard `.form-control` elements rendered by Django widgets. */
+  .settings-form-control, .form-control {
+    width: 100%;
+    --settings-control-bg: rgba(255,255,255,0.03);
+    background: var(--settings-control-bg);
+>>>>>>> ef3edc206dec91ad8c214385f4ee6d90d6f17feb
     border: 1px solid var(--surface-border);
     border-radius: 10px;
     padding: 10px 14px;
@@ -118,12 +141,114 @@
     font-family: var(--font-body);
     transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
   }
+<<<<<<< HEAD
   [data-theme="light"] .settings-form-control { background: rgba(0,0,0,0.02); }
 
   .settings-form-control:focus {
     outline: none;
     border-color: var(--neon-purple);
     box-shadow: 0 0 0 3px rgba(176,38,255,0.12);
+=======
+  [data-theme="light"] .settings-form-control, [data-theme="light"] .form-control {
+    --settings-control-bg: rgba(255,255,255,0.95);
+    background: var(--settings-control-bg);
+    color: var(--text-primary);
+  }
+  select.settings-form-control option, select.form-control option {
+    background: var(--surface-card) !important;
+    color: var(--text-primary) !important;
+  }
+  /* Ensure select dropdown and its options follow the active theme colors
+     across browsers. Some browsers render native white dropdowns which
+     make options unreadable in dark mode; enforce theme colors where
+     possible without redesigning the native control. */
+  .settings-form-control option,
+  .form-control option {
+    background: var(--surface-card) !important;
+    color: var(--text-primary) !important;
+  }
+  /* Preserve native select arrow while allowing themed colors */
+  select.settings-form-control, select.form-control { -webkit-appearance: menulist-button; appearance: menulist-button; }
+  /* Chromium/WebKit specific fixes for autofill/text fill color */
+  .settings-form-control:-webkit-autofill,
+  .settings-form-control:-webkit-autofill:focus,
+  .settings-form-control:-webkit-autofill:hover,
+  .settings-form-control:-webkit-autofill:active,
+  .settings-form-control:-webkit-autofill::first-line,
+  .settings-form-control:-internal-autofill-selected,
+  .form-control:-webkit-autofill,
+  .form-control:-webkit-autofill:focus,
+  .form-control:-webkit-autofill:hover,
+  .form-control:-webkit-autofill:active,
+  .form-control:-webkit-autofill::first-line,
+  .form-control:-internal-autofill-selected,
+  input:-webkit-autofill,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:active,
+  input:-webkit-autofill::first-line,
+  input:-internal-autofill-selected,
+  textarea:-webkit-autofill,
+  textarea:-webkit-autofill:focus,
+  textarea:-webkit-autofill:hover,
+  textarea:-webkit-autofill:active,
+  textarea:-webkit-autofill::first-line,
+  textarea:-internal-autofill-selected,
+  select:-webkit-autofill,
+  select:-webkit-autofill:focus,
+  select:-webkit-autofill:hover,
+  select:-webkit-autofill:active,
+  select:-webkit-autofill::first-line,
+  select:-internal-autofill-selected {
+    -webkit-text-fill-color: var(--text-primary) !important;
+    color: var(--text-primary) !important;
+    background-color: var(--settings-control-bg) !important;
+    background-image: none !important;
+    background-clip: padding-box !important;
+    -webkit-background-clip: padding-box !important;
+    -webkit-box-shadow: 0 0 0px 1000px var(--settings-control-bg) inset !important;
+    box-shadow: 0 0 0px 1000px var(--settings-control-bg) inset !important;
+    border-color: var(--surface-border) !important;
+    transition: background-color 5000s ease-in-out 0s !important;
+    caret-color: var(--text-primary) !important;
+  }
+  .settings-form-control::placeholder,
+  .form-control::placeholder {
+    color: var(--text-dim);
+    opacity: 1;
+  }
+  /* Firefox autofill */
+  input:-moz-autofill,
+  textarea:-moz-autofill,
+  select:-moz-autofill,
+  .settings-form-control:-moz-autofill,
+  .form-control:-moz-autofill {
+    box-shadow: 0 0 0px 1000px var(--surface-card) inset !important;
+    -moz-text-fill-color: var(--text-primary) !important;
+    color: var(--text-primary) !important;
+    caret-color: var(--text-primary) !important;
+  }
+  /* IE/Edge value color handling */
+  .settings-form-control::-ms-value, .form-control::-ms-value { color: var(--text-primary); background: var(--surface-card); }
+
+  /* Focus/hover/disabled states for inputs and selects */
+  .settings-form-control:focus, .form-control:focus {
+    outline: none;
+    border-color: var(--neon-purple);
+    box-shadow: 0 0 0 3px rgba(176,38,255,0.12);
+    background: var(--surface-card);
+  }
+  .settings-form-control:hover, .form-control:hover {
+    border-color: rgba(176,38,255,0.25);
+  }
+  .settings-form-control:disabled, .form-control:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background: rgba(255,255,255,0.02);
+  }
+  select.settings-form-control option:hover, select.form-control option:hover {
+    background: rgba(255,255,255,0.04);
+>>>>>>> ef3edc206dec91ad8c214385f4ee6d90d6f17feb
   }
 
   .settings-row {
@@ -500,9 +625,15 @@
           <div class="row g-3 mb-3">
             <div class="col-md-6">
               <label class="settings-field-label">Default Programming Language</label>
+<<<<<<< HEAD
               <select class="settings-form-control" name="default_language">
                 {% for value, label in user_settings.LANGUAGE_CHOICES %}
                   <option value="{{ value }}" {% if user_settings.default_language == value %}selected{% endif %}>{{ label }}</option>
+=======
+              <select class="settings-form-control" name="default_language" id="id_default_language">
+                {% for value, label in user_settings.LANGUAGE_CHOICES %}
+                  <option value="{{ value }}" {% if selected_default_language == value %}selected{% endif %}>{{ label }}</option>
+>>>>>>> ef3edc206dec91ad8c214385f4ee6d90d6f17feb
                 {% endfor %}
               </select>
             </div>
@@ -641,13 +772,27 @@
     function activate(tab) {
       tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
       panels.forEach(p => p.classList.toggle('active', p.id === 'panel-' + tab));
+<<<<<<< HEAD
+=======
+      const activePanel = document.getElementById('panel-' + tab);
+      if (activePanel) {
+        activePanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+>>>>>>> ef3edc206dec91ad8c214385f4ee6d90d6f17feb
       const url = new URL(window.location);
       url.searchParams.set('tab', tab);
       window.history.replaceState({}, '', url);
     }
 
     tabs.forEach(tab => {
+<<<<<<< HEAD
       tab.addEventListener('click', () => activate(tab.dataset.tab));
+=======
+      tab.addEventListener('click', (event) => {
+        event.preventDefault();
+        activate(tab.dataset.tab);
+      });
+>>>>>>> ef3edc206dec91ad8c214385f4ee6d90d6f17feb
     });
 
     const profileInput = document.getElementById('profilePictureInput');
@@ -693,14 +838,30 @@
       if (!form) return;
       const spinner = btn.querySelector('.btn-spinner');
       const label = btn.querySelector('.btn-label');
+<<<<<<< HEAD
+=======
+      const csrfToken = form.querySelector('input[name="csrfmiddlewaretoken"]')?.value || '';
+>>>>>>> ef3edc206dec91ad8c214385f4ee6d90d6f17feb
       try {
         btn.disabled = true;
         if (spinner) spinner.style.display = 'inline-block';
         if (label) label.style.opacity = '0.6';
+<<<<<<< HEAD
 
         const response = await fetch(window.location.pathname + window.location.search, {
           method: 'POST',
           headers: { 'X-Requested-With': 'XMLHttpRequest' },
+=======
+        form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        const response = await fetch(window.location.pathname + window.location.search, {
+          method: 'POST',
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': csrfToken,
+          },
+          credentials: 'same-origin',
+>>>>>>> ef3edc206dec91ad8c214385f4ee6d90d6f17feb
           body: new FormData(form)
         });
 

@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 
 class Question(models.Model):
     DIFFICULTY_CHOICES = [
@@ -8,6 +9,7 @@ class Question(models.Model):
     ]
     title = models.CharField(max_length=200)
     description = models.TextField()
+    topic = models.CharField(max_length=100, default='General', blank=True)
     difficulty = models.CharField(max_length=10, choices=DIFFICULTY_CHOICES)
     sample_input = models.TextField(blank=True)
     sample_output = models.TextField(blank=True)
@@ -26,3 +28,17 @@ class TestCase(models.Model):
 
     def __str__(self):
         return f"TestCase for {self.question.title}"
+
+
+class Bookmark(models.Model):
+    """Tracks which questions a user has bookmarked. Backed by the DB so
+    the state survives page refreshes / logins from other devices."""
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='bookmarks')
+    question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='bookmarked_by')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'question')
+
+    def __str__(self):
+        return f"{self.user.username} bookmarked {self.question.title}"
