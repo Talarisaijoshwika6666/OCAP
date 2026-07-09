@@ -57,9 +57,20 @@ def submit_code(request, question_id):
 
 @login_required
 def my_submissions(request):
-    submissions = Submission.objects.filter(
+    all_submissions = Submission.objects.filter(
         user=request.user
-    ).select_related('question').order_by('-submitted_at')[:20]
+    ).select_related('question').order_by('-submitted_at')
+
+    # Keep only the latest submission per question.
+    latest_by_question = {}
+    for sub in all_submissions:
+        if sub.question_id not in latest_by_question:
+            latest_by_question[sub.question_id] = sub
+
+    submissions = sorted(
+        latest_by_question.values(), key=lambda s: s.submitted_at, reverse=True
+    )[:20]
+
     return render(request, 'submissions/my_submissions.html', {
         'submissions': submissions
     })

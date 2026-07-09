@@ -14,20 +14,10 @@ from .forms import (
 User = get_user_model()
 
 RECRUITER_USERNAME = "recruiter"
-
-
-def _apply_unchecked_checkbox_fields(post_data, fields):
-    data = post_data.copy()
-    for field in fields:
-        if field not in data:
-            data[field] = False
-    return data
 RECRUITER_PASSWORD = "Recruiter@1234"
 
 
 def login_view(request):
-    panel = request.GET.get('panel', 'recruiter')
-
     if request.method == 'POST':
         username = request.POST.get('username', '').strip()
         password = request.POST.get('password', '')
@@ -35,28 +25,13 @@ def login_view(request):
 
         if panel == 'recruiter':
             if username == RECRUITER_USERNAME and password == RECRUITER_PASSWORD:
-                user, created = User.objects.get_or_create(
+                user, _ = User.objects.get_or_create(
                     username=RECRUITER_USERNAME,
-                    defaults={'is_staff': True, 'role': 'examiner', 'full_name': 'Recruiter'}
+                    defaults={'is_staff': True}
                 )
-                if created:
+                if not user.is_staff:
                     user.is_staff = True
-                    user.role = 'examiner'
-                    user.full_name = user.full_name or 'Recruiter'
-                    user.save(update_fields=['is_staff', 'role', 'full_name'])
-                else:
-                    changed = False
-                    if not user.is_staff:
-                        user.is_staff = True
-                        changed = True
-                    if user.role not in {'examiner', 'admin'}:
-                        user.role = 'examiner'
-                        changed = True
-                    if not user.full_name:
-                        user.full_name = 'Recruiter'
-                        changed = True
-                    if changed:
-                        user.save(update_fields=['is_staff', 'role', 'full_name'])
+                    user.save()
                 login(request, user,
                       backend='django.contrib.auth.backends.ModelBackend')
                 return redirect('/recruiter/dashboard/')
@@ -66,28 +41,22 @@ def login_view(request):
                     'panel': 'recruiter'
                 })
         else:
-            user = User.objects.filter(username=username).first()
-            if user is None:
-                user = User.objects.create_user(username=username, password=password, role='candidate')
-                login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-                next_url = request.GET.get('next') or request.POST.get('next') or '/dashboard/'
-                if next_url == '/':
-                    next_url = '/dashboard/'
-                return redirect(next_url)
-
-            user = authenticate(request, username=username, password=password)
-            if user is None:
-                return render(request, 'accounts/login.html', {
-                    'error': 'Invalid credentials.',
-                    'panel': 'candidate'
-                })
-
+            # Candidate panel — open to anyone
+            user, created = User.objects.get_or_create(
+                username=username,
+                defaults={'role': 'candidate'}
+            )
+            if created:
+                user.set_password(password)
+                user.save()
+            
             login(request, user, backend='django.contrib.auth.backends.ModelBackend')
             next_url = request.GET.get('next') or request.POST.get('next') or '/dashboard/'
             if next_url == '/':
                 next_url = '/dashboard/'
             return redirect(next_url)
 
+    panel = request.GET.get('panel', 'recruiter')
     return render(request, 'accounts/login.html', {'panel': panel})
 
 def logout_view(request):
@@ -155,188 +124,18 @@ def profile_view(request, username=None):
         'problems_solved':   problems_solved,
     })
 
-@login_required(login_url='/accounts/login/')
+@login_required
 def settings_view(request):
-    """Single-page Settings module: Account, Notifications, Appearance,
-    Editor Preferences, Privacy, About. Each tab posts back to this same
-    view with a hidden `section` field so we know which form to process."""
-    user = request.user
-    user_settings, _ = UserSettings.objects.get_or_create(user=user)
-    active_tab = request.GET.get('tab', 'account')
-    selected_default_language = user_settings.default_language or UserSettings._meta.get_field('default_language').get_default()
-    editor_form = EditorPreferencesForm(instance=user_settings)
-    notifications_form = NotificationsSettingsForm(instance=user_settings)
-    appearance_form = AppearanceSettingsForm(instance=user_settings)
-    privacy_form = PrivacySettingsForm(instance=user_settings)
+    settings_obj, created = UserSettings.objects.get_or_create(user=request.user)
 
-    if request.method == 'POST':
-        section = request.POST.get('section')
-        active_tab = section or active_tab
-        is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
+    context = {
+        "profile_form": UserProfileForm(instance=request.user),
+        "password_form": SettingsPasswordChangeForm(request.user),
+        "notifications_form": NotificationsSettingsForm(instance=settings_obj),
+        "appearance_form": AppearanceSettingsForm(instance=settings_obj),
+        "editor_form": EditorPreferencesForm(instance=settings_obj),
+        "privacy_form": PrivacySettingsForm(instance=settings_obj),
+        "settings": settings_obj,
+    }
 
-        if section == 'profile':
-            profile_form = UserProfileForm(
-                request.POST, request.FILES, instance=user)
-            if profile_form.is_valid():
-                profile_form.save()
-                user.refresh_from_db()
-                if is_ajax:
-                    return JsonResponse({
-                        'success': True,
-                        'message': 'Profile updated successfully.',
-                        'username': user.username,
-                        'profile_picture_url': user.profile_picture.url if user.profile_picture else None,
-                    })
-                messages.success(request, 'Profile updated successfully.')
-            else:
-                errors = []
-                for field_errors in profile_form.errors.values():
-                    for err in field_errors:
-                        errors.append(err)
-                        if not is_ajax:
-                            messages.error(request, err)
-                if is_ajax:
-                    return JsonResponse({'success': False, 'errors': errors}, status=400)
-            active_tab = 'account'
-
-        elif section == 'password':
-            password_form = SettingsPasswordChangeForm(user, request.POST)
-            if password_form.is_valid():
-                password_form.save()
-                update_session_auth_hash(request, user)
-                if is_ajax:
-                    return JsonResponse({
-                        'success': True,
-                        'message': 'Password updated successfully.',
-                    })
-                messages.success(request, 'Password updated successfully.')
-            else:
-                errors = []
-                for field_errors in password_form.errors.values():
-                    for err in field_errors:
-                        errors.append(err)
-                        if not is_ajax:
-                            messages.error(request, err)
-                if is_ajax:
-                    return JsonResponse({'success': False, 'errors': errors}, status=400)
-            active_tab = 'account'
-
-        elif section == 'notifications':
-            post_data = _apply_unchecked_checkbox_fields(
-                request.POST,
-                ['email_notifications', 'contest_notifications',
-                 'course_update_notifications', 'submission_result_notifications',
-                 'team_member_notifications', 'spam_filtering']
-            )
-            form = NotificationsSettingsForm(post_data, instance=user_settings)
-            if form.is_valid():
-                form.save()
-                user_settings.refresh_from_db()
-                if is_ajax:
-                    return JsonResponse({
-                        'success': True,
-                        'message': 'Notification preferences saved.',
-                    })
-                messages.success(request, 'Notification preferences saved.')
-            else:
-                errors = []
-                for field_errors in form.errors.values():
-                    for err in field_errors:
-                        errors.append(err)
-                        if not is_ajax:
-                            messages.error(request, err)
-                if is_ajax:
-                    return JsonResponse({'success': False, 'errors': errors}, status=400)
-            active_tab = 'notifications'
-
-        elif section == 'appearance':
-            form = AppearanceSettingsForm(request.POST, instance=user_settings)
-            if form.is_valid():
-                form.save()
-                user_settings.refresh_from_db()
-                if is_ajax:
-                    return JsonResponse({
-                        'success': True,
-                        'message': 'Appearance updated.',
-                        'theme': user_settings.theme,
-                    })
-                messages.success(request, 'Appearance updated.')
-            else:
-                errors = []
-                for field_errors in form.errors.values():
-                    for err in field_errors:
-                        errors.append(err)
-                        if not is_ajax:
-                            messages.error(request, err)
-                if is_ajax:
-                    return JsonResponse({'success': False, 'errors': errors}, status=400)
-            active_tab = 'appearance'
-
-        elif section == 'editor':
-            post_data = _apply_unchecked_checkbox_fields(
-                request.POST,
-                ['show_line_numbers', 'word_wrap', 'auto_complete', 'auto_save']
-            )
-            form = EditorPreferencesForm(post_data, instance=user_settings)
-            if form.is_valid():
-                form.save()
-                user_settings.refresh_from_db()
-                selected_default_language = user_settings.default_language or UserSettings._meta.get_field('default_language').get_default()
-                if is_ajax:
-                    return JsonResponse({
-                        'success': True,
-                        'message': 'Editor preferences saved.',
-                    })
-                messages.success(request, 'Editor preferences saved.')
-            else:
-                errors = []
-                for field_errors in form.errors.values():
-                    for err in field_errors:
-                        errors.append(err)
-                        if not is_ajax:
-                            messages.error(request, err)
-                if is_ajax:
-                    return JsonResponse({'success': False, 'errors': errors}, status=400)
-            active_tab = 'editor'
-
-        elif section == 'privacy':
-            post_data = _apply_unchecked_checkbox_fields(
-                request.POST,
-                ['public_profile', 'show_solved_problems',
-                 'show_contest_ranking', 'show_activity']
-            )
-            form = PrivacySettingsForm(post_data, instance=user_settings)
-            if form.is_valid():
-                form.save()
-                user_settings.refresh_from_db()
-                if is_ajax:
-                    return JsonResponse({
-                        'success': True,
-                        'message': 'Privacy settings saved.',
-                    })
-                messages.success(request, 'Privacy settings saved.')
-            else:
-                errors = []
-                for field_errors in form.errors.values():
-                    for err in field_errors:
-                        errors.append(err)
-                        if not is_ajax:
-                            messages.error(request, err)
-                if is_ajax:
-                    return JsonResponse({'success': False, 'errors': errors}, status=400)
-            active_tab = 'privacy'
-
-        base_path = '/recruiter/settings/' if request.path.startswith('/recruiter/') else '/accounts/settings/'
-        return redirect(f'{base_path}?tab={active_tab}')
-
-    template_name = 'recruiter/settings.html' if request.path.startswith('/recruiter/') else 'accounts/settings.html'
-    return render(request, template_name, {
-        'user_settings': user_settings,
-        'active_tab': active_tab,
-        'password_form': SettingsPasswordChangeForm(user),
-        'editor_form': editor_form,
-        'notifications_form': notifications_form,
-        'appearance_form': appearance_form,
-        'privacy_form': privacy_form,
-        'selected_default_language': selected_default_language,
-    })
+    return render(request, "accounts/settings.html", context)
