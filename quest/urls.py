@@ -28,10 +28,4 @@ urlpatterns = [
         views.update_topic_progress,
         name='update_topic_progress'
     ),
-
-    path(
-        'study-plan/<str:topic>/',
-        views.study_plan_view,
-        name='study_plan'
-    ),
 ]

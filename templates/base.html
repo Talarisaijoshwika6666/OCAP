@@ -1,7 +1,6 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en" data-theme="{{ active_theme|default:'dark' }}">
-<html lang="en" data-theme="{{ active_theme|default:'dark' }}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -50,37 +49,6 @@
     [data-theme="light"] .bg-layer { opacity: var(--glow-opacity); }
     [data-theme="light"] ::-webkit-scrollbar-track { background: #eae7f5; }
 
-      /* Chrome surfaces (sidebar / topbar / cards) — theme-aware */
-      --surface-1: rgba(8, 5, 18, 0.92);
-      --surface-1-soft: rgba(8, 5, 18, 0.8);
-      --surface-card: rgba(12, 8, 28, 0.75);
-      --surface-border: rgba(176, 38, 255, 0.18);
-      --glow-opacity: 1;
-    }
-
-<<<<<<< HEAD
-    /* ── LIGHT THEME ── */
-=======
->>>>>>> ef3edc206dec91ad8c214385f4ee6d90d6f17feb
-    [data-theme="light"] {
-      --bg-void: #f4f2fb;
-      --neon-pink: #d6006f;
-      --neon-cyan: #0090a8;
-      --neon-purple: #7a1fcc;
-      --neon-magenta: #b0006a;
-      --text-primary: #1c1530;
-      --text-dim: rgba(28,21,48,0.55);
-
-      --surface-1: rgba(255, 255, 255, 0.9);
-      --surface-1-soft: rgba(255, 255, 255, 0.85);
-      --surface-card: rgba(255, 255, 255, 0.8);
-      --surface-border: rgba(122, 31, 204, 0.18);
-      --glow-opacity: 0.5;
-    }
-
-    [data-theme="light"] .bg-layer { opacity: var(--glow-opacity); }
-    [data-theme="light"] ::-webkit-scrollbar-track { background: #eae7f5; }
-
     *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
 
     body {
@@ -91,7 +59,6 @@
       overflow-x: hidden;
       display: flex;
       position: relative;
-      transition: background 0.3s ease, color 0.3s ease;
       transition: background 0.3s ease, color 0.3s ease;
     }
 
@@ -123,8 +90,6 @@
     .sidebar {
       width: var(--sidebar-w);
       min-height: 100vh;
-      background: var(--surface-1);
-      border-right: 1px solid var(--surface-border);
       background: var(--surface-1);
       border-right: 1px solid var(--surface-border);
       position: fixed;
@@ -226,9 +191,6 @@
       font-size: 0.65rem;
       color: var(--neon-cyan);
       font-weight: 700;
-      font-size: 0.65rem;
-      color: var(--neon-cyan);
-      font-weight: 700;
       letter-spacing: 3px;
       text-transform: uppercase;
       font-family: var(--font-code);
@@ -252,7 +214,6 @@
       color: var(--text-dim);
       text-decoration: none;
       font-size: 0.84rem;
-      font-weight: 700;
       font-weight: 700;
       margin: 2px 8px;
       border-radius: 9px;
@@ -367,12 +328,6 @@
     .user-avatar img {
       width: 100%; height: 100%; object-fit: cover;
       display: block;
-      overflow: hidden;
-    }
-
-    .user-avatar img {
-      width: 100%; height: 100%; object-fit: cover;
-      display: block;
     }
 
     .user-name { color: var(--text-primary); font-size:0.82rem; font-weight:600; }
@@ -398,8 +353,6 @@
 
     /* ── TOP BAR ── */
     .topbar {
-      background: var(--surface-1-soft);
-      border-bottom: 1px solid var(--surface-border);
       background: var(--surface-1-soft);
       border-bottom: 1px solid var(--surface-border);
       backdrop-filter: blur(20px);
@@ -482,8 +435,6 @@
     .card-glass {
       background: var(--surface-card);
       border: 1px solid var(--surface-border);
-      background: var(--surface-card);
-      border: 1px solid var(--surface-border);
       border-radius: 16px;
       backdrop-filter: blur(20px);
       transition: all 0.3s ease;
@@ -513,8 +464,6 @@
 
     /* ── STAT CARDS ── */
     .stat-card {
-      background: var(--surface-card);
-      border: 1px solid var(--surface-border);
       background: var(--surface-card);
       border: 1px solid var(--surface-border);
       border-radius: 16px;
@@ -579,32 +528,6 @@
       box-shadow: 0 0 30px rgba(255,45,120,0.5), 0 8px 25px rgba(176,38,255,0.4);
       color: #fff !important;
     }
-
-    /* ── TOAST ALERTS (django messages) ── */
-    .toast-stack {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      margin-bottom: 22px;
-    }
-    .toast-alert {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 12px 18px;
-      border-radius: 10px;
-      font-size: 0.85rem;
-      font-weight: 500;
-      background: var(--surface-card);
-      border: 1px solid rgba(0,255,130,0.35);
-      color: var(--text-primary);
-      animation: fadeInUp 0.35s ease forwards;
-    }
-    .toast-alert i { color: #00ff82; }
-    .toast-alert.toast-error {
-      border-color: rgba(255,45,120,0.4);
-    }
-    .toast-alert.toast-error i { color: var(--neon-pink); }
 
     /* ── TOAST ALERTS (django messages) ── */
     .toast-stack {
@@ -704,28 +627,12 @@
       outline-offset: 3px;
     }
 
-    /* ── BACK BUTTON ── */
-    .back-btn {
-      margin-bottom: 18px;
-    }
-    .back-btn:active {
-      transform: scale(0.96);
-    }
-    .back-btn:focus-visible {
-      outline: 2px solid var(--neon-cyan);
-      outline-offset: 3px;
-    }
-
     /* ── MOBILE ── */
     @media (max-width: 768px) {
       .sidebar { transform: translateX(-100%); }
       .sidebar.open { transform: translateX(0); }
       .main-content { margin-left: 0; }
       .page-content { padding: 16px; }
-      .back-btn {
-        padding: 10px 20px;
-        min-height: 42px;
-      }
       .back-btn {
         padding: 10px 20px;
         min-height: 42px;
@@ -783,7 +690,6 @@
     </a>
 
     
-    
     <div class="sidebar-section">// COMPETE</div>
 <a href="/leaderboard/" class="nav-item-side {% if 'leaderboard' in request.path %}active{% endif %}">
   <div class="nav-icon"><i class="fas fa-trophy"></i></div>
@@ -817,14 +723,8 @@
     <div class="sidebar-section">// Account</div>
 
     <a href="/accounts/profile/" class="nav-item-side {% if request.path == '/accounts/profile/' or '/profile/' in request.path %}active{% endif %}">
-    <a href="/accounts/profile/" class="nav-item-side {% if request.path == '/accounts/profile/' or '/profile/' in request.path %}active{% endif %}">
       <div class="nav-icon"><i class="fas fa-user"></i></div>
       Profile
-    </a>
-
-    <a href="/accounts/settings/" class="nav-item-side {% if 'settings' in request.path %}active{% endif %}">
-      <div class="nav-icon"><i class="fas fa-gear"></i></div>
-      Settings
     </a>
 
     <a href="/accounts/settings/" class="nav-item-side {% if 'settings' in request.path %}active{% endif %}">
@@ -850,15 +750,7 @@
         <span id="sidebarUserInitial">{{ user.username|slice:":1"|upper }}</span>
         {% endif %}
       </div>
-      <div class="user-avatar" id="sidebarUserAvatar">
-        {% if user.profile_picture %}
-        <img id="sidebarUserAvatarImg" src="{{ user.profile_picture.url }}" alt="{{ user.username }}">
-        {% else %}
-        <span id="sidebarUserInitial">{{ user.username|slice:":1"|upper }}</span>
-        {% endif %}
-      </div>
       <div>
-        <div class="user-name" id="sidebarUsername">{{ user.username }}</div>
         <div class="user-name" id="sidebarUsername">{{ user.username }}</div>
         <div class="user-role">{% if user.is_staff %}// admin{% else %}// coder{% endif %}</div>
       </div>
@@ -885,8 +777,6 @@
       {% if user.is_authenticated %}
       <a href="/accounts/profile/" class="topbar-user" id="topbarUserLink">
         <i class="fas fa-terminal"></i> <span id="topbarUsername">{{ user.username }}</span>
-      <a href="/accounts/profile/" class="topbar-user" id="topbarUserLink">
-        <i class="fas fa-terminal"></i> <span id="topbarUsername">{{ user.username }}</span>
       </a>
       {% else %}
       <a href="/accounts/login/" class="btn-gradient" style="padding:7px 18px;font-size:0.8rem;">Login</a>
@@ -905,16 +795,6 @@
         {% endfor %}
       {% endif %}
     </div>
-    <div class="toast-stack" id="toastStack">
-      {% if messages %}
-        {% for message in messages %}
-          <div class="toast-alert {% if message.tags %}toast-{{ message.tags }}{% endif %}">
-            <i class="fas {% if message.tags == 'error' %}fa-circle-exclamation{% else %}fa-circle-check{% endif %}"></i>
-            <span>{{ message }}</span>
-          </div>
-        {% endfor %}
-      {% endif %}
-    </div>
     {% block content %}{% endblock %}
   </div>
 </div>
@@ -923,16 +803,6 @@
 <script>
   function toggleSidebar() {
     document.getElementById('sidebar').classList.toggle('open');
-  }
-
-  // Shared handler for every "← Back" button (see templates/includes/back_button.html).
-  // Uses browser history when available, otherwise falls back to a safe, page-appropriate URL.
-  function goBack(fallbackUrl) {
-    if (window.history.length > 1) {
-      window.history.back();
-    } else {
-      window.location.href = fallbackUrl || '/';
-    }
   }
 
   // Shared handler for every "← Back" button (see templates/includes/back_button.html).
@@ -969,23 +839,9 @@
         setTimeout(() => toastStack.remove(), 400);
       }, 3500);
     }
-
-    const toastStack = document.getElementById('toastStack');
-    if (toastStack) {
-      setTimeout(() => {
-        toastStack.style.transition = 'opacity 0.4s ease';
-        toastStack.style.opacity = '0';
-        setTimeout(() => toastStack.remove(), 400);
-      }, 3500);
-    }
   });
 </script>
 {% block extra_js %}{% endblock %}
-{% block chatbot_widget %}
-{% if user.is_authenticated %}
-  {% include 'chatbot_widget.html' %}
-{% endif %}
-{% endblock %}
 {% block chatbot_widget %}
 {% if user.is_authenticated %}
   {% include 'chatbot_widget.html' %}
