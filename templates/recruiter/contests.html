@@ -1,492 +1,277 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LogicLabs — Contests</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+{% extends 'recruiter/recruiter_base.html' %}
+{% block title %}LogicLabs — Recruiter Contests{% endblock %}
 
-        body {
-            background: #0a0a1a;
-            color: #fff;
-            font-family: 'Segoe UI', sans-serif;
-            display: flex;
-            min-height: 100vh;
-        }
-
-        /* ── Sidebar (same shell as the recruiter dashboard) ── */
-        .sidebar {
-            width: 240px;
-            min-height: 100vh;
-            background: rgba(15,15,35,0.95);
-            border-right: 1px solid rgba(255,255,255,0.07);
-            display: flex;
-            flex-direction: column;
-            padding: 24px 0;
-            position: fixed;
-            top: 0; left: 0;
-        }
-        .sidebar-logo { display: flex; align-items: center; gap: 10px; padding: 0 20px 24px; border-bottom: 1px solid rgba(255,255,255,0.06); }
-        .logo-icon { width: 38px; height: 38px; background: linear-gradient(135deg, #4f46e5, #06b6d4); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
-        .logo-text { font-size: 18px; font-weight: 700; }
-        .logo-text .logic { color: #fff; }
-        .logo-text .labs  { color: #06b6d4; }
-        .sidebar-section { padding: 18px 20px 6px; font-size: 10px; letter-spacing: 2px; color: #4b5563; text-transform: uppercase; }
-        .nav-item { display: flex; align-items: center; gap: 12px; padding: 11px 20px; color: #9ca3af; text-decoration: none; font-size: 14px; font-weight: 500; border-left: 3px solid transparent; transition: all 0.2s; cursor: pointer; }
-        .nav-item:hover { background: rgba(124,58,237,0.1); color: #fff; border-left-color: #7c3aed; }
-        .nav-item.active { background: rgba(124,58,237,0.15); color: #fff; border-left-color: #7c3aed; }
-        .nav-icon { font-size: 16px; width: 20px; text-align: center; }
-        .sidebar-bottom { margin-top: auto; padding: 16px 20px; border-top: 1px solid rgba(255,255,255,0.06); }
-        .recruiter-info { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-        .recruiter-avatar { width: 36px; height: 36px; background: linear-gradient(135deg, #7c3aed, #06b6d4); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; }
-        .recruiter-name { font-size: 13px; font-weight: 600; color: #fff; }
-        .recruiter-role { font-size: 11px; color: #6b7280; }
-        .btn-logout { width: 100%; padding: 9px; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); border-radius: 8px; color: #f87171; font-size: 13px; cursor: pointer; text-align: center; text-decoration: none; display: block; transition: background 0.2s; }
-        .btn-logout:hover { background: rgba(239,68,68,0.2); }
-
-        /* ── Main content ── */
-        .main { margin-left: 240px; flex: 1; padding: 32px; max-width: 1100px; }
-        .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
-        .page-title { font-size: 11px; letter-spacing: 3px; color: #7c3aed; font-family: 'Courier New', monospace; }
-        .page-heading { font-size: 24px; font-weight: 700; margin-top: 4px; }
-
-        .card { background: rgba(15,15,35,0.8); border: 1px solid rgba(255,255,255,0.07); border-radius: 14px; padding: 24px; margin-bottom: 24px; }
-        .card-title { font-size: 11px; letter-spacing: 2px; color: #7c3aed; font-family: 'Courier New', monospace; margin-bottom: 16px; text-transform: uppercase; }
-
-        table { width: 100%; border-collapse: collapse; }
-        thead th { padding: 10px 14px; font-size: 11px; letter-spacing: 1px; color: #6b7280; text-transform: uppercase; text-align: left; background: rgba(255,255,255,0.02); }
-        tbody tr { border-top: 1px solid rgba(255,255,255,0.04); }
-        tbody td { padding: 12px 14px; font-size: 13.5px; color: #d1d5db; }
-        .status-pill { padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
-        .status-upcoming { background: rgba(234,179,8,0.15); color: #facc15; }
-        .status-live { background: rgba(34,197,94,0.15); color: #4ade80; }
-        .status-ended { background: rgba(148,163,184,0.15); color: #94a3b8; }
-
-        label { display:block; font-size: 12px; color: #9ca3af; margin-bottom: 6px; margin-top: 14px; font-weight: 600; }
-        label:first-child { margin-top: 0; }
-        input[type=text], input[type=number], input[type=date], input[type=time], textarea, select {
-            width: 100%; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 8px; padding: 10px 12px; color: #fff; font-size: 13.5px; font-family: inherit;
-        }
-        textarea { resize: vertical; min-height: 70px; }
-        input:focus, textarea:focus, select:focus { outline: none; border-color: #7c3aed; }
-        select { appearance: none; -webkit-appearance: none; -moz-appearance: none;
-            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%239ca3af'><path d='M5.5 7.5l4.5 4.5 4.5-4.5' stroke='%239ca3af' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
-            background-repeat: no-repeat; background-position: right 12px center; padding-right: 34px; }
-        select option { background: #14142b; color: #fff; }
-        select option:checked, select option:hover { background: #7c3aed; color: #fff; }
-        .field-error { color: #f87171; font-size: 12px; margin-top: 4px; display: none; }
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
-
-        .lang-options { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 6px; }
-        .lang-chip { display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 8px 12px; font-size: 13px; cursor: pointer; }
-        .lang-chip input { width: auto; }
-
-        .section-divider { border-top: 1px solid rgba(255,255,255,0.07); margin: 26px 0 18px; padding-top: 18px; display:flex; align-items:center; justify-content:space-between; }
-        .section-divider h3 { font-size: 15px; font-weight: 700; }
-        .counter-badge { background: rgba(124,58,237,0.15); color: #a78bfa; padding: 3px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; }
-
-        .qblock { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 16px; margin-bottom: 14px; position: relative; }
-        .qblock-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
-        .qblock-title { font-size: 13px; font-weight: 700; color: #a78bfa; }
-        .btn-remove { background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.3); color: #f87171; border-radius: 6px; padding: 5px 12px; font-size: 12px; cursor: pointer; }
-        .btn-remove:hover { background: rgba(239,68,68,0.25); }
-
-        .tc-row { display: flex; gap: 10px; margin-bottom: 8px; align-items: flex-start; }
-        .tc-row textarea { min-height: 44px; }
-
-        .btn-add { background: rgba(124,58,237,0.12); border: 1px dashed rgba(124,58,237,0.4); color: #a78bfa; border-radius: 8px; padding: 9px 16px; font-size: 13px; cursor: pointer; font-weight: 600; }
-        .btn-add:hover { background: rgba(124,58,237,0.22); }
-
-        .btn-create { width: 100%; margin-top: 28px; padding: 16px; background: linear-gradient(135deg, #7c3aed, #06b6d4); border: none; border-radius: 10px; color: #fff; font-size: 16px; font-weight: 800; cursor: pointer; letter-spacing: 0.5px; }
-        .btn-create:hover { opacity: 0.92; }
-        .btn-create:disabled { opacity: 0.6; cursor: default; }
-
-        .toast { position: fixed; top: 24px; right: 24px; z-index: 9999; padding: 14px 20px; border-radius: 10px; font-size: 13.5px; font-weight: 600; display: none; max-width: 360px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
-        .toast-success { background: #14532d; color: #86efac; border: 1px solid #22c55e; }
-        .toast-error { background: #450a0a; color: #fca5a5; border: 1px solid #ef4444; }
-
-        .btn-view { padding: 6px 14px; background: rgba(124,58,237,0.15); border: 1px solid rgba(124,58,237,0.3); border-radius: 6px; color: #a78bfa; font-size: 12px; cursor: pointer; text-decoration: none; }
-
-        .btn-open-create { padding: 11px 20px; background: linear-gradient(135deg, #7c3aed, #06b6d4); border: none; border-radius: 10px; color: #fff; font-size: 13.5px; font-weight: 700; cursor: pointer; letter-spacing: 0.3px; white-space: nowrap; }
-        .btn-open-create:hover { opacity: 0.9; }
-        #create-contest-card { display: none; }
-        .create-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
-        .btn-close-create { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #9ca3af; border-radius: 6px; padding: 5px 12px; font-size: 12px; cursor: pointer; }
-        .btn-close-create:hover { background: rgba(255,255,255,0.1); color: #fff; }
-    </style>
-</head>
-<body>
-
-<!-- Sidebar -->
-<div class="sidebar">
-    <div class="sidebar-logo">
-        <div class="logo-icon">💡</div>
-        <div class="logo-text"><span class="logic">Logic</span><span class="labs">Labs</span></div>
-    </div>
-
-    <div class="sidebar-section">// Main</div>
-    <a href="/recruiter/dashboard/" class="nav-item"><span class="nav-icon">📊</span> Overview</a>
-
-    <div class="sidebar-section">// Practice</div>
-    <a href="/recruiter/problems/" class="nav-item"><span class="nav-icon">💻</span> Problem Bank</a>
-    <a href="/recruiter/submissions/" class="nav-item"><span class="nav-icon">📋</span> All Submissions</a>
-    <a href="/recruiter/candidates/" class="nav-item"><span class="nav-icon">👥</span> Candidates</a>
-
-    <a href="/recruiter/contests/" class="nav-item active"><span class="nav-icon">🗂️</span> Contests</a>
-    <a href="/recruiter/contest/" class="nav-item"><span class="nav-icon">🏆</span> Contest Results</a>
-
-    <div class="sidebar-section">// Manage</div>
-    <a href="/recruiter/reports/" class="nav-item"><span class="nav-icon">📈</span> Reports</a>
-    <a href="/recruiter/settings/" class="nav-item"><span class="nav-icon">⚙️</span> Settings</a>
-
-    <div class="sidebar-bottom">
-        <div class="recruiter-info">
-            <div class="recruiter-avatar">🏢</div>
-            <div>
-                <div class="recruiter-name">{{ username }}</div>
-                <div class="recruiter-role">Recruiter</div>
-            </div>
+{% block page_header %}
+<div class="content-header">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start gap-3">
+        <div>
+            <div class="page-title">Recruiter Portal</div>
+            <div class="page-heading">Contests</div>
+            <div class="page-subtitle">Manage contests, review entries, and create new recruitment challenges.</div>
         </div>
-        <a href="/accounts/logout/" class="btn-logout">⎋ Logout</a>
+        <button type="button" class="btn-create" onclick="toggleCreateForm()">+ Create New Contest</button>
     </div>
 </div>
+{% endblock %}
 
-<!-- Main -->
-<div class="main">
-    <div class="topbar">
+{% block content %}
+<div class="glass mb-4">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3 mb-3">
         <div>
-            <div class="page-title">// RECRUITER PANEL</div>
-            <div class="page-heading">Contests</div>
+            <div class="section-title">Your Contests</div>
+            <div class="help-text">Browse contests, see registration counts, and monitor status.</div>
         </div>
-        <button type="button" class="btn-open-create" id="open-create-btn" onclick="toggleCreateForm()">+ Create Contest</button>
+        <div class="text-muted small">Total contests: {{ contest_rows|length }}</div>
     </div>
 
-    <!-- Existing contests -->
-    <div class="card">
-        <div class="card-title">// YOUR CONTESTS</div>
-        <table>
+    {% if contest_rows %}
+    <div class="table-responsive">
+        <table class="table table-borderless align-middle mb-0">
             <thead>
                 <tr>
-                    <th>Name</th><th>Topic</th><th>Starts</th><th>Duration</th>
-                    <th>MCQs</th><th>Prog. Qs</th><th>Registered</th><th>Status</th>
+                    <th>Title</th>
+                    <th>Topic</th>
+                    <th>Starts</th>
+                    <th>Duration</th>
+                    <th>MCQs</th>
+                    <th>Problems</th>
+                    <th>Registered</th>
+                    <th>Status</th>
                 </tr>
             </thead>
             <tbody>
-            {% for row in contest_rows %}
+                {% for row in contest_rows %}
                 <tr>
-                    <td>{{ row.contest.title }}</td>
-                    <td>{{ row.contest.topic|default:"—" }}</td>
-                    <td>{{ row.contest.start_time|date:"d M, H:i" }}</td>
+                    <td>
+                        <div class="fw-semibold">{{ row.contest.title }}</div>
+                        <div class="text-muted small">{{ row.contest.description|truncatechars:80 }}</div>
+                    </td>
+                    <td>{{ row.contest.topic|default:'—' }}</td>
+                    <td>{{ row.contest.start_time|date:'d M, H:i' }}</td>
                     <td>{{ row.contest.duration_minutes }} min</td>
                     <td>{{ row.contest.mcq_count }}</td>
                     <td>{{ row.contest.problem_count }}</td>
                     <td>{{ row.registrations }}</td>
-                    <td><span class="status-pill status-{{ row.contest.status }}">{{ row.contest.status }}</span></td>
+                    <td>
+                        {% if row.contest.status == 'upcoming' %}
+                            <span class="badge-status badge-upcoming">Upcoming</span>
+                        {% elif row.contest.status == 'live' %}
+                            <span class="badge-status badge-live">Live</span>
+                        {% else %}
+                            <span class="badge-status badge-ended">Ended</span>
+                        {% endif %}
+                    </td>
                 </tr>
-            {% empty %}
-                <tr><td colspan="8" style="text-align:center;color:#4b5563;padding:28px;">No contests created yet — use the form below to create your first one.</td></tr>
-            {% endfor %}
+                {% endfor %}
             </tbody>
         </table>
     </div>
+    {% else %}
+    <div class="text-center py-5 text-muted">No contests found yet. Use the Create Contest button to add your first contest.</div>
+    {% endif %}
+</div>
 
-    <!-- Create contest form -->
-    <div class="card" id="create-contest-card">
-        <div class="create-card-header">
-            <div class="card-title" style="margin-bottom:0;">// CREATE NEW CONTEST</div>
-            <button type="button" class="btn-close-create" onclick="toggleCreateForm(false)">✕ Close</button>
+<div class="glass" id="create-contest-form" style="display:none;">
+    <div class="mb-4">
+        <div class="section-title">Create New Contest</div>
+        <p class="help-text">Add contest details, select languages, and include at least one question.</p>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-lg-6">
+            <label class="form-label">Contest Title *</label>
+            <input type="text" class="form-control" id="f-title" placeholder="e.g., Summer Challenge 2026">
         </div>
-
-        <label>Contest Name *</label>
-        <input type="text" id="f-title" placeholder="e.g. Weekly Coding Challenge #12">
-        <div class="field-error" id="err-title"></div>
-
-        <label>Contest Description</label>
-        <textarea id="f-description" placeholder="What is this contest about?"></textarea>
-
-        <div class="grid-2">
-            <div>
-                <label>Topic</label>
-                <input type="text" id="f-topic" placeholder="e.g. Data Structures, Arrays">
-            </div>
-            <div>
-                <label>Contest Duration (minutes) *</label>
-                <input type="number" id="f-duration" min="1" placeholder="e.g. 90">
-                <div class="field-error" id="err-duration"></div>
-            </div>
+        <div class="col-lg-6">
+            <label class="form-label">Topic</label>
+            <input type="text" class="form-control" id="f-topic" placeholder="e.g., Algorithms">
         </div>
-
-        <div class="grid-2">
-            <div>
-                <label>Contest Start Date *</label>
-                <input type="date" id="f-start-date">
-            </div>
-            <div>
-                <label>Contest Start Time *</label>
-                <input type="time" id="f-start-time">
-            </div>
+        <div class="col-12">
+            <label class="form-label">Description</label>
+            <textarea class="form-control" id="f-description" rows="3" placeholder="Describe the contest objectives and scope."></textarea>
         </div>
-        <div class="field-error" id="err-start"></div>
+    </div>
 
-        <label>Programming Languages Allowed *</label>
-        <div class="lang-options">
-            {% for code, label in language_choices %}
-            <label class="lang-chip" style="margin:0;">
-                <input type="checkbox" class="lang-checkbox" value="{{ code }}" {% if code != 'c' %}checked{% endif %}> {{ label }}
+    <div class="row g-3 mb-4">
+        <div class="col-md-6">
+            <label class="form-label">Start Date *</label>
+            <input type="date" class="form-control" id="f-start-date">
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Start Time *</label>
+            <input type="time" class="form-control" id="f-start-time">
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Duration (minutes) *</label>
+            <input type="number" class="form-control" id="f-duration" min="1" placeholder="120">
+        </div>
+    </div>
+
+    <div class="mb-4">
+        <div class="section-title">Allowed Programming Languages</div>
+        <div class="d-flex flex-wrap gap-3">
+            {% for code, name in language_choices %}
+            <label class="form-check form-check-inline text-muted">
+                <input class="form-check-input" type="checkbox" name="allowed_languages" value="{{ code }}">
+                <span class="form-check-label text-muted">{{ name }}</span>
             </label>
             {% endfor %}
         </div>
-        <div class="field-error" id="err-allowed_languages"></div>
-        <div class="field-error" id="err-questions" style="margin-top:10px;"></div>
+    </div>
 
-        <!-- ── MCQs ── -->
-        <div class="section-divider">
-            <h3>📝 MCQs</h3>
-            <span class="counter-badge" id="mcq-counter">Number of MCQs: 0</span>
-        </div>
-        <div id="mcq-list"></div>
-        <button type="button" class="btn-add" onclick="addMCQ()">+ Add MCQ</button>
+    <div class="mb-4">
+        <div class="section-title">Multiple Choice Questions</div>
+        <div id="mcqs-container"></div>
+        <button type="button" class="add-btn" onclick="addMCQ()">+ Add MCQ</button>
+    </div>
 
-        <!-- ── Programming Questions ── -->
-        <div class="section-divider">
-            <h3>💻 Programming Questions</h3>
-            <span class="counter-badge" id="pq-counter">Number of Programming Questions: 0</span>
-        </div>
-        <div id="pq-list"></div>
-        <button type="button" class="btn-add" onclick="addProgrammingQuestion()">+ Add Programming Question</button>
+    <div class="mb-4">
+        <div class="section-title">Programming Problems</div>
+        <div id="problems-container"></div>
+        <button type="button" class="add-btn" onclick="addProblem()">+ Add Programming Problem</button>
+    </div>
 
-        <button type="button" class="btn-create" id="create-btn" onclick="submitContest()">🚀 Create Contest</button>
+    <div class="d-flex flex-wrap gap-2">
+        <button type="button" class="btn btn-primary" onclick="submitContest()">Create Contest</button>
+        <button type="button" class="btn btn-secondary" onclick="toggleCreateForm()">Cancel</button>
     </div>
 </div>
+{% endblock %}
 
-<div class="toast toast-success" id="toast-success">✅ <span id="toast-success-text"></span></div>
-<div class="toast toast-error" id="toast-error">⚠️ <span id="toast-error-text"></span></div>
-
+{% block extra_js %}
 <script>
-const CSRF = "{{ csrf_token }}";
-const CREATE_URL = "{% url 'recruiter_contests' %}";
-
-let mcqCount = 0;
-let pqCount = 0;
-
-function toggleCreateForm(forceOpen) {
-  const card = document.getElementById('create-contest-card');
-  const shouldOpen = forceOpen !== undefined ? forceOpen : (card.style.display === 'none' || !card.style.display);
-  card.style.display = shouldOpen ? 'block' : 'none';
-  if (shouldOpen) {
-    card.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
+function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+    return '';
 }
+const CSRF = getCookie('csrftoken');
+const CREATE_URL = '{% url "recruiter_contests" %}';
 
-function el(html) {
-  const t = document.createElement('template');
-  t.innerHTML = html.trim();
-  return t.content.firstChild;
-}
-
-function updateCounters() {
-  document.getElementById('mcq-counter').textContent = `Number of MCQs: ${document.querySelectorAll('.qblock-mcq').length}`;
-  document.getElementById('pq-counter').textContent = `Number of Programming Questions: ${document.querySelectorAll('.qblock-pq').length}`;
+function toggleCreateForm() {
+    const form = document.getElementById('create-contest-form');
+    form.style.display = form.style.display === 'block' ? 'none' : 'block';
+    if (form.style.display === 'block') {
+        document.getElementById('mcqs-container').innerHTML = '';
+        document.getElementById('problems-container').innerHTML = '';
+    }
 }
 
 function addMCQ() {
-  mcqCount += 1;
-  const idx = mcqCount;
-  const node = el(`
-    <div class="qblock qblock-mcq" data-idx="${idx}">
-      <div class="qblock-header">
-        <span class="qblock-title">MCQ #${idx}</span>
-        <button type="button" class="btn-remove" onclick="this.closest('.qblock').remove(); updateCounters();">✕ Remove</button>
-      </div>
-      <label>Question *</label>
-      <textarea class="mcq-question"></textarea>
-      <div class="grid-2">
-        <div><label>Option A *</label><input type="text" class="mcq-a"></div>
-        <div><label>Option B *</label><input type="text" class="mcq-b"></div>
-      </div>
-      <div class="grid-2">
-        <div><label>Option C *</label><input type="text" class="mcq-c"></div>
-        <div><label>Option D *</label><input type="text" class="mcq-d"></div>
-      </div>
-      <div class="grid-3">
-        <div>
-          <label>Correct Answer *</label>
-          <select class="mcq-correct">
-            <option value="A">Option A</option>
-            <option value="B">Option B</option>
-            <option value="C">Option C</option>
-            <option value="D">Option D</option>
-          </select>
+    const container = document.getElementById('mcqs-container');
+    const index = container.children.length;
+    const html = `
+        <div class="item-card" data-mcq-index="${index}">
+            <button type="button" class="remove-btn" onclick="this.parentElement.remove()">Remove</button>
+            <div class="row g-3 mb-3">
+                <div class="col-md-12">
+                    <input type="text" class="form-control" placeholder="Question text" data-mcq-question="${index}">
+                </div>
+                <div class="col-md-6"><input type="text" class="form-control" placeholder="Option A" data-mcq-a="${index}"></div>
+                <div class="col-md-6"><input type="text" class="form-control" placeholder="Option B" data-mcq-b="${index}"></div>
+                <div class="col-md-6"><input type="text" class="form-control" placeholder="Option C" data-mcq-c="${index}"></div>
+                <div class="col-md-6"><input type="text" class="form-control" placeholder="Option D" data-mcq-d="${index}"></div>
+                <div class="col-md-6"><select class="form-control" data-mcq-correct="${index}"><option value="">Select correct answer</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select></div>
+                <div class="col-md-6"><select class="form-control" data-mcq-difficulty="${index}"><option value="Easy">Easy</option><option value="Medium">Medium</option><option value="Hard">Hard</option></select></div>
+                <div class="col-md-6"><input type="number" class="form-control" placeholder="Marks" value="1" data-mcq-marks="${index}" min="1"></div>
+            </div>
         </div>
-        <div>
-          <label>Difficulty</label>
-          <select class="mcq-difficulty">
-            <option value="Easy">Easy</option>
-            <option value="Medium">Medium</option>
-            <option value="Hard">Hard</option>
-          </select>
+    `;
+    container.insertAdjacentHTML('beforeend', html);
+}
+
+function addProblem() {
+    const container = document.getElementById('problems-container');
+    const index = container.children.length;
+    const html = `
+        <div class="item-card" data-problem-index="${index}">
+            <button type="button" class="remove-btn" onclick="this.parentElement.remove()">Remove</button>
+            <div class="row g-3 mb-3">
+                <div class="col-md-6"><input type="text" class="form-control" placeholder="Problem title" data-prob-title="${index}"></div>
+                <div class="col-md-3"><input type="number" class="form-control" placeholder="Memory (MB)" value="256" data-prob-memory="${index}" min="16"></div>
+                <div class="col-md-3"><input type="number" class="form-control" placeholder="Marks" value="0" data-prob-marks="${index}" min="0"></div>
+            </div>
+            <textarea class="form-control mb-3" placeholder="Problem description" rows="3" data-prob-description="${index}"></textarea>
+            <div class="row g-3">
+                <div class="col-md-12"><textarea class="form-control" placeholder="Constraints" rows="2" data-prob-constraints="${index}"></textarea></div>
+            </div>
+            <div class="row g-3 mt-3">
+                <div class="col-md-6"><textarea class="form-control" placeholder="Input format" rows="2" data-prob-input-format="${index}"></textarea></div>
+                <div class="col-md-6"><textarea class="form-control" placeholder="Output format" rows="2" data-prob-output-format="${index}"></textarea></div>
+            </div>
+            <div class="row g-3 mt-3">
+                <div class="col-md-6"><textarea class="form-control" placeholder="Sample input" rows="2" data-prob-sample-input="${index}"></textarea></div>
+                <div class="col-md-6"><textarea class="form-control" placeholder="Sample output" rows="2" data-prob-sample-output="${index}"></textarea></div>
+            </div>
         </div>
-        <div><label>Marks</label><input type="number" class="mcq-marks" min="1" value="1"></div>
-      </div>
-      <div class="field-error mcq-err"></div>
-    </div>
-  `);
-  document.getElementById('mcq-list').appendChild(node);
-  updateCounters();
-}
-
-function addTestCaseRow(container) {
-  const row = el(`
-    <div class="tc-row">
-      <textarea class="tc-input" placeholder="Input"></textarea>
-      <textarea class="tc-output" placeholder="Expected Output"></textarea>
-      <button type="button" class="btn-remove" onclick="this.closest('.tc-row').remove();">✕</button>
-    </div>
-  `);
-  container.appendChild(row);
-}
-
-function addProgrammingQuestion() {
-  pqCount += 1;
-  const idx = pqCount;
-  const node = el(`
-    <div class="qblock qblock-pq" data-idx="${idx}">
-      <div class="qblock-header">
-        <span class="qblock-title">Programming Question #${idx}</span>
-        <button type="button" class="btn-remove" onclick="this.closest('.qblock').remove(); updateCounters();">✕ Remove</button>
-      </div>
-      <label>Title *</label>
-      <input type="text" class="pq-title">
-      <label>Problem Description *</label>
-      <textarea class="pq-description"></textarea>
-      <label>Constraints</label>
-      <textarea class="pq-constraints"></textarea>
-      <div class="grid-2">
-        <div><label>Input Format</label><textarea class="pq-input-format"></textarea></div>
-        <div><label>Output Format</label><textarea class="pq-output-format"></textarea></div>
-      </div>
-      <div class="grid-2">
-        <div><label>Sample Input</label><textarea class="pq-sample-input"></textarea></div>
-        <div><label>Sample Output</label><textarea class="pq-sample-output"></textarea></div>
-      </div>
-      <label>Hidden Test Cases</label>
-      <div class="pq-testcases"></div>
-      <button type="button" class="btn-add" style="margin-bottom:6px;" onclick="addTestCaseRow(this.previousElementSibling)">+ Add Hidden Test Case</button>
-      <div class="grid-2">
-        <div><label>Memory Limit (MB)</label><input type="number" class="pq-memory-limit" min="16" value="256"></div>
-        <div><label>Marks</label><input type="number" class="pq-marks" min="0" value="10"></div>
-      </div>
-      <div class="field-error pq-err"></div>
-    </div>
-  `);
-  document.getElementById('pq-list').appendChild(node);
-  updateCounters();
-}
-
-function clearErrors() {
-  document.querySelectorAll('.field-error').forEach(e => { e.style.display = 'none'; e.textContent = ''; });
-}
-
-function showError(id, msg) {
-  const box = document.getElementById(id);
-  if (box) { box.textContent = msg; box.style.display = 'block'; }
-}
-
-function showToast(kind, msg) {
-  const toast = document.getElementById(`toast-${kind}`);
-  document.getElementById(`toast-${kind}-text`).textContent = msg;
-  toast.style.display = 'block';
-  setTimeout(() => { toast.style.display = 'none'; }, 4500);
-}
-
-function collectPayload() {
-  const mcqs = [...document.querySelectorAll('.qblock-mcq')].map(b => ({
-    question_text: b.querySelector('.mcq-question').value.trim(),
-    option_a: b.querySelector('.mcq-a').value.trim(),
-    option_b: b.querySelector('.mcq-b').value.trim(),
-    option_c: b.querySelector('.mcq-c').value.trim(),
-    option_d: b.querySelector('.mcq-d').value.trim(),
-    correct_option: b.querySelector('.mcq-correct').value,
-    difficulty: b.querySelector('.mcq-difficulty').value,
-    marks: parseInt(b.querySelector('.mcq-marks').value || '1', 10),
-  }));
-
-  const programming_questions = [...document.querySelectorAll('.qblock-pq')].map(b => ({
-    title: b.querySelector('.pq-title').value.trim(),
-    description: b.querySelector('.pq-description').value.trim(),
-    constraints: b.querySelector('.pq-constraints').value.trim(),
-    input_format: b.querySelector('.pq-input-format').value.trim(),
-    output_format: b.querySelector('.pq-output-format').value.trim(),
-    sample_input: b.querySelector('.pq-sample-input').value.trim(),
-    sample_output: b.querySelector('.pq-sample-output').value.trim(),
-    hidden_test_cases: [...b.querySelectorAll('.tc-row')].map(r => ({
-      input: r.querySelector('.tc-input').value.trim(),
-      output: r.querySelector('.tc-output').value.trim(),
-    })),
-    memory_limit_mb: parseInt(b.querySelector('.pq-memory-limit').value || '256', 10),
-    marks: parseInt(b.querySelector('.pq-marks').value || '0', 10),
-  }));
-
-  return {
-    title: document.getElementById('f-title').value.trim(),
-    description: document.getElementById('f-description').value.trim(),
-    topic: document.getElementById('f-topic').value.trim(),
-    start_date: document.getElementById('f-start-date').value,
-    start_time: document.getElementById('f-start-time').value,
-    duration: parseInt(document.getElementById('f-duration').value || '0', 10),
-    allowed_languages: [...document.querySelectorAll('.lang-checkbox:checked')].map(c => c.value),
-    mcqs,
-    programming_questions,
-  };
+    `;
+    container.insertAdjacentHTML('beforeend', html);
 }
 
 function submitContest() {
-  clearErrors();
-  const payload = collectPayload();
-  const btn = document.getElementById('create-btn');
-  btn.disabled = true;
-  btn.textContent = 'Creating…';
+    const title = document.getElementById('f-title').value.trim();
+    const description = document.getElementById('f-description').value.trim();
+    const topic = document.getElementById('f-topic').value.trim();
+    const start_date = document.getElementById('f-start-date').value;
+    const start_time = document.getElementById('f-start-time').value;
+    const duration = parseInt(document.getElementById('f-duration').value);
 
-  fetch(CREATE_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF, 'X-Requested-With': 'XMLHttpRequest' },
-    body: JSON.stringify(payload),
-  })
-    .then(r => r.json().then(data => ({ status: r.status, data })))
-    .then(({ status, data }) => {
-      btn.disabled = false;
-      btn.textContent = '🚀 Create Contest';
-      if (!data.ok) {
-        Object.entries(data.errors || {}).forEach(([field, msg]) => {
-          if (field === 'title' || field === 'duration' || field === 'start' || field === 'allowed_languages' || field === 'questions') {
-            showError(`err-${field}`, msg);
-          } else {
-            // mcq_i / question_i — surface as a single toast since there's
-            // no one fixed place to render a per-row error for a dynamic list.
-            showToast('error', msg);
-          }
+    const allowed_languages = Array.from(document.querySelectorAll('[name="allowed_languages"]:checked')).map(el => el.value);
+
+    const mcqs = [];
+    document.querySelectorAll('[data-mcq-index]').forEach(card => {
+        const idx = card.getAttribute('data-mcq-index');
+        mcqs.push({
+            question_text: document.querySelector(`[data-mcq-question="${idx}"]`).value,
+            option_a: document.querySelector(`[data-mcq-a="${idx}"]`).value,
+            option_b: document.querySelector(`[data-mcq-b="${idx}"]`).value,
+            option_c: document.querySelector(`[data-mcq-c="${idx}"]`).value,
+            option_d: document.querySelector(`[data-mcq-d="${idx}"]`).value,
+            correct_option: document.querySelector(`[data-mcq-correct="${idx}"]`).value,
+            difficulty: document.querySelector(`[data-mcq-difficulty="${idx}"]`).value,
+            marks: parseInt(document.querySelector(`[data-mcq-marks="${idx}"]`).value) || 1,
         });
-        showToast('error', 'Please fix the highlighted fields.');
-        return;
-      }
-      showToast('success', data.message);
-      setTimeout(() => { window.location.reload(); }, 1200);
-    })
-    .catch(() => {
-      btn.disabled = false;
-      btn.textContent = '🚀 Create Contest';
-      showToast('error', 'Something went wrong creating the contest. Please try again.');
     });
+
+    const problems = [];
+    document.querySelectorAll('[data-problem-index]').forEach(card => {
+        const idx = card.getAttribute('data-problem-index');
+        problems.push({
+            title: document.querySelector(`[data-prob-title="${idx}"]`).value,
+            description: document.querySelector(`[data-prob-description="${idx}"]`).value,
+            constraints: document.querySelector(`[data-prob-constraints="${idx}"]`).value,
+            input_format: document.querySelector(`[data-prob-input-format="${idx}"]`).value,
+            output_format: document.querySelector(`[data-prob-output-format="${idx}"]`).value,
+            sample_input: document.querySelector(`[data-prob-sample-input="${idx}"]`).value,
+            sample_output: document.querySelector(`[data-prob-sample-output="${idx}"]`).value,
+            memory_limit_mb: parseInt(document.querySelector(`[data-prob-memory="${idx}"]`).value) || 256,
+            marks: parseInt(document.querySelector(`[data-prob-marks="${idx}"]`).value) || 0,
+            hidden_test_cases: [],
+        });
+    });
+
+    const payload = {
+        title, description, topic, start_date, start_time, duration,
+        allowed_languages, mcqs, programming_questions: problems
+    };
+
+    fetch(CREATE_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+        body: JSON.stringify(payload)
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.ok) {
+            alert('Contest created successfully!');
+            location.reload();
+        } else {
+            const errors = Object.entries(data.errors || {}).map(([k, v]) => `${k}: ${v}`).join('\n');
+            alert('Error creating contest:\n' + errors);
+        }
+    })
+    .catch(err => alert('Network error: ' + err));
 }
-
-// Start with one blank MCQ and one blank programming question so the form
-// doesn't look empty/confusing on first load.
-addMCQ();
-addProgrammingQuestion();
 </script>
-
-</body>
-</html>
+{% endblock %}

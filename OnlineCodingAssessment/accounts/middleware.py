@@ -21,9 +21,9 @@ class CandidateAccessMiddleware:
             # CANDIDATE — block recruiter and admin areas
             if not user.is_staff and not user.is_superuser:
                 if request.path.startswith('/admin/'):
-                    return redirect('/questions/')
+                    return redirect('/candidates/dashboard/')
                 if request.path.startswith('/recruiter/'):
-                    return redirect('/questions/')
+                    return redirect('/candidates/dashboard/')
 
         response = self.get_response(request)
         return response

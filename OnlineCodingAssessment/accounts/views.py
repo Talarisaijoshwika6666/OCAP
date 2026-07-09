@@ -45,9 +45,9 @@ def login_view(request):
                 user.save()
             
             login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-            next_url = request.GET.get('next') or request.POST.get('next') or '/dashboard/'
+            next_url = request.GET.get('next') or request.POST.get('next') or '/candidates/dashboard/'
             if next_url == '/':
-                next_url = '/dashboard/'
+                next_url = '/candidates/dashboard/'
             return redirect(next_url)
 
     return render(request, 'accounts/login.html', {'panel': panel})
@@ -88,7 +88,7 @@ def register_view(request):
         user = User.objects.create_user(
             username=username, email=email, password=password)
         login(request, user)
-        return redirect('/questions/')
+        return redirect('/candidates/dashboard/')
 
     return render(request, 'accounts/register.html')
 

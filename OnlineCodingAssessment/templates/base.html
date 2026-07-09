@@ -623,10 +623,7 @@
   <div class="nav-icon"><i class="fas fa-trophy"></i></div>
   Leaderboard
 </a>
-<a href="/recruiter/" class="nav-item-side {% if 'recruiter' in request.path %}active{% endif %}">
-  <div class="nav-icon"><i class="fas fa-briefcase"></i></div>
-  Recruiter
-</a>
+{% comment %} Recruiter link shown only to staff users; points to dashboard. {% endcomment %}
 
     <div class="sidebar-section">// Learn</div>
 
@@ -647,7 +644,7 @@
 
     {% if user.is_staff %}
     <div class="sidebar-section">// Admin</div>
-    <a href="/recruiter/" class="nav-item-side {% if 'recruiter' in request.path %}active{% endif %}">
+    <a href="/recruiter/dashboard/" class="nav-item-side {% if 'recruiter' in request.path %}active{% endif %}">
       <div class="nav-icon"><i class="fas fa-briefcase"></i></div>
       Recruiter
     </a>
@@ -695,7 +692,9 @@
       <a href="/contest/"     class="topbar-btn" title="Contest"><i class="fas fa-flag-checkered"></i></a>
       <a href="/discuss/"     class="topbar-btn" title="Discuss"><i class="fas fa-comments"></i></a>
       <a href="/leaderboard/" class="topbar-btn" title="Leaderboard"><i class="fas fa-trophy"></i></a>
-      <a href="/recruiter/" class="topbar-btn" title="Recruiter"><i class="fas fa-briefcase"></i></a>
+      {% if user.is_staff %}
+      <a href="/recruiter/dashboard/" class="topbar-btn" title="Recruiter"><i class="fas fa-briefcase"></i></a>
+      {% endif %}
       {% if user.is_authenticated %}
       <a href="/accounts/profile/" class="topbar-user">
         <i class="fas fa-terminal"></i> {{ user.username }}

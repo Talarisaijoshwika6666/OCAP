@@ -126,7 +126,7 @@ def register_view(request):
         user = User.objects.create_user(
             username=username, email=email, password=password)
         login(request, user)
-        return redirect('/questions/')
+        return redirect('/candidates/dashboard/')
 
     return render(request, 'accounts/register.html')
 

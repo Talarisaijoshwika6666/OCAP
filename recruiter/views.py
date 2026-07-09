@@ -104,6 +104,7 @@ def recruiter_dashboard(request):
 
     return render(request, 'recruiter/dashboard.html', {
         'username': request.user.username,
+        'active_page': 'overview',
         'total_questions':    total_questions,
         'total_candidates':   total_candidates,
         'total_assessments':  total_assessments,
@@ -438,6 +439,7 @@ def recruiter_problem_bank(request):
         'easy_count': easy_count,
         'medium_count': medium_count,
         'hard_count': hard_count,
+        'active_page': 'problems',
     })
 
 
@@ -520,6 +522,7 @@ def recruiter_add_problem(request):
         'form_data': form_data,
         'errors': errors,
         'difficulty_choices': Question.DIFFICULTY_CHOICES,
+        'active_page': 'problems',
     })
 
 
@@ -605,6 +608,7 @@ def recruiter_all_submissions(request):
         'difficulty_distribution': difficulty_distribution,
         'submissions_by_problem': submissions_by_problem,
         'daily_trend': daily_trend,
+        'active_page': 'submissions',
     })
 
 
