@@ -2,6 +2,15 @@
 {% block page_title %}// Problem Bank{% endblock %}
 {% block content %}
 
+
+{% if request.GET.timeout_submitted %}
+<div style="margin-bottom:16px;padding:14px 20px;border-radius:12px;
+  background:rgba(255,193,7,0.1);border:1px solid rgba(255,193,7,0.4);color:#ffc107;
+  font-family:'Orbitron',monospace;font-size:0.85rem;font-weight:700;display:flex;align-items:center;gap:10px;">
+  <i class="fas fa-clock"></i> Time's up on that problem -- your code was submitted automatically.
+</div>
+{% endif %}
+
 <style>
   /* Solve button — same visual style previously inlined on the <a>, kept identical */
   .solve-btn {
@@ -109,19 +118,46 @@
   }
 </style>
 
-
 <div class="card-glass anim-in">
   <div style="display:flex;justify-content:space-between;align-items:center;padding:20px 24px;border-bottom:1px solid rgba(176,38,255,0.15);">
     <div style="font-family:'Orbitron',monospace;font-size:0.82rem;font-weight:700;color:#f0eaff;letter-spacing:1px;">
       <i class="fas fa-code" style="color:#b026ff;margin-right:8px;"></i>PROBLEM_BANK
     </div>
-    <div class="d-flex gap-2">
-      <span style="background:rgba(0,255,130,0.15);color:#00ff82;padding:4px 12px;border-radius:20px;font-size:0.72rem;font-weight:700;border:1px solid rgba(0,255,130,0.4);">Easy</span>
-      <span style="background:rgba(255,193,7,0.15);color:#ffc107;padding:4px 12px;border-radius:20px;font-size:0.72rem;font-weight:700;border:1px solid rgba(255,193,7,0.4);">Med</span>
-      <span style="background:rgba(255,45,120,0.15);color:#ff2d78;padding:4px 12px;border-radius:20px;font-size:0.72rem;font-weight:700;border:1px solid rgba(255,45,120,0.4);">Hard</span>
+    <div class="d-flex gap-2" style="align-items:center;flex-wrap:wrap;">
+
+      {% if request.user.is_authenticated %}
+      <!-- Solved / Unsolved / All dropdown -->
+      <select onchange="applyFilter('status', this.value)"
+        style="background:#0a0614;border:1px solid rgba(176,38,255,0.3);border-radius:8px;color:#f0eaff;padding:5px 12px;font-family:'JetBrains Mono',monospace;font-size:0.75rem;cursor:pointer;">
+        <option value="" {% if not status %}selected{% endif %}>All</option>
+        <option value="solved" {% if status == 'solved' %}selected{% endif %}>Solved</option>
+        <option value="unsolved" {% if status == 'unsolved' %}selected{% endif %}>Unsolved</option>
+      </select>
+      {% endif %}
+
+      <!-- Difficulty filter tabs -->
+      <a href="?{% if status %}status={{ status }}&{% endif %}difficulty="
+         style="background:{% if not difficulty %}rgba(176,38,255,0.25){% else %}rgba(176,38,255,0.08){% endif %};color:#f0eaff;padding:4px 12px;border-radius:20px;font-size:0.72rem;font-weight:700;border:1px solid rgba(176,38,255,0.4);text-decoration:none;">All</a>
+      <a href="?{% if status %}status={{ status }}&{% endif %}difficulty=Easy"
+         style="background:{% if difficulty == 'Easy' %}rgba(0,255,130,0.35){% else %}rgba(0,255,130,0.15){% endif %};color:#00ff82;padding:4px 12px;border-radius:20px;font-size:0.72rem;font-weight:700;border:1px solid rgba(0,255,130,0.4);text-decoration:none;">Easy</a>
+      <a href="?{% if status %}status={{ status }}&{% endif %}difficulty=Medium"
+         style="background:{% if difficulty == 'Medium' %}rgba(255,193,7,0.35){% else %}rgba(255,193,7,0.15){% endif %};color:#ffc107;padding:4px 12px;border-radius:20px;font-size:0.72rem;font-weight:700;border:1px solid rgba(255,193,7,0.4);text-decoration:none;">Med</a>
+      <a href="?{% if status %}status={{ status }}&{% endif %}difficulty=Hard"
+         style="background:{% if difficulty == 'Hard' %}rgba(255,45,120,0.35){% else %}rgba(255,45,120,0.15){% endif %};color:#ff2d78;padding:4px 12px;border-radius:20px;font-size:0.72rem;font-weight:700;border:1px solid rgba(255,45,120,0.4);text-decoration:none;">Hard</a>
     </div>
   </div>
 
+  <script>
+    function applyFilter(key, value) {
+      const url = new URL(window.location.href);
+      if (value) {
+        url.searchParams.set(key, value);
+      } else {
+        url.searchParams.delete(key);
+      }
+      window.location.href = url.toString();
+    }
+  </script>
   <form method="get" action="/questions/" style="display:flex;align-items:center;gap:12px;padding:18px 24px;border-bottom:1px solid rgba(176,38,255,0.15);flex-wrap:wrap;">
     <input
       type="text"
@@ -163,6 +199,7 @@
           <th style="color:#b026ff;padding:13px 22px;border-bottom:1px solid rgba(176,38,255,0.2);font-size:0.7rem;letter-spacing:2px;font-family:'JetBrains Mono',monospace;border-top:none;background:rgba(176,38,255,0.1);">TITLE</th>
           <th style="color:#b026ff;padding:13px 22px;border-bottom:1px solid rgba(176,38,255,0.2);font-size:0.7rem;letter-spacing:2px;font-family:'JetBrains Mono',monospace;border-top:none;background:rgba(176,38,255,0.1);">TOPIC</th>
           <th style="color:#b026ff;padding:13px 22px;border-bottom:1px solid rgba(176,38,255,0.2);font-size:0.7rem;letter-spacing:2px;font-family:'JetBrains Mono',monospace;border-top:none;background:rgba(176,38,255,0.1);">DIFFICULTY</th>
+          <th style="color:#b026ff;padding:13px 22px;border-bottom:1px solid rgba(176,38,255,0.2);font-size:0.7rem;letter-spacing:2px;font-family:'JetBrains Mono',monospace;border-top:none;background:rgba(176,38,255,0.1);">STATUS</th>
           <th style="color:#b026ff;padding:13px 22px;border-bottom:1px solid rgba(176,38,255,0.2);font-size:0.7rem;letter-spacing:2px;font-family:'JetBrains Mono',monospace;border-top:none;background:rgba(176,38,255,0.1);">ACTION</th>
         </tr>
       </thead>
@@ -194,6 +231,17 @@
             {% endif %}
           </td>
           <td style="padding:14px 22px;background:transparent;">
+            {% if q.pk in solved_ids %}
+              <span style="background:rgba(0,255,130,0.15);color:#00ff82;padding:4px 14px;border-radius:20px;font-size:0.75rem;font-weight:700;border:1px solid rgba(0,255,130,0.4);white-space:nowrap;">
+                <i class="fas fa-check-circle"></i> Solved
+              </span>
+            {% else %}
+              <span style="background:rgba(255,255,255,0.06);color:rgba(240,234,255,0.4);padding:4px 14px;border-radius:20px;font-size:0.75rem;font-weight:700;border:1px solid rgba(255,255,255,0.12);white-space:nowrap;">
+                <i class="far fa-circle"></i> Unsolved
+              </span>
+            {% endif %}
+          </td>
+          <td style="padding:14px 22px;background:transparent;">
             <div style="display:flex;align-items:center;gap:12px;">
               <button
                 type="button"
@@ -207,7 +255,7 @@
               </button>
               {% if q.pk in solved_ids %}
                 <a href="/questions/{{ q.pk }}/" class="solve-btn is-solved">
-                  <i class="fas fa-check"></i> Solved
+                  <i class="fas fa-redo"></i> Try Again
                 </a>
               {% else %}
                 <a href="/questions/{{ q.pk }}/" class="solve-btn">
@@ -221,7 +269,7 @@
         <tr>
           <td colspan="5" style="padding:50px;text-align:center;color:rgba(240,234,255,0.4);background:transparent;">
             <i class="fas fa-code" style="font-size:2rem;display:block;margin-bottom:12px;opacity:0.3;"></i>
-            <span style="font-family:'JetBrains Mono',monospace;font-size:0.8rem;">// no problems yet</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:0.8rem;">// no problems match this filter</span>
           </td>
         </tr>
         {% endfor %}
