@@ -54,7 +54,6 @@ INSTALLED_APPS = [
     'results',
     'submissions',
     'testcases',
-    'recruiter.apps.RecruiterConfig',
     'quest',
     'contest',
     'discuss',

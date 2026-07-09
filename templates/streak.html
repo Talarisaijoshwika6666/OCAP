@@ -1,0 +1,447 @@
+{% extends 'base.html' %}
+{% block page_title %}// Streak{% endblock %}
+{% block content %}
+
+<a href="/dashboard/" style="display:inline-flex;align-items:center;gap:8px;color:rgba(240,234,255,0.55);text-decoration:none;font-family:'JetBrains Mono',monospace;font-size:0.78rem;margin-bottom:16px;">
+  <i class="fas fa-arrow-left"></i> Back to Overview
+</a>
+
+<!-- ══════ HERO ══════ -->
+<div class="anim-in streak-hero">
+  <div class="streak-hero-topline"></div>
+  <div class="streak-hero-glow"></div>
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:20px;position:relative;z-index:1;">
+    <div style="display:flex;align-items:center;gap:20px;">
+      <div class="streak-flame-badge">
+        <i class="fas fa-fire"></i>
+      </div>
+      <div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.68rem;letter-spacing:3px;color:#ff6b9d;margin-bottom:6px;font-weight:700;">// SOLVING STREAK</div>
+        <h2 style="font-family:'Orbitron',monospace;font-size:1.45rem;font-weight:900;color:#ffffff;margin:0;">{{ streak_message }}</h2>
+      </div>
+    </div>
+    <div style="display:flex;gap:14px;">
+      <div class="streak-count-pill" style="--pill-color:#ff2d78;">
+        <div class="streak-count-num" style="color:#ff5c93;">{{ current_streak }}</div>
+        <div class="streak-count-label">CURRENT</div>
+      </div>
+      <div class="streak-count-pill" style="--pill-color:#b026ff;">
+        <div class="streak-count-num" style="color:#c869ff;">{{ longest_streak }}</div>
+        <div class="streak-count-label">LONGEST</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <!-- ══════ LEFT: charts ══════ -->
+  <div class="col-lg-7 d-flex flex-column gap-4">
+
+    <!-- Solve velocity -->
+    <div class="card-glass anim-in anim-d2 p-4">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:14px;margin-bottom:6px;">
+        <div>
+          <div style="font-family:'Orbitron',monospace;font-size:0.95rem;font-weight:900;color:#ffffff;">Solve Velocity</div>
+          <div style="color:rgba(240,234,255,0.55);font-size:0.7rem;font-family:'JetBrains Mono',monospace;margin-top:3px;">INTERACTIVE PROGRESSION INTERVALS</div>
+        </div>
+        <div style="display:flex;background:rgba(0,0,0,0.35);border-radius:10px;padding:3px;border:1px solid rgba(176,38,255,0.25);">
+          <button class="velocity-tab active" data-key="daily" onclick="setVelocityTab('daily', this)">Daily</button>
+          <button class="velocity-tab" data-key="weekly" onclick="setVelocityTab('weekly', this)">Weekly</button>
+          <button class="velocity-tab" data-key="monthly" onclick="setVelocityTab('monthly', this)">Monthly</button>
+        </div>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:8px;margin:14px 0 8px;flex-wrap:wrap;">
+        <i class="fas fa-chart-line" style="color:#00ff9d;"></i>
+        <span style="color:#00ff9d;font-size:0.78rem;font-weight:700;font-family:'JetBrains Mono',monospace;" id="velocity-label">DAILY SOLVED PROGRESSION</span>
+        <span style="color:rgba(240,234,255,0.4);font-size:0.72rem;font-style:italic;margin-left:auto;">Metrics: problems verified successfully · anchored to {{ month_label }}</span>
+      </div>
+
+      <div style="background:#0a0614;border:1px solid rgba(176,38,255,0.2);border-radius:12px;padding:14px 10px 6px;">
+        <svg id="velocity-svg" viewBox="0 0 640 190" style="width:100%;height:auto;display:block;">
+          <defs>
+            <linearGradient id="velocityGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#00ff9d" stop-opacity="0.55"></stop>
+              <stop offset="100%" stop-color="#00ff9d" stop-opacity="0"></stop>
+            </linearGradient>
+          </defs>
+          <g id="velocity-chart-group"></g>
+        </svg>
+      </div>
+
+      <div style="display:flex;gap:12px;margin-top:16px;background:rgba(0,255,157,0.07);border:1px solid rgba(0,255,157,0.25);border-radius:12px;padding:14px 16px;">
+        <div class="insight-icon"><i class="fas fa-lightbulb"></i></div>
+        <span id="velocity-insight" style="color:rgba(240,234,255,0.85);font-size:0.82rem;line-height:1.5;">{{ insight_daily }}</span>
+      </div>
+    </div>
+
+    <!-- Focus hours -->
+    <div class="card-glass anim-in anim-d3 p-4">
+      <div style="font-family:'Orbitron',monospace;font-size:0.95rem;font-weight:900;color:#ffffff;">Focus Hours Breakdown</div>
+      <div style="color:rgba(240,234,255,0.55);font-size:0.7rem;font-family:'JetBrains Mono',monospace;margin:3px 0 14px;">BAR CHART DISTRIBUTION THROUGHOUT A DAY</div>
+
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
+        <i class="fas fa-clock" style="color:#00d4ff;"></i>
+        <span style="color:#00d4ff;font-size:0.78rem;font-weight:700;font-family:'JetBrains Mono',monospace;">ACTIVE HOURS ALLOCATION</span>
+        <span style="color:rgba(240,234,255,0.4);font-size:0.72rem;font-style:italic;margin-left:auto;">Metrics: active compiler hours in {{ month_label }}</span>
+      </div>
+
+      <div style="background:#0a0614;border:1px solid rgba(176,38,255,0.2);border-radius:12px;padding:18px 16px 10px;display:flex;align-items:flex-end;gap:10px;height:150px;">
+        {% for label, value in bucket_data %}
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;">
+          <div class="focus-bar" data-value="{{ value }}" title="{{ label }}: {{ value }}"></div>
+          <div style="font-size:0.62rem;color:rgba(240,234,255,0.5);margin-top:8px;font-family:'JetBrains Mono',monospace;white-space:nowrap;">{{ label }}</div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <div class="row g-2 mt-1">
+        <div class="col-4">
+          <div class="mini-stat-box" style="--acc:#00d4ff;">
+            <div class="mini-stat-label">PEAK ACTIVITY</div>
+            <div class="mini-stat-value" style="color:#3ddcff;">{{ peak_label }}</div>
+          </div>
+        </div>
+        <div class="col-4">
+          <div class="mini-stat-box" style="--acc:#b026ff;">
+            <div class="mini-stat-label">MOST ACTIVE DAY</div>
+            <div class="mini-stat-value" style="color:#c869ff;">{{ most_active_weekday }}</div>
+          </div>
+        </div>
+        <div class="col-4">
+          <div class="mini-stat-box" style="--acc:#00ff9d;">
+            <div class="mini-stat-label">AVG SOLVED / DAY</div>
+            <div class="mini-stat-value" style="color:#2dffb0;">{{ avg_solved_per_active_day }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════ RIGHT: calendar + milestones ══════ -->
+  <div class="col-lg-5 d-flex flex-column gap-4">
+
+    <div class="card-glass anim-in anim-d2 p-4">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;position:relative;">
+        <a href="?y={{ prev_year }}&m={{ prev_month }}" class="btn-neon" style="padding:5px 10px;font-size:0.75rem;"><i class="fas fa-chevron-left"></i></a>
+
+        <div class="month-picker-wrap">
+          <button type="button" class="month-label-btn" onclick="toggleMonthPicker(event)">
+            <i class="fas fa-calendar-days" style="color:#ff2d78;margin-right:8px;font-size:0.85rem;"></i>{{ month_label }}
+            <i class="fas fa-chevron-down" style="font-size:0.6rem;margin-left:8px;opacity:0.6;"></i>
+          </button>
+          <div id="month-picker-popover" class="month-picker-popover">
+            <select id="month-picker-month">
+              {% for mi, mname in month_choices %}
+              <option value="{{ mi }}" {% if mi == cur_month %}selected{% endif %}>{{ mname }}</option>
+              {% endfor %}
+            </select>
+            <select id="month-picker-year">
+              {% for yy in year_choices %}
+              <option value="{{ yy }}" {% if yy == cur_year %}selected{% endif %}>{{ yy }}</option>
+              {% endfor %}
+            </select>
+            <button type="button" class="month-picker-go" onclick="jumpToMonth()">Go</button>
+          </div>
+        </div>
+
+        <a href="?y={{ next_year }}&m={{ next_month }}" class="btn-neon" style="padding:5px 10px;font-size:0.75rem;"><i class="fas fa-chevron-right"></i></a>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;text-align:center;margin-bottom:6px;">
+        {% for wd in "MTWTFSS" %}
+        <div style="font-size:0.65rem;color:rgba(240,234,255,0.45);font-family:'JetBrains Mono',monospace;font-weight:700;">{{ wd }}</div>
+        {% endfor %}
+      </div>
+
+      {% for week in month_grid %}
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:6px;">
+        {% for cell in week %}
+          {% if cell %}
+            <div class="cal-day cal-{{ cell.status }}{% if cell.is_today %} cal-today{% endif %}" title="{% if cell.status == 'solved' %}Solved a problem{% elif cell.status == 'attempted' %}Attempted, not solved{% else %}No activity{% endif %}">
+              {{ cell.day }}
+            </div>
+          {% else %}
+            <div></div>
+          {% endif %}
+        {% endfor %}
+      </div>
+      {% endfor %}
+
+      <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.08);">
+        <div class="cal-legend-item"><span class="cal-legend-swatch cal-solved"></span><span>Solved</span></div>
+        <div class="cal-legend-item"><span class="cal-legend-swatch cal-attempted"></span><span>Attempted</span></div>
+        <div class="cal-legend-item"><span class="cal-legend-swatch cal-today-swatch"></span><span>Today</span></div>
+        <div class="cal-legend-item"><span class="cal-legend-swatch cal-none-swatch"></span><span>No activity</span></div>
+      </div>
+    </div>
+
+    <div class="card-glass anim-in anim-d3 p-4">
+      <div style="font-family:'Orbitron',monospace;font-size:0.82rem;font-weight:800;color:#ffffff;margin-bottom:14px;">
+        <i class="fas fa-medal" style="color:#ffc107;margin-right:8px;"></i>STREAK MILESTONES
+      </div>
+      <div class="row g-2">
+        {% for m in milestones %}
+        <div class="col-4">
+          <div class="milestone-badge {% if m.unlocked %}unlocked{% endif %}">
+            <div class="milestone-icon"><i class="fas {% if m.unlocked %}fa-fire{% else %}fa-lock{% endif %}"></i></div>
+            <div class="milestone-days">{{ m.days }}d</div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="card-glass anim-in anim-d4 p-4">
+      <div style="font-family:'Orbitron',monospace;font-size:0.82rem;font-weight:800;color:#ffffff;margin-bottom:14px;">
+        <i class="fas fa-satellite-dish" style="color:#00d4ff;margin-right:8px;"></i>THIS WEEK
+      </div>
+      <div class="d-flex justify-content-between mb-1">
+        <span style="color:rgba(240,234,255,0.55);font-size:0.75rem;font-family:'JetBrains Mono',monospace;">active_days</span>
+        <span style="color:#3ddcff;font-size:0.75rem;font-family:'JetBrains Mono',monospace;font-weight:700;">{{ this_week_active }} / 7</span>
+      </div>
+      <div class="progress-neon mb-3"><div class="progress-neon-bar" style="background:linear-gradient(90deg,#00d4ff,#b026ff);" data-width="{{ this_week_active_pct }}"></div></div>
+      <div class="d-flex justify-content-between mb-1">
+        <span style="color:rgba(240,234,255,0.55);font-size:0.75rem;font-family:'JetBrains Mono',monospace;">total_active_days</span>
+        <span style="color:#2dffb0;font-size:0.75rem;font-family:'JetBrains Mono',monospace;font-weight:700;">{{ total_active_days }}</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+{{ daily_series|json_script:"daily-series-data" }}
+{{ weekly_series|json_script:"weekly-series-data" }}
+{{ monthly_series|json_script:"monthly-series-data" }}
+{{ insights|json_script:"insight-data" }}
+
+<style>
+  /* ── HERO ── */
+  .streak-hero {
+    background: linear-gradient(135deg, #1a0a1f 0%, #170a2a 45%, #0d1024 100%);
+    border: 1px solid rgba(255,45,120,0.35);
+    border-radius: 20px;
+    padding: 30px 32px;
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .streak-hero-topline {
+    position: absolute; top:0; left:0; right:0; height:3px;
+    background: linear-gradient(90deg, transparent, #ff2d78, #ff8f2d, #b026ff, transparent);
+  }
+  .streak-hero-glow {
+    position: absolute; top:-50px; right:-30px; width:220px; height:220px; border-radius:50%;
+    background: radial-gradient(circle, rgba(255,45,120,0.28), transparent 70%);
+    pointer-events: none;
+  }
+  .streak-flame-badge {
+    width: 64px; height: 64px; border-radius: 16px; flex-shrink: 0;
+    background: linear-gradient(135deg, #ff2d78, #ff8f2d);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 0 28px rgba(255,120,45,0.55), 0 0 0 1px rgba(255,255,255,0.08) inset;
+    animation: flame-pulse 2.2s ease-in-out infinite;
+  }
+  .streak-flame-badge i { color: #fff; font-size: 1.6rem; filter: drop-shadow(0 0 6px rgba(255,255,255,0.5)); }
+  @keyframes flame-pulse {
+    0%, 100% { box-shadow: 0 0 22px rgba(255,120,45,0.45), 0 0 0 1px rgba(255,255,255,0.08) inset; transform: scale(1); }
+    50% { box-shadow: 0 0 36px rgba(255,120,45,0.75), 0 0 0 1px rgba(255,255,255,0.12) inset; transform: scale(1.04); }
+  }
+  .streak-count-pill {
+    text-align: center; padding: 10px 24px; border-radius: 14px;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid var(--pill-color, #ff2d78);
+    box-shadow: 0 0 18px color-mix(in srgb, var(--pill-color, #ff2d78) 25%, transparent);
+    min-width: 88px;
+  }
+  .streak-count-num { font-family:'Orbitron',monospace; font-size:1.9rem; font-weight:900; line-height:1; text-shadow: 0 0 14px currentColor; }
+  .streak-count-label { font-size:0.65rem; color:rgba(255,255,255,0.65); font-family:'JetBrains Mono',monospace; margin-top:5px; letter-spacing:1px; font-weight:700; }
+
+  /* ── VELOCITY TABS ── */
+  .velocity-tab {
+    background: transparent; border: none; color: rgba(240,234,255,0.55);
+    font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; font-weight: 700;
+    padding: 6px 14px; border-radius: 8px; cursor: pointer; transition: all 0.2s;
+  }
+  .velocity-tab:hover { color: rgba(240,234,255,0.85); }
+  .velocity-tab.active { background: rgba(0,255,157,0.2); color: #00ff9d; box-shadow: 0 0 10px rgba(0,255,157,0.15) inset; }
+
+  .insight-icon {
+    width: 30px; height: 30px; border-radius: 9px; flex-shrink: 0;
+    background: rgba(0,255,157,0.15); border: 1px solid rgba(0,255,157,0.35);
+    display: flex; align-items: center; justify-content: center; margin-top: 1px;
+  }
+  .insight-icon i { color: #00ff9d; font-size: 0.85rem; }
+
+  /* ── FOCUS BARS ── */
+  .focus-bar {
+    width: 60%; border-radius: 6px 6px 2px 2px; height: 4px;
+    background: linear-gradient(180deg, #3ddcff, #b026ff);
+    box-shadow: 0 0 14px rgba(0,212,255,0.4);
+    transition: height 1s cubic-bezier(.2,.8,.2,1);
+  }
+
+  .mini-stat-box {
+    border: 1px solid color-mix(in srgb, var(--acc) 45%, transparent);
+    background: color-mix(in srgb, var(--acc) 8%, transparent);
+    border-radius: 12px; padding: 12px 10px; text-align: center;
+  }
+  .mini-stat-label { font-size: 0.62rem; color: rgba(240,234,255,0.55); font-family:'JetBrains Mono',monospace; letter-spacing: 1px; font-weight: 700; }
+  .mini-stat-value { font-weight: 800; font-size: 0.9rem; margin-top: 4px; }
+
+  /* ── CALENDAR ── */
+  .cal-day {
+    aspect-ratio: 1; display:flex; align-items:center; justify-content:center;
+    border-radius: 9px; font-size: 0.78rem; font-family:'JetBrains Mono',monospace; font-weight: 600;
+    color: rgba(240,234,255,0.6); background: rgba(255,255,255,0.045);
+    border: 1px solid transparent; transition: transform 0.15s ease;
+  }
+  .cal-day:hover { transform: scale(1.1); }
+  .cal-solved {
+    background: linear-gradient(145deg, #00ffa2, #00c97e);
+    color: #032f1c; font-weight: 800;
+    box-shadow: 0 0 12px rgba(0,255,162,0.45);
+  }
+  .cal-attempted {
+    background: linear-gradient(145deg, #ffcf3d, #ff9d1f);
+    color: #3a2100; font-weight: 800;
+    box-shadow: 0 0 10px rgba(255,180,30,0.35);
+  }
+  .cal-future { color: rgba(240,234,255,0.2); background: rgba(255,255,255,0.02); }
+  .cal-today { border: 2px solid #00fff7 !important; box-shadow: 0 0 10px rgba(0,255,247,0.55); color: #7bfff9; }
+  .cal-solved.cal-today, .cal-attempted.cal-today { color: inherit; }
+
+  .cal-legend-item { display:flex; align-items:center; gap:6px; font-size:0.72rem; color:rgba(240,234,255,0.6); }
+  .cal-legend-swatch { width:13px; height:13px; border-radius:4px; display:inline-block; }
+  .cal-legend-swatch.cal-solved { background: linear-gradient(145deg, #00ffa2, #00c97e); box-shadow: none; }
+  .cal-legend-swatch.cal-attempted { background: linear-gradient(145deg, #ffcf3d, #ff9d1f); box-shadow: none; }
+  .cal-today-swatch { border: 2px solid #00fff7; background: transparent; }
+  .cal-none-swatch { background: rgba(255,255,255,0.06); }
+
+  /* ── MILESTONES ── */
+  .milestone-badge {
+    text-align: center; padding: 13px 6px; border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.02);
+    transition: all 0.25s ease;
+  }
+  .milestone-badge.unlocked {
+    border: 1px solid rgba(255,193,7,0.5);
+    background: linear-gradient(160deg, rgba(255,193,7,0.16), rgba(255,111,7,0.06));
+    box-shadow: 0 0 14px rgba(255,193,7,0.18);
+  }
+  .milestone-icon {
+    width: 30px; height: 30px; border-radius: 50%; margin: 0 auto;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(255,255,255,0.05); color: rgba(240,234,255,0.25);
+  }
+  .milestone-badge.unlocked .milestone-icon {
+    background: linear-gradient(145deg, #ffc107, #ff6f07); color: #fff;
+    box-shadow: 0 0 12px rgba(255,150,7,0.5);
+  }
+  .milestone-days { font-weight: 800; font-size: 0.85rem; margin-top: 7px; color: rgba(240,234,255,0.4); }
+  .milestone-badge.unlocked .milestone-days { color: #ffffff; }
+
+  /* ── MONTH / YEAR PICKER ── */
+  .month-picker-wrap { position: relative; }
+  .month-label-btn {
+    font-family: 'Orbitron', monospace; font-weight: 800; color: #ffffff; font-size: 0.95rem;
+    background: transparent; border: none; cursor: pointer;
+    display: flex; align-items: center; padding: 6px 10px; border-radius: 8px;
+    transition: background 0.15s ease;
+  }
+  .month-label-btn:hover { background: rgba(255,45,120,0.1); }
+  .month-picker-popover {
+    display: none; position: absolute; top: calc(100% + 8px); left: 50%; transform: translateX(-50%);
+    background: #150a1f; border: 1px solid rgba(255,45,120,0.35); border-radius: 12px;
+    padding: 12px; gap: 8px; z-index: 20; box-shadow: 0 12px 30px rgba(0,0,0,0.55);
+    align-items: center; white-space: nowrap;
+  }
+  .month-picker-popover.open { display: flex; }
+  .month-picker-popover select {
+    background: #0a0614; border: 1px solid rgba(176,38,255,0.35); color: #f0eaff;
+    border-radius: 8px; padding: 6px 8px; font-family: 'JetBrains Mono', monospace; font-size: 0.78rem;
+  }
+  .month-picker-go {
+    background: linear-gradient(135deg, #ff2d78, #b026ff); border: none; color: #fff;
+    font-weight: 700; font-size: 0.78rem; padding: 6px 14px; border-radius: 8px; cursor: pointer;
+  }
+  .month-picker-go:hover { filter: brightness(1.1); }
+</style>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const velocityDatasets = {
+    daily: JSON.parse(document.getElementById('daily-series-data').textContent),
+    weekly: JSON.parse(document.getElementById('weekly-series-data').textContent),
+    monthly: JSON.parse(document.getElementById('monthly-series-data').textContent),
+  };
+  const insightData = JSON.parse(document.getElementById('insight-data').textContent);
+  const velocityLabels = { daily: 'DAILY SOLVED PROGRESSION', weekly: 'WEEKLY SOLVED PROGRESSION', monthly: 'MONTHLY SOLVED PROGRESSION' };
+
+  function renderVelocityChart(key) {
+    const data = velocityDatasets[key];
+    const width = 640, height = 190, padTop = 16, padBottom = 30, padX = 24;
+    const maxVal = Math.max(1, ...data.map(d => d.value));
+    const stepX = data.length > 1 ? (width - padX * 2) / (data.length - 1) : 0;
+
+    const points = data.map((d, i) => {
+      const x = padX + i * stepX;
+      const y = height - padBottom - (d.value / maxVal) * (height - padTop - padBottom);
+      return { x, y, v: d.value, label: d.label };
+    });
+
+    const pathD = points.map((p, i) => (i === 0 ? 'M' : 'L') + p.x.toFixed(1) + ',' + p.y.toFixed(1)).join(' ');
+    const areaD = points.length
+      ? pathD + ` L${points[points.length - 1].x.toFixed(1)},${height - padBottom} L${points[0].x.toFixed(1)},${height - padBottom} Z`
+      : '';
+
+    const showEvery = Math.max(1, Math.ceil(points.length / 7));
+    const dots = points.map((p) => `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.5" fill="#00ff9d" stroke="#0a0614" stroke-width="2"><title>${p.label}: ${p.v}</title></circle>`).join('');
+    const labels = points.map((p, i) => (i % showEvery === 0 || i === points.length - 1)
+      ? `<text x="${p.x.toFixed(1)}" y="${height - 8}" font-size="9.5" fill="rgba(240,234,255,0.6)" text-anchor="middle" font-family="'JetBrains Mono',monospace">${p.label}</text>`
+      : '').join('');
+
+    document.getElementById('velocity-chart-group').innerHTML =
+      `<path d="${areaD}" fill="url(#velocityGradient)"></path>
+       <path d="${pathD}" fill="none" stroke="#00ff9d" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></path>
+       ${dots}${labels}`;
+
+    document.getElementById('velocity-label').textContent = velocityLabels[key];
+    document.getElementById('velocity-insight').textContent = insightData[key];
+  }
+
+  function setVelocityTab(key, btn) {
+    document.querySelectorAll('.velocity-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderVelocityChart(key);
+  }
+
+  renderVelocityChart('daily');
+
+  function toggleMonthPicker(evt) {
+    evt.stopPropagation();
+    document.getElementById('month-picker-popover').classList.toggle('open');
+  }
+  function jumpToMonth() {
+    const m = document.getElementById('month-picker-month').value;
+    const y = document.getElementById('month-picker-year').value;
+    window.location.href = `?y=${y}&m=${m}`;
+  }
+  document.addEventListener('click', function (e) {
+    const popover = document.getElementById('month-picker-popover');
+    const wrap = document.querySelector('.month-picker-wrap');
+    if (popover && wrap && !wrap.contains(e.target)) {
+      popover.classList.remove('open');
+    }
+  });
+
+  window.addEventListener('load', () => {
+    document.querySelectorAll('.focus-bar').forEach(bar => {
+      const v = parseFloat(bar.getAttribute('data-value')) || 0;
+      const max = Math.max(1, ...Array.from(document.querySelectorAll('.focus-bar')).map(b => parseFloat(b.getAttribute('data-value')) || 0));
+      setTimeout(() => { bar.style.height = Math.max(4, (v / max) * 110) + 'px'; }, 300);
+    });
+  });
+</script>
+{% endblock %}
