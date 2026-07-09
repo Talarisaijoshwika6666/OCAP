@@ -68,12 +68,10 @@ def login_view(request):
         else:
             user = User.objects.filter(username=username).first()
             if user is None:
-                user = User.objects.create_user(username=username, password=password, role='candidate')
-                login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-                next_url = request.GET.get('next') or request.POST.get('next') or '/dashboard/'
-                if next_url == '/':
-                    next_url = '/dashboard/'
-                return redirect(next_url)
+                return render(request, 'accounts/login.html', {
+                    'error': 'Invalid credentials.',
+                    'panel': 'candidate'
+                })
 
             user = authenticate(request, username=username, password=password)
             if user is None:
@@ -81,6 +79,10 @@ def login_view(request):
                     'error': 'Invalid credentials.',
                     'panel': 'candidate'
                 })
+
+            if not getattr(user, 'is_registered_candidate', False):
+                user.is_registered_candidate = True
+                user.save(update_fields=['is_registered_candidate'])
 
             login(request, user, backend='django.contrib.auth.backends.ModelBackend')
             next_url = request.GET.get('next') or request.POST.get('next') or '/dashboard/'
@@ -124,7 +126,14 @@ def register_view(request):
             })
 
         user = User.objects.create_user(
-            username=username, email=email, password=password)
+            username=username,
+            email=email,
+            password=password,
+            role='candidate',
+            is_staff=False,
+            is_superuser=False,
+            is_registered_candidate=True,
+        )
         login(request, user)
         return redirect('/questions/')
 

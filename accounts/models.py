@@ -10,6 +10,7 @@ class User(AbstractUser):
     
     full_name = models.CharField(max_length=150, blank=True)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='candidate')
+    is_registered_candidate = models.BooleanField(default=False)
     mobile = models.CharField(max_length=15, blank=True, null=True)
     profile_picture = models.ImageField(upload_to='profiles/', blank=True, null=True)
     bio = models.TextField(blank=True)
