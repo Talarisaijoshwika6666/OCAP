@@ -226,7 +226,20 @@ class RegistrationTests(TestCase):
         }
         response = self.client.post(self.register_url, payload)
         self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], '/dashboard/')
         self.assertTrue(User.objects.filter(username='newcoder').exists())
+
+    def test_registration_redirects_to_candidate_overview(self):
+        payload = {
+            'username': 'overviewuser',
+            'email': 'overviewuser@example.com',
+            'password': 'password123',
+            'confirm_password': 'password123'
+        }
+        response = self.client.post(self.register_url, payload)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], '/dashboard/')
+        self.assertTrue(User.objects.filter(username='overviewuser').exists())
 
     def test_registration_mismatched_passwords(self):
         payload = {
