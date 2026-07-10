@@ -102,7 +102,7 @@ def recruiter_candidates_view(request):
     for candidate in candidates_qs:
         results = Result.objects.filter(candidate=candidate).select_related('assessment')
         submissions = Submission.objects.filter(user=candidate).select_related('question')
-        avg_score = round(results.aggregate(Avg('score'))['score__avg'] or 0, 1)
+        avg_score = round(submissions.aggregate(Avg('score'))['score__avg'] or 0, 1)
         preferred_language = 'Not available'
         successful_submissions = [submission for submission in submissions if is_successful_submission(submission)]
         if successful_submissions:
