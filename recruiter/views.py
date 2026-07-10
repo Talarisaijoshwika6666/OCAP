@@ -12,6 +12,7 @@ from questions.models import Question
 from assessments.models import Assessment
 from results.models import Result
 from contest.models import Contest
+from django.contrib.auth.decorators import login_required
 
 User = get_user_model()
 
@@ -1016,3 +1017,18 @@ def contest_stats_api(request):
             'success': False,
             'error': str(e)
         }, status=500)
+    
+
+@login_required
+def recruiter_settings(request):
+    if not request.user.is_authenticated:
+        return redirect('/accounts/login/')
+
+    return render(
+        request,
+        'recruiter/settings.html',
+        {
+            'username': request.user.username,
+        }
+    )
+    

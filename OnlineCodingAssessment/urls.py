@@ -1,3 +1,4 @@
+from .chatbot import chatbot_api_view
 from django.contrib import admin
 from django.urls import path, include
 from OnlineCodingAssessment.views import home_view, dashboard_view, streak_view, dashboard_api
@@ -23,5 +24,6 @@ urlpatterns = [
     path('dashboard/api/', dashboard_api, name='dashboard_api'),
     path('streak/', streak_view, name='streak'),
     path('quest/', include('quest.urls')),
+    path("chatbot/api/", chatbot_api_view, name="chatbot_api"),
     
 ]
