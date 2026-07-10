@@ -1,8 +1,5 @@
 from django.urls import path
-<<<<<<< HEAD
-=======
 #from accounts.views import settings_view as account_settings_view
->>>>>>> ef01398 (success)
 from . import views
 
 urlpatterns = [
