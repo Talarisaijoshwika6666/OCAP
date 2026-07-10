@@ -10,9 +10,6 @@
     <a class="settings-tab {% if active_tab == 'notifications' %}active{% endif %}" data-tab="notifications">
       <i class="fas fa-bell"></i> Notifications
     </a>
-    <a class="settings-tab {% if active_tab == 'appearance' %}active{% endif %}" data-tab="appearance">
-      <i class="fas fa-palette"></i> Appearance
-    </a>
     <a class="settings-tab {% if active_tab == 'editor' %}active{% endif %}" data-tab="editor">
       <i class="fas fa-code"></i> Editor Preferences
     </a>
@@ -206,38 +203,10 @@
         </form>
       </div>
     </div>
+<<<<<<< HEAD
 
-    <!-- ── APPEARANCE ── -->
-    <div class="settings-panel {% if active_tab == 'appearance' %}active{% endif %}" id="panel-appearance">
-      <div class="card-glass settings-card anim-in">
-        <div class="settings-card-title"><i class="fas fa-palette"></i> Appearance</div>
-        <div class="settings-card-sub">Pick the theme LogicLabs should use for you.</div>
-
-        <form method="post" id="appearanceForm">
-          {% csrf_token %}
-          <input type="hidden" name="section" value="appearance">
-
-          <div class="theme-options">
-            <label class="theme-option {% if user_settings.theme == 'dark' %}selected{% endif %}">
-              <input type="radio" name="theme" value="dark" {% if user_settings.theme == 'dark' %}checked{% endif %}>
-              <div class="theme-swatch dark"></div>
-              <div class="theme-option-label"><i class="fas fa-moon"></i> Dark Mode</div>
-            </label>
-            <label class="theme-option {% if user_settings.theme == 'light' %}selected{% endif %}">
-              <input type="radio" name="theme" value="light" {% if user_settings.theme == 'light' %}checked{% endif %}>
-              <div class="theme-swatch light"></div>
-              <div class="theme-option-label"><i class="fas fa-sun"></i> Light Mode</div>
-            </label>
-          </div>
-
-          <button class="btn-gradient settings-save-btn mt-4" type="submit" id="appearanceSaveBtn">
-            <span class="btn-spinner" style="display:none;margin-right:8px;">⏳</span>
-            <i class="fas fa-floppy-disk"></i> <span class="btn-label">Save Changes</span>
-          </button>
-        </form>
-      </div>
-    </div>
-
+=======
+>>>>>>> ef01398 (success)
     <!-- ── EDITOR PREFERENCES ── -->
     <div class="settings-panel {% if active_tab == 'editor' %}active{% endif %}" id="panel-editor">
       <div class="card-glass settings-card anim-in">

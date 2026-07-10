@@ -317,10 +317,12 @@
           margin-bottom: 20px;
         }
         .toolbar { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 18px; }
-        .toolbar-left { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-        .search-box { display: flex; align-items: center; gap: 8px; background: rgba(4, 8, 20, 0.95); border: 1px solid rgba(0, 245, 255, 0.24); border-radius: 999px; padding: 10px 14px; min-width: 280px; box-shadow: inset 0 0 10px rgba(0, 245, 255, 0.08), 0 0 10px rgba(0, 245, 255, 0.08); }
+        .toolbar-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; width: 100%; }
+        .search-box { display: flex; align-items: center; gap: 8px; background: rgba(4, 8, 20, 0.95); border: 1px solid rgba(0, 245, 255, 0.24); border-radius: 999px; padding: 10px 14px; min-width: 320px; flex: 1 1 320px; box-shadow: inset 0 0 10px rgba(0, 245, 255, 0.08), 0 0 10px rgba(0, 245, 255, 0.08); }
         .search-box input { border: 0; background: transparent; outline: none; width: 100%; color: #f8fbff; font-weight: 600; }
         .search-box input::placeholder { color: #8ba2c7; }
+        .filter-select { width: 180px; min-width: 160px; flex: 0 0 180px; background: rgba(4, 8, 20, 0.95); border: 1px solid rgba(0, 245, 255, 0.24); color: #f8fbff; box-shadow: inset 0 0 10px rgba(0, 245, 255, 0.08); }
+        .filter-select:focus { border-color: rgba(0, 245, 255, 0.5); box-shadow: 0 0 0 0.2rem rgba(0, 245, 255, 0.15); color: #f8fbff; }
         .table { margin-bottom: 0; color: #f8fbff; background: transparent !important; }
         .table th {
           color: #7dd3fc;
@@ -399,7 +401,8 @@
         @media (max-width: 768px) {
           .toolbar { flex-direction: column; align-items: stretch; }
           .stats-grid { grid-template-columns: 1fr; }
-          .search-box { min-width: 0; }
+          .search-box { min-width: 0; flex-basis: 100%; }
+          .filter-select { width: 100%; flex-basis: 100%; }
         }
     </style>
 </head>
@@ -457,21 +460,19 @@
         </section>
 
         <section class="toolbar card">
-            <div class="toolbar-left">
+            <div class="toolbar-row">
                 <div class="search-box">
                     <i class="bi bi-search"></i>
                     <input type="text" id="submissionSearch" placeholder="Search problem, difficulty...">
                 </div>
-                <select id="difficultyFilter" class="form-select">
+                <select id="difficultyFilter" class="form-select filter-select">
                     <option value="all">All Difficulties</option>
                     <option value="easy">Easy</option>
                     <option value="medium">Medium</option>
                     <option value="hard">Hard</option>
                 </select>
-            </div>
-            <div class="toolbar-right">
-                <button class="btn btn-outline-secondary" id="refreshBtn"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
-                <button class="btn btn-primary" id="exportBtn"><i class="bi bi-download"></i> Export CSV</button>
+                <button class="btn btn-outline-secondary d-flex align-items-center gap-2" id="refreshBtn"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
+                <button class="btn btn-primary d-flex align-items-center gap-2" id="exportBtn"><i class="bi bi-download"></i> Export CSV</button>
             </div>
         </section>
 

@@ -31,15 +31,6 @@
       });
     }
 
-    // Live-highlight the selected theme card before submit
-    document.querySelectorAll('.theme-option input').forEach(input => {
-      input.addEventListener('change', () => {
-        document.querySelectorAll('.theme-option').forEach(opt => opt.classList.remove('selected'));
-        input.closest('.theme-option').classList.add('selected');
-        markUnsaved(document.getElementById('appearanceForm'));
-      });
-    });
-
     // Mark form as having unsaved changes
     function markUnsaved(form) {
       if (!form) return;
@@ -49,7 +40,7 @@
     }
 
     // Attach change listeners to inputs to mark unsaved
-    document.querySelectorAll('#profileForm input, #profileForm textarea, #notificationsForm input, #appearanceForm input, #editorForm input, #privacyForm input, #passwordForm input, #editorForm select').forEach(el => {
+    document.querySelectorAll('#profileForm input, #profileForm textarea, #notificationsForm input, #editorForm input, #privacyForm input, #passwordForm input, #editorForm select').forEach(el => {
       el.addEventListener('change', (e) => markUnsaved(el.closest('form')));
     });
 
@@ -91,10 +82,6 @@
             const profileAvatar = document.getElementById('profileAvatarImg'); if (profileAvatar) profileAvatar.src = data.profile_picture_url;
             const preview = document.getElementById('profilePreview'); if (preview) preview.innerHTML = '<img src="'+data.profile_picture_url+'">';
           }
-          if (data.theme) {
-            document.documentElement.setAttribute('data-theme', data.theme);
-            try { localStorage.setItem('active_theme', data.theme); } catch (e) {}
-          }
           // Clear unsaved state
           form.classList.remove('unsaved');
           const btnEl = form.querySelector('.settings-save-btn'); if (btnEl) btnEl.classList.remove('unsaved');
@@ -124,7 +111,6 @@
     // Bind forms
     const binds = [
       { formId: 'profileForm', btnId: 'profileSaveBtn' },
-      { formId: 'appearanceForm', btnId: 'appearanceSaveBtn' },
       { formId: 'passwordForm', btnId: 'passwordSaveBtn' },
       { formId: 'notificationsForm', btnId: 'notificationsSaveBtn' },
       { formId: 'editorForm', btnId: 'editorSaveBtn' },

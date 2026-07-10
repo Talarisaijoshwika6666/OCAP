@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LogicLabs — Candidates</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-void: #030611;
+            --neon-blue: #00e5ff;
+            --neon-purple: #7000ff;
+            --neon-indigo: #0052ff;
+            --neon-cyan: #00f5ff;
+            --neon-pink: #00a2ff;
+            --text-primary: #e0f2fe;
+            --text-dim: rgba(224, 242, 254, 0.45);
+            --sidebar-w: 240px;
+            --font-display: 'Orbitron', sans-serif;
+            --font-body: 'Inter', sans-serif;
+            --font-code: 'JetBrains Mono', monospace;
+        }
+
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: var(--bg-void);
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            display: flex;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        .bg-layer {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            background:
+                radial-gradient(ellipse 700px 500px at 15% 50%, rgba(0, 114, 255, 0.15) 0%, transparent 65%),
+                radial-gradient(ellipse 600px 400px at 85% 30%, rgba(0, 240, 255, 0.12) 0%, transparent 65%),
+                radial-gradient(ellipse 500px 400px at 50% 90%, rgba(0, 82, 255, 0.10) 0%, transparent 65%),
+                radial-gradient(ellipse 400px 300px at 90% 80%, rgba(0, 229, 255, 0.10) 0%, transparent 65%);
+        }
+
+        .bg-layer::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(0, 114, 255, 0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 240, 255, 0.04) 1px, transparent 1px);
+            background-size: 55px 55px;
+        }
+
+        .sidebar {
+            width: var(--sidebar-w);
+            min-height: 100vh;
+            background: rgba(8, 5, 18, 0.95);
+            border-right: 1px solid rgba(0, 114, 255, 0.2);
+            display: flex;
+            flex-direction: column;
+            padding: 24px 0;
+            position: fixed;
+            top: 0; left: 0;
+            backdrop-filter: blur(24px);
+            z-index: 1000;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .sidebar::after {
+            content: '';
+            position: absolute;
+            top: 0; right: 0;
+            width: 1px; height: 100%;
+            background: linear-gradient(180deg,
+              transparent 0%,
+              rgba(0, 240, 255, 0.6) 25%,
+              rgba(176, 38, 255, 0.8) 50%,
+              rgba(0, 82, 255, 0.6) 75%,
+              transparent 100%);
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 0 20px 24px;
+            border-bottom: 1px solid rgba(0,114,255,0.15);
+        }
+
+        .logo-icon {
+            width: 38px; height: 38px;
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .logo-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 8px;
+            display: block;
+        }
+
+        .logo-text { font-size: 18px; font-weight: 700; font-family: var(--font-display); }
+        .logo-text .logic { color: #fff; text-shadow: 0 0 10px rgba(255, 255, 255, 0.3); }
+        .logo-text .labs {
+            background: linear-gradient(90deg, var(--neon-cyan), var(--neon-purple), var(--neon-pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(0 0 8px rgba(0, 114, 255, 0.45));
+        }
+
+        .sidebar-section {
+            padding: 18px 20px 6px;
+            font-size: 10px;
+            letter-spacing: 2px;
+            color: rgba(0,114,255,0.5);
+            text-transform: uppercase;
+            font-family: var(--font-code);
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 11px 20px;
+            color: var(--text-dim);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            border-left: 3px solid transparent;
+            transition: all 0.25s;
+            cursor: pointer;
+            margin: 2px 8px;
+            border-radius: 9px;
+        }
+
+        .nav-item:hover {
+            color: var(--neon-blue);
+            background: rgba(0, 240, 255, 0.05);
+            border-left-color: var(--neon-blue);
+            transform: translateX(4px);
+        }
+
+        .nav-item.active {
+            color: var(--neon-purple);
+            background: rgba(176, 38, 255, 0.07);
+            border-left-color: var(--neon-purple);
+        }
+
+        .nav-icon { font-size: 16px; width: 20px; text-align: center; }
+
+        .sidebar-bottom {
+            margin-top: auto;
+            padding: 16px 20px;
+            border-top: 1px solid rgba(0,114,255,0.15);
+        }
+
+        .recruiter-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .recruiter-avatar {
+            width: 36px; height: 36px;
+            background: linear-gradient(135deg, var(--neon-blue), var(--neon-purple));
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px;
+            box-shadow: 0 0 12px rgba(0, 240, 255, 0.4);
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .recruiter-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .recruiter-role {
+            font-size: 11px;
+            font-family: var(--font-code);
+            background: linear-gradient(90deg, var(--neon-cyan), var(--neon-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .btn-logout {
+            width: 100%;
+            padding: 9px;
+            background: rgba(0, 240, 255, 0.05);
+            border: 1px solid rgba(0, 240, 255, 0.2);
+            border-radius: 8px;
+            color: var(--neon-blue);
+            font-size: 13px;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            display: block;
+            transition: all 0.2s;
+            font-family: var(--font-code);
+        }
+
+        .btn-logout:hover {
+            background: rgba(0, 114, 255, 0.15);
+            border-color: rgba(0, 114, 255, 0.4);
+            box-shadow: 0 0 12px rgba(0, 114, 255, 0.25);
+            color: var(--text-primary);
+        }
+
+        .main {
+            margin-left: var(--sidebar-w);
+            flex: 1;
+            padding: 32px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(0, 114, 255, 0.1);
+        }
+
+        .page-eyebrow {
+            font-family: var(--font-code);
+            font-size: 10px;
+            letter-spacing: 2px;
+            color: rgba(0, 114, 255, 0.6);
+            margin-bottom: 4px;
+            text-transform: uppercase;
+        }
+
+        .page-title {
+            font-family: var(--font-display);
+            font-size: 22px;
+            color: var(--neon-blue);
+            font-weight: 700;
+        }
+
+        .btn-neon {
+            background: linear-gradient(135deg, var(--neon-purple), var(--neon-blue));
+            color: #fff;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .filters {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .filters input[type="text"] {
+            flex: 1;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.15);
+            color: var(--text-primary);
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 14px;
+            min-width: 240px;
+            transition: all 0.3s;
+        }
+
+        .filters input[type="text"]:focus {
+            outline: none;
+            background: rgba(255,255,255,0.08);
+            border-color: var(--neon-blue);
+            box-shadow: 0 0 12px rgba(0, 229, 255, 0.2);
+        }
+
+        .filters input[type="text"]::placeholder {
+            color: var(--text-dim);
+        }
+
+        .filters select {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.15);
+            color: var(--text-primary);
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 14px;
+            min-width: 140px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .filters select:focus {
+            outline: none;
+            background: rgba(255,255,255,0.08);
+            border-color: var(--neon-blue);
+            box-shadow: 0 0 12px rgba(0, 229, 255, 0.2);
+        }
+
+        .filters select option {
+            background: #0a0e1e;
+            color: var(--text-primary);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(12, 8, 28, 0.5);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(0, 114, 255, 0.15);
+            table-layout: fixed;
+        }
+
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            font-size: 14px;
+            vertical-align: top;
+            word-break: break-word;
+            overflow-wrap: anywhere;
+        }
+
+        th {
+            color: var(--neon-cyan);
+            font-family: var(--font-code);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            background: rgba(0, 229, 255, 0.03);
+        }
+
+        tbody tr {
+            transition: all 0.2s;
+        }
+
+        tbody tr:hover {
+            background: rgba(0, 229, 255, 0.05);
+            border-color: rgba(0, 229, 255, 0.2);
+        }
+
+        .badge-active {
+            color: #4ade80;
+            background: rgba(74, 222, 128, 0.1);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .badge-inactive {
+            color: #f87171;
+            background: rgba(248, 113, 113, 0.1);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .btn-action {
+            background: rgba(255,255,255,0.05);
+            color: var(--text-primary);
+            border: 1px solid rgba(255,255,255,0.15);
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 13px;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .btn-action:hover {
+            background: rgba(0, 229, 255, 0.1);
+            border-color: rgba(0, 229, 255, 0.35);
+            color: var(--neon-blue);
+        }
+
+        .name-cell {
+            max-width: 180px;
+            min-width: 140px;
+            white-space: normal;
+        }
+
+        .email-cell {
+            max-width: 260px;
+            min-width: 180px;
+            white-space: normal;
+        }
+
+        .actions-cell {
+            width: 110px;
+            min-width: 110px;
+            white-space: nowrap;
+            text-align: center;
+        }
+
+        .action-icons {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .modal-content {
+            background: rgba(8, 5, 18, 0.98);
+            border: 1px solid rgba(0, 114, 255, 0.2);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            color: var(--text-primary);
+        }
+
+        .modal-header, .modal-footer {
+            border-color: rgba(255,255,255,0.08);
+        }
+
+        .modal-title {
+            color: var(--neon-blue);
+            font-family: var(--font-display);
+            font-size: 18px;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .detail-item {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 8px;
+            padding: 10px 12px;
+        }
+
+        .detail-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-dim);
+            font-family: var(--font-code);
+            margin-bottom: 4px;
+        }
+
+        .detail-value {
+            font-size: 14px;
+            color: var(--text-primary);
+            word-break: break-word;
+        }
+
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .history-item {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 8px;
+            padding: 10px 12px;
+            font-size: 13px;
+        }
+
+        .history-item small {
+            color: var(--text-dim);
+        }
+
+        .page-info {
+            color: var(--text-dim);
+            margin-bottom: 12px;
+            font-size: 13px;
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        @media (max-width: 1100px) {
+            .main { padding: 24px; }
+            .filters { flex-direction: column; align-items: stretch; }
+            .filters input[type="text"], .filters select { min-width: 100%; }
+        }
+
+        @media (max-width: 768px) {
+            body { flex-direction: column; }
+            .sidebar {
+                position: relative;
+                width: 100%;
+                min-height: auto;
+                height: auto;
+            }
+            .main { margin-left: 0; padding: 20px; }
+            table { display: table; table-layout: auto; }
+        }
+    </style>
+</head>
+<body>
+<div class="bg-layer"></div>
+
+{% include 'recruiter/sidebar.html' with active_page='candidates' %}
+
+<div class="main">
+    <div class="page-header">
+        <div>
+            <div class="page-eyebrow">Recruiter Portal</div>
+            <div class="page-title">👥 Candidates</div>
+        </div>
+    </div>
+
+    <form method="get" class="filters">
+        <input type="text" name="search" placeholder="Search candidate by name or registered email..." value="{{ search }}">
+        <select name="preferred_language">
+            <option value="">All Languages</option>
+            {% for language in languages %}
+            <option value="{{ language }}" {% if preferred_language == language %}selected{% endif %}>{{ language }}</option>
+            {% endfor %}
+        </select>
+        <select name="problems_solved">
+            <option value="">All</option>
+            {% for label, value in problem_ranges %}
+            <option value="{{ value }}" {% if problems_solved == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+        <select name="status">
+            <option value="">All</option>
+            <option value="Active" {% if status == 'Active' %}selected{% endif %}>Active</option>
+            <option value="Inactive" {% if status == 'Inactive' %}selected{% endif %}>Inactive</option>
+        </select>
+        <button type="submit" class="btn-neon"><i class="fa-solid fa-filter"></i> Apply</button>
+    </form>
+
+    {% if messages %}
+    <div class="page-info" style="margin-bottom: 12px;">
+        {% for message in messages %}
+        <div class="badge-active">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <p class="page-info">Showing {{ candidates|length }} candidates</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th class="name-cell">Candidate Name</th>
+                <th class="email-cell">Registered Email</th>
+                <th>Problems Solved</th>
+                <th>Contests Participated</th>
+                <th>Average Score</th>
+                <th>Global Rank</th>
+                <th>Preferred Language</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for candidate in candidates %}
+            <tr>
+                <td class="name-cell">{{ candidate.name }}</td>
+                <td class="email-cell">{{ candidate.email }}</td>
+                <td>{{ candidate.problems_solved }}</td>
+                <td>{{ candidate.contest_participation }}</td>
+                <td>{{ candidate.average_score }}%</td>
+                <td>#{{ candidate.global_rank }}</td>
+                <td>{{ candidate.preferred_language }}</td>
+                <td><span class="badge-{{ candidate.status|lower }}">{{ candidate.status }}</span></td>
+                <td class="actions-cell">
+                    <div class="action-icons">
+                        <button type="button" class="btn-action" data-bs-toggle="modal" data-bs-target="#candidateModal{{ candidate.id }}" aria-label="View candidate">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                        <form method="post" action="{% url 'recruiter_delete_candidate' candidate.id %}" style="display:inline;" onsubmit="return confirm('Delete this candidate?');">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-action" aria-label="Delete candidate">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="8" style="text-align:center; color: var(--text-dim);">No candidates found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% for candidate in candidates %}
+<div class="modal fade" id="candidateModal{{ candidate.id }}" tabindex="-1" aria-labelledby="candidateModalLabel{{ candidate.id }}" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="candidateModalLabel{{ candidate.id }}">Candidate Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div style="margin-bottom: 16px;">
+                    <div class="detail-label">Personal Information</div>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <div class="detail-label">Candidate Name</div>
+                            <div class="detail-value">{{ candidate.name }}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Username</div>
+                            <div class="detail-value">{{ candidate.username }}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Registered Email</div>
+                            <div class="detail-value">{{ candidate.email }}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Phone Number</div>
+                            <div class="detail-value">{{ candidate.mobile }}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Registration Date</div>
+                            <div class="detail-value">{{ candidate.registration_date }}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Last Login</div>
+                            <div class="detail-value">{{ candidate.last_login }}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Account Status</div>
+                            <div class="detail-value">{{ candidate.status }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 16px;">
+                    <div class="detail-label">Coding Statistics</div>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <div class="detail-label">Problems Solved</div>
+                            <div class="detail-value">{{ candidate.problems_solved }}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Contests Participated</div>
+                            <div class="detail-value">{{ candidate.contest_participation }}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Average Score</div>
+                            <div class="detail-value">{{ candidate.average_score }}%</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Global Rank</div>
+                            <div class="detail-value">#{{ candidate.global_rank }}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Preferred Language</div>
+                            <div class="detail-value">{{ candidate.preferred_language }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 16px;">
+                    <div class="detail-label">Problem Breakdown</div>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <div class="detail-label">Easy Problems Solved</div>
+                            <div class="detail-value">{{ candidate.easy_problems_solved }}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Medium Problems Solved</div>
+                            <div class="detail-value">{{ candidate.medium_problems_solved }}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Hard Problems Solved</div>
+                            <div class="detail-value">{{ candidate.hard_problems_solved }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 16px;">
+                    <div class="detail-label">Recent Coding Submissions</div>
+                    <div class="history-list">
+                        {% for submission in candidate.recent_submission_history %}
+                        <div class="history-item">
+                            <div>{{ submission.title }}</div>
+                            <small>{{ submission.detail }}</small>
+                        </div>
+                        {% empty %}
+                        <div class="history-item">No coding submissions available.</div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 16px;">
+                    <div class="detail-label">Recent Contests</div>
+                    <div class="history-list">
+                        {% for contest in candidate.recent_contest_history %}
+                        <div class="history-item">
+                            <div>{{ contest.title }}</div>
+                            <small>{{ contest.detail }}</small>
+                        </div>
+                        {% empty %}
+                        <div class="history-item">No contest history available.</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-action" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

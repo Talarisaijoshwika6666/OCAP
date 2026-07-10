@@ -1,12 +1,13 @@
 from django.urls import path
-
-from accounts.views import settings_view as account_settings_view
+#from accounts.views import settings_view as account_settings_view
 from . import views
 
 urlpatterns = [
     path('dashboard/', views.recruiter_dashboard, name='recruiter_dashboard'),
+    path('candidates/', views.recruiter_candidates_view, name='recruiter_candidates'),
+    path('candidates/<int:pk>/delete/', views.recruiter_delete_candidate, name='recruiter_delete_candidate'),
     path('all-submissions/', views.recruiter_all_submissions, name='recruiter_all_submissions'),
-    path('settings/', account_settings_view, name='recruiter_settings'),
+    path('settings/', views.recruiter_settings, name='recruiter_settings'),
     path('contest/', views.recruiter_contest_results, name='recruiter_contest_results'),
     path('problems/', views.recruiter_problem_bank, name='recruiter_problem_bank'),
     path('problems/add/', views.recruiter_add_problem, name='recruiter_add_problem'),
