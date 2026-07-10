@@ -1023,7 +1023,6 @@ def contest_stats_api(request):
             'success': False,
             'error': str(e)
         }, status=500)
-<<<<<<< HEAD
 
 
 @login_required
@@ -1044,8 +1043,7 @@ def recruiter_settings(request):
     }
 
     return render(request, "recruiter/settings.html", context)
-=======
->>>>>>> ef01398 (success)
+
     
 
 @login_required
