@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load tz %}
 {% block page_title %}// My Submissions{% endblock %}
 {% block content %}
 {% include 'includes/back_button.html' with fallback_url='/' %}
@@ -50,7 +51,7 @@
               <span style="color:#ffc107;font-weight:700;font-family:'JetBrains Mono',monospace;font-size:0.85rem;"><i class="fas fa-exclamation-circle"></i> {{ sub.result }}</span>
             {% endif %}
           </td>
-          <td style="padding:14px 22px;color:rgba(240,234,255,0.4);font-family:'JetBrains Mono',monospace;font-size:0.78rem;">{{ sub.submitted_at|date:"M d, H:i" }}</td>
+          <td style="padding:14px 22px;color:rgba(240,234,255,0.4);font-family:'JetBrains Mono',monospace;font-size:0.78rem;">{{ sub.submitted_at|localtime|date:"M d, H:i" }}</td>
         </tr>
         {% empty %}
         <tr>
