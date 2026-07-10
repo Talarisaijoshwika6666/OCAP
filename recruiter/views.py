@@ -13,11 +13,14 @@ from questions.models import Question
 from assessments.models import Assessment
 from results.models import Result
 from contest.models import Contest
+<<<<<<< HEAD
 from accounts.models import UserSettings
 from accounts.forms import (
     UserProfileForm, SettingsPasswordChangeForm, NotificationsSettingsForm,
     EditorPreferencesForm, PrivacySettingsForm,
 )
+=======
+>>>>>>> ef01398 (success)
 from django.contrib.auth.decorators import login_required
 
 User = get_user_model()
@@ -1023,6 +1026,7 @@ def contest_stats_api(request):
             'success': False,
             'error': str(e)
         }, status=500)
+<<<<<<< HEAD
 
 
 @login_required
@@ -1043,6 +1047,8 @@ def recruiter_settings(request):
     }
 
     return render(request, "recruiter/settings.html", context)
+=======
+>>>>>>> ef01398 (success)
     
 
 @login_required
