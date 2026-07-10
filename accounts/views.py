@@ -41,7 +41,6 @@ def login_view(request):
                     'panel': 'recruiter'
                 })
         else:
-<<<<<<< HEAD
             user = User.objects.filter(username=username).first()
             if user is None:
                 return render(request, 'accounts/login.html', {
@@ -60,7 +59,6 @@ def login_view(request):
                 user.is_registered_candidate = True
                 user.save(update_fields=['is_registered_candidate'])
 
-=======
             # Candidate panel — open to anyone
             user, created = User.objects.get_or_create(
                 username=username,
@@ -69,8 +67,6 @@ def login_view(request):
             if created:
                 user.set_password(password)
                 user.save()
-            
->>>>>>> 4ea9c3610859775a65f0a870892746949cc93ad2
             login(request, user, backend='django.contrib.auth.backends.ModelBackend')
             next_url = request.GET.get('next') or request.POST.get('next') or '/dashboard/'
             if next_url == '/':
