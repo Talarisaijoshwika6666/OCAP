@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import get_user_model
+from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Avg, Q as models_Q
 from django.utils import timezone
 from django.http import JsonResponse
@@ -12,6 +13,11 @@ from questions.models import Question
 from assessments.models import Assessment
 from results.models import Result
 from contest.models import Contest
+from accounts.models import UserSettings
+from accounts.forms import (
+    UserProfileForm, SettingsPasswordChangeForm, NotificationsSettingsForm,
+    EditorPreferencesForm, PrivacySettingsForm,
+)
 
 User = get_user_model()
 
@@ -811,3 +817,23 @@ def contest_stats_api(request):
             'success': False,
             'error': str(e)
         }, status=500)
+
+
+@login_required
+def recruiter_settings(request):
+    """Recruiter-specific settings page. Staff-only."""
+    if not request.user.is_authenticated or not request.user.is_staff:
+        return redirect('/accounts/login/')
+    
+    settings_obj, created = UserSettings.objects.get_or_create(user=request.user)
+
+    context = {
+        "profile_form": UserProfileForm(instance=request.user),
+        "password_form": SettingsPasswordChangeForm(request.user),
+        "notifications_form": NotificationsSettingsForm(instance=settings_obj),
+        "editor_form": EditorPreferencesForm(instance=settings_obj),
+        "privacy_form": PrivacySettingsForm(instance=settings_obj),
+        "settings": settings_obj,
+    }
+
+    return render(request, "recruiter/settings.html", context)

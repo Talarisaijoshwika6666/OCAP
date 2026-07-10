@@ -8,7 +8,7 @@ from submissions.models import Submission
 from .models import UserSettings
 from .forms import (
     UserProfileForm, SettingsPasswordChangeForm, NotificationsSettingsForm,
-    AppearanceSettingsForm, EditorPreferencesForm, PrivacySettingsForm,
+    EditorPreferencesForm, PrivacySettingsForm,
 )
 
 User = get_user_model()
@@ -132,7 +132,6 @@ def settings_view(request):
         "profile_form": UserProfileForm(instance=request.user),
         "password_form": SettingsPasswordChangeForm(request.user),
         "notifications_form": NotificationsSettingsForm(instance=settings_obj),
-        "appearance_form": AppearanceSettingsForm(instance=settings_obj),
         "editor_form": EditorPreferencesForm(instance=settings_obj),
         "privacy_form": PrivacySettingsForm(instance=settings_obj),
         "settings": settings_obj,
