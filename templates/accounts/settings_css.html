@@ -267,40 +267,6 @@
     background: #fff;
   }
 
-  /* ── THEME PICKER ── */
-  .theme-options { display: flex; gap: 16px; flex-wrap: wrap; }
-  .theme-option {
-    flex: 1;
-    min-width: 150px;
-    border: 2px solid var(--surface-border);
-    border-radius: 14px;
-    padding: 16px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    position: relative;
-  }
-  .theme-option:hover { border-color: rgba(176,38,255,0.5); }
-  .theme-option.selected {
-    border-color: var(--neon-pink);
-    box-shadow: 0 0 15px rgba(255,45,120,0.2);
-  }
-  .theme-option input { position: absolute; opacity: 0; }
-  .theme-swatch {
-    height: 60px;
-    border-radius: 8px;
-    margin-bottom: 10px;
-  }
-  .theme-swatch.dark { background: linear-gradient(135deg, #0a0a14, #1a0f2e); }
-  .theme-swatch.light { background: linear-gradient(135deg, #f4f2fb, #e5e0f5); border: 1px solid #ddd; }
-  .theme-option-label {
-    font-size: 0.82rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
   .settings-save-btn { margin-top: 6px; }
 
   .settings-preview {

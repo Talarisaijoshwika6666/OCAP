@@ -241,12 +241,6 @@ class NotificationsSettingsForm(forms.ModelForm):
         widgets = {name: forms.CheckboxInput() for name in fields}
 
 
-class AppearanceSettingsForm(forms.ModelForm):
-    class Meta:
-        model = UserSettings
-        fields = ['theme']
-
-
 class EditorPreferencesForm(forms.ModelForm):
     class Meta:
         model = UserSettings

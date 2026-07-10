@@ -1,5 +1,4 @@
 from django.urls import path
-#from accounts.views import settings_view as account_settings_view
 from . import views
 
 urlpatterns = [
