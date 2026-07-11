@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% block page_title %}// Exam Review{% endblock %}
+{% block content %}
+{% include 'includes/back_button.html' with fallback_url='/contest/' %}
+
+<div class="anim-in" style="margin-bottom:36px; display:flex; justify-content:space-between; align-items:center;">
+  <div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.68rem;letter-spacing:3px;color:var(--neon-cyan);margin-bottom:10px;">// EXAM REVIEW</div>
+    <h2 style="font-family:'Orbitron',monospace;font-size:1.8rem;font-weight:900;color:#f0eaff; margin-bottom: 0;">
+      {{ contest.title }}
+    </h2>
+  </div>
+  <div style="text-align: right; display: flex; align-items: center; gap: 20px;">
+    <div>
+      <div style="color:rgba(240,234,255,0.45);font-size:0.8rem; margin-bottom: 5px;">Total Score</div>
+      <div style="font-family:'JetBrains Mono',monospace; font-size: 1.5rem; font-weight: 700; color: #00fff7;">{{ result.score }} / {{ result.total_marks }}</div>
+    </div>
+    <button onclick="if(window.opener){window.close();}else{window.location.href='/contest/';}" class="btn-neon" style="font-size: 0.8rem; padding: 6px 12px; background: rgba(248,113,113,0.1); border-color: rgba(248,113,113,0.3); color: #f87171;"><i class="fas fa-times me-2"></i>Exit</button>
+  </div>
+</div>
+
+<div class="anim-in anim-d1 row g-4">
+    {% for submission in submissions %}
+    <div class="col-12">
+        <div class="card-glass p-4" style="border-left: 4px solid {% if submission.is_correct %}#4ade80{% else %}#f87171{% endif %}; background: rgba(12,8,28,0.6);">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:15px;">
+                <h5 style="color:#f0eaff; margin:0; font-family:'Inter', sans-serif;">{{ forloop.counter }}. {{ submission.question.question_text }}</h5>
+                <span style="font-family:'JetBrains Mono',monospace; font-size: 0.8rem; color: #b026ff; background: rgba(176,38,255,0.1); padding: 4px 10px; border-radius: 4px;">{{ submission.question.marks }} Marks</span>
+            </div>
+            
+            <div class="row g-3 mt-2">
+                <div class="col-md-6">
+                    <div style="padding: 10px 15px; border-radius: 6px; font-size: 0.9rem; {% if submission.selected_option == 'Option A' %}{% if submission.is_correct %}background: rgba(74,222,128,0.15); border: 1px solid #4ade80;{% else %}background: rgba(248,113,113,0.15); border: 1px solid #f87171;{% endif %}{% elif submission.question.correct_answer == 'Option A' %}background: rgba(74,222,128,0.15); border: 1px solid #4ade80;{% else %}background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);{% endif %} color: {% if submission.selected_option == 'Option A' or submission.question.correct_answer == 'Option A' %}#ffffff{% else %}rgba(255,255,255,0.7){% endif %};">
+                        <strong>A.</strong> {{ submission.question.option_a }}
+                        {% if submission.selected_option == 'Option A' %}
+                            <i class="fas {% if submission.is_correct %}fa-check text-success{% else %}fa-times text-danger{% endif %}" style="float: right; margin-top: 3px;"></i>
+                        {% elif submission.question.correct_answer == 'Option A' %}
+                            <i class="fas fa-check text-success" style="float: right; margin-top: 3px;"></i>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div style="padding: 10px 15px; border-radius: 6px; font-size: 0.9rem; {% if submission.selected_option == 'Option B' %}{% if submission.is_correct %}background: rgba(74,222,128,0.15); border: 1px solid #4ade80;{% else %}background: rgba(248,113,113,0.15); border: 1px solid #f87171;{% endif %}{% elif submission.question.correct_answer == 'Option B' %}background: rgba(74,222,128,0.15); border: 1px solid #4ade80;{% else %}background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);{% endif %} color: {% if submission.selected_option == 'Option B' or submission.question.correct_answer == 'Option B' %}#ffffff{% else %}rgba(255,255,255,0.7){% endif %};">
+                        <strong>B.</strong> {{ submission.question.option_b }}
+                        {% if submission.selected_option == 'Option B' %}
+                            <i class="fas {% if submission.is_correct %}fa-check text-success{% else %}fa-times text-danger{% endif %}" style="float: right; margin-top: 3px;"></i>
+                        {% elif submission.question.correct_answer == 'Option B' %}
+                            <i class="fas fa-check text-success" style="float: right; margin-top: 3px;"></i>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div style="padding: 10px 15px; border-radius: 6px; font-size: 0.9rem; {% if submission.selected_option == 'Option C' %}{% if submission.is_correct %}background: rgba(74,222,128,0.15); border: 1px solid #4ade80;{% else %}background: rgba(248,113,113,0.15); border: 1px solid #f87171;{% endif %}{% elif submission.question.correct_answer == 'Option C' %}background: rgba(74,222,128,0.15); border: 1px solid #4ade80;{% else %}background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);{% endif %} color: {% if submission.selected_option == 'Option C' or submission.question.correct_answer == 'Option C' %}#ffffff{% else %}rgba(255,255,255,0.7){% endif %};">
+                        <strong>C.</strong> {{ submission.question.option_c }}
+                        {% if submission.selected_option == 'Option C' %}
+                            <i class="fas {% if submission.is_correct %}fa-check text-success{% else %}fa-times text-danger{% endif %}" style="float: right; margin-top: 3px;"></i>
+                        {% elif submission.question.correct_answer == 'Option C' %}
+                            <i class="fas fa-check text-success" style="float: right; margin-top: 3px;"></i>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div style="padding: 10px 15px; border-radius: 6px; font-size: 0.9rem; {% if submission.selected_option == 'Option D' %}{% if submission.is_correct %}background: rgba(74,222,128,0.15); border: 1px solid #4ade80;{% else %}background: rgba(248,113,113,0.15); border: 1px solid #f87171;{% endif %}{% elif submission.question.correct_answer == 'Option D' %}background: rgba(74,222,128,0.15); border: 1px solid #4ade80;{% else %}background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);{% endif %} color: {% if submission.selected_option == 'Option D' or submission.question.correct_answer == 'Option D' %}#ffffff{% else %}rgba(255,255,255,0.7){% endif %};">
+                        <strong>D.</strong> {{ submission.question.option_d }}
+                        {% if submission.selected_option == 'Option D' %}
+                            <i class="fas {% if submission.is_correct %}fa-check text-success{% else %}fa-times text-danger{% endif %}" style="float: right; margin-top: 3px;"></i>
+                        {% elif submission.question.correct_answer == 'Option D' %}
+                            <i class="fas fa-check text-success" style="float: right; margin-top: 3px;"></i>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="mt-3">
+                {% if submission.is_correct %}
+                    <span style="color: #4ade80; font-size: 0.85rem;"><i class="fas fa-check-circle me-1"></i> Correct (Earned {{ submission.question.marks }} marks)</span>
+                {% else %}
+                    <span style="color: #f87171; font-size: 0.85rem;"><i class="fas fa-times-circle me-1"></i> Incorrect 
+                        (Your answer: {% if submission.selected_option %}{{ submission.selected_option }}{% else %}Not Answered{% endif %}. 
+                        Correct answer: {{ submission.question.correct_answer }})
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% endblock %}

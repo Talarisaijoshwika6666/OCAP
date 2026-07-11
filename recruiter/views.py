@@ -119,12 +119,12 @@ def recruiter_dashboard(request):
     })
 
 def _get_contest_results_for_contest(contest):
-    results_qs = Result.objects.filter(assessment__title__icontains=contest.title).order_by('-score', 'submitted_at')
+    from contest.models import CandidateResult
+    results_qs = CandidateResult.objects.filter(contest=contest).order_by('-score', 'completed_at')
     results_list = []
     for idx, r in enumerate(results_qs):
-        rank = r.rank if getattr(r, 'rank', 0) > 0 else (idx + 1)
         results_list.append({
-            'rank': rank,
+            'rank': idx + 1,
             'candidate': r.candidate.username,
             'score': r.score
         })
@@ -392,11 +392,11 @@ def recruiter_contest_results(request):
     
     for c in past_qs:
         results_list = _get_contest_results_for_contest(c)
-        
-        # Real registrations (number of unique candidates who submitted tests)
-        registrations_count = Result.objects.filter(assessment__title__icontains=c.title).values('candidate').distinct().count()
+        from contest.models import ContestRegistration, CandidateResult
+        # Real registrations (number of candidates registered)
+        registrations_count = ContestRegistration.objects.filter(contest=c).count()
         # Real submissions (total test submissions)
-        submissions_count = Result.objects.filter(assessment__title__icontains=c.title).count()
+        submissions_count = CandidateResult.objects.filter(contest=c).count()
 
         past_list.append({
             'id': c.id,
@@ -811,3 +811,286 @@ def contest_stats_api(request):
             'success': False,
             'error': str(e)
         }, status=500)
+
+def recruiter_contests_list(request):
+    if not request.user.is_authenticated or not request.user.is_staff:
+        return redirect('/accounts/login/')
+    from contest.models import Contest
+    
+    from django.db.models import Count
+    contests = Contest.objects.annotate(registration_count=Count('registrations')).order_by('-start_time')
+    
+    search = request.GET.get('search', '')
+    if search:
+        contests = contests.filter(models_Q(title__icontains=search) | models_Q(topic__icontains=search))
+        
+    topic = request.GET.get('topic', '')
+    if topic:
+        contests = contests.filter(topic=topic)
+        
+    format_type = request.GET.get('format', '')
+    if format_type:
+        contests = contests.filter(format_type=format_type)
+        
+    topics = Contest.objects.order_by('topic').values_list('topic', flat=True).distinct()
+    
+    return render(request, 'recruiter/contests_list.html', {
+        'username': request.user.username,
+        'contests': contests,
+        'search': search,
+        'topic': topic,
+        'topics': topics,
+        'format_type': format_type,
+        'total_contests': Contest.objects.count()
+    })
+
+def recruiter_contest_create(request):
+    if not request.user.is_authenticated or not request.user.is_staff:
+        return redirect('/accounts/login/')
+    return render(request, 'recruiter/contest_create.html', {
+        'username': request.user.username,
+    })
+
+from datetime import datetime
+
+def recruiter_contest_create_objective(request):
+    if not request.user.is_authenticated or not request.user.is_staff:
+        return redirect('/accounts/login/')
+    from contest.models import Contest, MCQQuestion
+
+    if request.method == 'POST':
+        title = request.POST.get('title')
+        description = request.POST.get('description')
+        topic = request.POST.get('topic')
+        duration = request.POST.get('duration')
+        start_date = request.POST.get('start_date')
+        
+        start_hour = request.POST.get('start_hour')
+        start_minute = request.POST.get('start_minute')
+        start_ampm = request.POST.get('start_ampm')
+        
+        hour = int(start_hour)
+        if start_ampm == 'PM' and hour != 12:
+            hour += 12
+        elif start_ampm == 'AM' and hour == 12:
+            hour = 0
+            
+        start_time = f"{hour:02d}:{int(start_minute):02d}"
+        languages = request.POST.getlist('languages')
+        
+        # Combine date and time
+        start_datetime = datetime.strptime(f"{start_date} {start_time}", "%Y-%m-%d %H:%M")
+        
+        contest = Contest.objects.create(
+            title=title,
+            description=description,
+            topic=topic,
+            duration_minutes=int(duration),
+            start_time=start_datetime,
+            end_time=start_datetime + timezone.timedelta(minutes=int(duration)),
+            allowed_languages=languages,
+            format_type='objective',
+            is_active=True
+        )
+
+        # Handle MCQs
+        mcq_count = int(request.POST.get('mcq_count', 0))
+        for i in range(1, mcq_count + 1):
+            q_text = request.POST.get(f'mcq_{i}_question')
+            if q_text:
+                MCQQuestion.objects.create(
+                    contest=contest,
+                    question_text=q_text,
+                    option_a=request.POST.get(f'mcq_{i}_option_a'),
+                    option_b=request.POST.get(f'mcq_{i}_option_b'),
+                    option_c=request.POST.get(f'mcq_{i}_option_c'),
+                    option_d=request.POST.get(f'mcq_{i}_option_d'),
+                    correct_answer=request.POST.get(f'mcq_{i}_correct'),
+                    difficulty=request.POST.get(f'mcq_{i}_difficulty'),
+                    marks=int(request.POST.get(f'mcq_{i}_marks', 1))
+                )
+        return redirect('recruiter_contests_list')
+
+    return render(request, 'recruiter/contest_create_objective.html', {
+        'username': request.user.username,
+    })
+
+def recruiter_contest_create_interactive(request):
+    if not request.user.is_authenticated or not request.user.is_staff:
+        return redirect('/accounts/login/')
+    from contest.models import Contest, ProgrammingQuestion, HiddenTestCase
+
+    if request.method == 'POST':
+        title = request.POST.get('title')
+        description = request.POST.get('description')
+        topic = request.POST.get('topic')
+        duration = request.POST.get('duration')
+        start_date = request.POST.get('start_date')
+        
+        start_hour = request.POST.get('start_hour')
+        start_minute = request.POST.get('start_minute')
+        start_ampm = request.POST.get('start_ampm')
+        
+        hour = int(start_hour)
+        if start_ampm == 'PM' and hour != 12:
+            hour += 12
+        elif start_ampm == 'AM' and hour == 12:
+            hour = 0
+            
+        start_time = f"{hour:02d}:{int(start_minute):02d}"
+        languages = request.POST.getlist('languages')
+        
+        start_datetime = datetime.strptime(f"{start_date} {start_time}", "%Y-%m-%d %H:%M")
+        
+        contest = Contest.objects.create(
+            title=title,
+            description=description,
+            topic=topic,
+            duration_minutes=int(duration),
+            start_time=start_datetime,
+            end_time=start_datetime + timezone.timedelta(minutes=int(duration)),
+            allowed_languages=languages,
+            format_type='interactive',
+            is_active=True
+        )
+
+        prog_count = int(request.POST.get('prog_count', 0))
+        for i in range(1, prog_count + 1):
+            p_title = request.POST.get(f'prog_{i}_title')
+            if p_title:
+                prog_q = ProgrammingQuestion.objects.create(
+                    contest=contest,
+                    title=p_title,
+                    description=request.POST.get(f'prog_{i}_desc'),
+                    constraints=request.POST.get(f'prog_{i}_constraints'),
+                    input_format=request.POST.get(f'prog_{i}_input_fmt'),
+                    output_format=request.POST.get(f'prog_{i}_output_fmt'),
+                    sample_input=request.POST.get(f'prog_{i}_sample_in'),
+                    sample_output=request.POST.get(f'prog_{i}_sample_out'),
+                    memory_limit=int(request.POST.get(f'prog_{i}_memory', 256)),
+                    marks=int(request.POST.get(f'prog_{i}_marks', 10))
+                )
+                
+                # Hidden Test Cases
+                tc_count = int(request.POST.get(f'prog_{i}_tc_count', 0))
+                for j in range(1, tc_count + 1):
+                    tc_in = request.POST.get(f'prog_{i}_tc_{j}_in')
+                    if tc_in is not None:
+                        HiddenTestCase.objects.create(
+                            question=prog_q,
+                            input_data=tc_in,
+                            expected_output=request.POST.get(f'prog_{i}_tc_{j}_out')
+                        )
+        return redirect('recruiter_contests_list')
+
+    return render(request, 'recruiter/contest_create_interactive.html', {
+        'username': request.user.username,
+    })
+
+def recruiter_contest_delete(request, contest_id):
+    if not request.user.is_authenticated or not request.user.is_staff:
+        return redirect('/accounts/login/')
+    from contest.models import Contest
+    
+    if request.method == 'POST':
+        contest = get_object_or_404(Contest, pk=contest_id)
+        contest.delete()
+        
+    return redirect('recruiter_contests_list')
+
+def recruiter_contest_preview(request, contest_id):
+    if not request.user.is_authenticated or not request.user.is_staff:
+        return redirect('/accounts/login/')
+    from contest.models import Contest
+    
+    contest = get_object_or_404(Contest, pk=contest_id)
+    
+    # We will reuse candidate views if possible, or build a simple preview page.
+    # The user asked to show 'how it looks for candidates'.
+    # We can render a dedicated preview template.
+    return render(request, 'recruiter/contest_preview.html', {
+        'username': request.user.username,
+        'contest': contest,
+    })
+
+def recruiter_contest_edit(request, contest_id):
+    if not request.user.is_authenticated or not request.user.is_staff:
+        return redirect('/accounts/login/')
+    from contest.models import Contest, MCQQuestion, ProgrammingQuestion, HiddenTestCase
+    
+    contest = get_object_or_404(Contest, pk=contest_id)
+    
+    if request.method == 'POST':
+        # Update Contest details
+        contest.title = request.POST.get('title', contest.title)
+        contest.description = request.POST.get('description', contest.description)
+        contest.topic = request.POST.get('topic', contest.topic)
+        contest.duration_minutes = int(request.POST.get('duration', contest.duration_minutes))
+        
+        start_date = request.POST.get('start_date')
+        start_time = request.POST.get('start_time')
+        if start_date and start_time:
+            from datetime import datetime
+            start_datetime = datetime.strptime(f"{start_date} {start_time}", "%Y-%m-%d %H:%M")
+            contest.start_time = start_datetime
+            from django.utils import timezone
+            contest.end_time = start_datetime + timezone.timedelta(minutes=contest.duration_minutes)
+            
+        languages = request.POST.getlist('languages')
+        if languages:
+            contest.allowed_languages = languages
+            
+        contest.save()
+        return redirect('recruiter_contests_list')
+        
+    # Depending on format_type, redirect to appropriate edit page or render template
+    if contest.format_type == 'objective':
+        return render(request, 'recruiter/contest_edit_objective.html', {
+            'username': request.user.username,
+            'contest': contest,
+        })
+    else:
+        return render(request, 'recruiter/contest_edit_interactive.html', {
+            'username': request.user.username,
+            'contest': contest,
+        })
+
+def recruiter_contest_analytics(request):
+    if not request.user.is_authenticated or not request.user.is_staff:
+        return redirect('/accounts/login/')
+    
+    from contest.models import Contest, ContestRegistration, CandidateResult
+    
+    # 1. Top level metrics
+    total_contests = Contest.objects.count()
+    registered_candidates_count = ContestRegistration.objects.count()
+    completed_exams_count = CandidateResult.objects.count()
+    incomplete_exams_count = registered_candidates_count - completed_exams_count
+
+    # 2. Registrations details
+    registered_details = ContestRegistration.objects.select_related('candidate', 'contest').all()
+    # 3. Completed details
+    completed_details = CandidateResult.objects.select_related('candidate', 'contest').all()
+    completed_pairs = set(completed_details.values_list('candidate_id', 'contest_id'))
+    
+    # 4. Incomplete details
+    incomplete_details = [r for r in registered_details if (r.candidate_id, r.contest_id) not in completed_pairs]
+
+    # 5. Global Leaderboard (Ranks)
+    from django.db.models import Sum
+    leaderboard = CandidateResult.objects.values('candidate__username').annotate(
+        total_score=Sum('score')
+    ).order_by('-total_score')[:10]
+
+    return render(request, 'recruiter/contest_analytics.html', {
+        'username': request.user.username,
+        'total_contests': total_contests,
+        'registered_count': registered_candidates_count,
+        'completed_count': completed_exams_count,
+        'incomplete_count': incomplete_exams_count,
+        'registered_details': registered_details,
+        'completed_details': completed_details,
+        'incomplete_details': incomplete_details,
+        'leaderboard': leaderboard,
+    })
+

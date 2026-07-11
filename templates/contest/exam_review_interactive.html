@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block page_title %}// Exam Review{% endblock %}
+{% block content %}
+{% include 'includes/back_button.html' with fallback_url='/contest/' %}
+
+<div class="anim-in" style="margin-bottom:36px; display:flex; justify-content:space-between; align-items:center;">
+  <div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.68rem;letter-spacing:3px;color:var(--neon-cyan);margin-bottom:10px;">// EXAM REVIEW</div>
+    <h2 style="font-family:'Orbitron',monospace;font-size:1.8rem;font-weight:900;color:#f0eaff; margin-bottom: 0;">
+      {{ contest.title }}
+    </h2>
+  </div>
+  <div style="text-align: right; display: flex; align-items: center; gap: 20px;">
+    <div>
+      <div style="color:rgba(240,234,255,0.45);font-size:0.8rem; margin-bottom: 5px;">Total Score & Accuracy</div>
+      <div style="font-family:'JetBrains Mono',monospace; font-size: 1.5rem; font-weight: 700; color: #00fff7;">
+          {{ result.score }} / {{ result.total_marks }}
+          <span style="font-size: 1rem; color: #b026ff; margin-left: 10px;">({% widthratio result.score result.total_marks 100 %}%)</span>
+      </div>
+    </div>
+    <button onclick="if(window.opener){window.close();}else{window.location.href='/contest/';}" class="btn-neon" style="font-size: 0.8rem; padding: 6px 12px; background: rgba(248,113,113,0.1); border-color: rgba(248,113,113,0.3); color: #f87171;"><i class="fas fa-times me-2"></i>Exit</button>
+  </div>
+</div>
+
+<div class="anim-in anim-d1 row g-4">
+    {% for submission in submissions %}
+    <div class="col-12">
+        <div class="card-glass p-4" style="border-left: 4px solid {% if submission.is_correct %}#4ade80{% else %}#f87171{% endif %}; background: rgba(12,8,28,0.6);">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:15px;">
+                <h5 style="color:#f0eaff; margin:0; font-family:'Orbitron', sans-serif;">{{ forloop.counter }}. {{ submission.question.title }}</h5>
+                <span style="font-family:'JetBrains Mono',monospace; font-size: 0.8rem; color: #b026ff; background: rgba(176,38,255,0.1); padding: 4px 10px; border-radius: 4px;">{{ submission.question.marks }} Marks</span>
+            </div>
+            
+            <div style="margin-bottom: 20px; font-size: 0.9rem; color: rgba(240,234,255,0.8);">
+                {{ submission.question.description|linebreaks }}
+            </div>
+            
+            <h6 style="color: #00fff7; font-family:'JetBrains Mono', monospace; font-size: 0.85rem; margin-bottom: 10px;">Your Submission ({{ submission.language }})</h6>
+            <div style="background: #0d1117; padding: 15px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: #c9d1d9; overflow-x: auto; white-space: pre-wrap;">{{ submission.code|default:"No code submitted." }}</div>
+            
+            <div class="mt-3">
+                {% if submission.is_correct %}
+                    <span style="color: #4ade80; font-size: 0.85rem;"><i class="fas fa-check-circle me-1"></i> Correct (Earned {{ submission.question.marks }} marks)</span>
+                {% else %}
+                    <span style="color: #f87171; font-size: 0.85rem;"><i class="fas fa-times-circle me-1"></i> Incorrect</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% endblock %}
