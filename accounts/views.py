@@ -8,7 +8,7 @@ from submissions.models import Submission
 from .models import UserSettings
 from .forms import (
     UserProfileForm, SettingsPasswordChangeForm, NotificationsSettingsForm,
-    AppearanceSettingsForm, EditorPreferencesForm, PrivacySettingsForm,
+    EditorPreferencesForm, PrivacySettingsForm,
 )
 
 User = get_user_model()
@@ -41,6 +41,24 @@ def login_view(request):
                     'panel': 'recruiter'
                 })
         else:
+            user = User.objects.filter(username=username).first()
+            if user is None:
+                return render(request, 'accounts/login.html', {
+                    'error': 'Invalid credentials.',
+                    'panel': 'candidate'
+                })
+
+            user = authenticate(request, username=username, password=password)
+            if user is None:
+                return render(request, 'accounts/login.html', {
+                    'error': 'Invalid credentials.',
+                    'panel': 'candidate'
+                })
+
+            if not getattr(user, 'is_registered_candidate', False):
+                user.is_registered_candidate = True
+                user.save(update_fields=['is_registered_candidate'])
+
             # Candidate panel — open to anyone
             user, created = User.objects.get_or_create(
                 username=username,
@@ -49,7 +67,6 @@ def login_view(request):
             if created:
                 user.set_password(password)
                 user.save()
-            
             login(request, user, backend='django.contrib.auth.backends.ModelBackend')
             next_url = request.GET.get('next') or request.POST.get('next') or '/dashboard/'
             if next_url == '/':
@@ -93,7 +110,14 @@ def register_view(request):
             })
 
         user = User.objects.create_user(
-            username=username, email=email, password=password)
+            username=username,
+            email=email,
+            password=password,
+            role='candidate',
+            is_staff=False,
+            is_superuser=False,
+            is_registered_candidate=True,
+        )
         login(request, user)
         return redirect('/dashboard/')
 
@@ -132,7 +156,6 @@ def settings_view(request):
         "profile_form": UserProfileForm(instance=request.user),
         "password_form": SettingsPasswordChangeForm(request.user),
         "notifications_form": NotificationsSettingsForm(instance=settings_obj),
-        "appearance_form": AppearanceSettingsForm(instance=settings_obj),
         "editor_form": EditorPreferencesForm(instance=settings_obj),
         "privacy_form": PrivacySettingsForm(instance=settings_obj),
         "settings": settings_obj,

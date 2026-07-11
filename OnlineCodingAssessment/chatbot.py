@@ -17,6 +17,8 @@ def chatbot_api_view(request):
     
     # Load Groq API key dynamically from settings
     groq_key = getattr(settings, 'GROQ_API_KEY', '').strip()
+    print("Groq Key:", groq_key)
+    print("Starts with gsk:", groq_key.startswith("gsk_"))
     
     if not groq_key or groq_key == 'YOUR_GROQ_API_KEY_HERE':
         return JsonResponse({

@@ -276,40 +276,6 @@
     background: #fff;
   }
 
-  /* ── THEME PICKER ── */
-  .theme-options { display: flex; gap: 16px; flex-wrap: wrap; }
-  .theme-option {
-    flex: 1;
-    min-width: 150px;
-    border: 2px solid var(--surface-border);
-    border-radius: 14px;
-    padding: 16px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    position: relative;
-  }
-  .theme-option:hover { border-color: rgba(176,38,255,0.5); }
-  .theme-option.selected {
-    border-color: var(--neon-pink);
-    box-shadow: 0 0 15px rgba(255,45,120,0.2);
-  }
-  .theme-option input { position: absolute; opacity: 0; }
-  .theme-swatch {
-    height: 60px;
-    border-radius: 8px;
-    margin-bottom: 10px;
-  }
-  .theme-swatch.dark { background: linear-gradient(135deg, #0a0a14, #1a0f2e); }
-  .theme-swatch.light { background: linear-gradient(135deg, #f4f2fb, #e5e0f5); border: 1px solid #ddd; }
-  .theme-option-label {
-    font-size: 0.82rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
   .settings-save-btn { margin-top: 6px; }
 
   .settings-preview {
@@ -359,9 +325,6 @@
     </a>
     <a class="settings-tab {% if active_tab == 'notifications' %}active{% endif %}" data-tab="notifications">
       <i class="fas fa-bell"></i> Notifications
-    </a>
-    <a class="settings-tab {% if active_tab == 'appearance' %}active{% endif %}" data-tab="appearance">
-      <i class="fas fa-palette"></i> Appearance
     </a>
     <a class="settings-tab {% if active_tab == 'editor' %}active{% endif %}" data-tab="editor">
       <i class="fas fa-code"></i> Editor Preferences
@@ -557,37 +520,6 @@
       </div>
     </div>
 
-    <!-- ── APPEARANCE ── -->
-    <div class="settings-panel {% if active_tab == 'appearance' %}active{% endif %}" id="panel-appearance">
-      <div class="card-glass settings-card anim-in">
-        <div class="settings-card-title"><i class="fas fa-palette"></i> Appearance</div>
-        <div class="settings-card-sub">Pick the theme LogicLabs should use for you.</div>
-
-        <form method="post" id="appearanceForm">
-          {% csrf_token %}
-          <input type="hidden" name="section" value="appearance">
-
-          <div class="theme-options">
-            <label class="theme-option {% if user_settings.theme == 'dark' %}selected{% endif %}">
-              <input type="radio" name="theme" value="dark" {% if user_settings.theme == 'dark' %}checked{% endif %}>
-              <div class="theme-swatch dark"></div>
-              <div class="theme-option-label"><i class="fas fa-moon"></i> Dark Mode</div>
-            </label>
-            <label class="theme-option {% if user_settings.theme == 'light' %}selected{% endif %}">
-              <input type="radio" name="theme" value="light" {% if user_settings.theme == 'light' %}checked{% endif %}>
-              <div class="theme-swatch light"></div>
-              <div class="theme-option-label"><i class="fas fa-sun"></i> Light Mode</div>
-            </label>
-          </div>
-
-          <button class="btn-gradient settings-save-btn mt-4" type="submit" id="appearanceSaveBtn">
-            <span class="btn-spinner" style="display:none;margin-right:8px;">⏳</span>
-            <i class="fas fa-floppy-disk"></i> <span class="btn-label">Save Changes</span>
-          </button>
-        </form>
-      </div>
-    </div>
-
     <!-- ── EDITOR PREFERENCES ── -->
     <div class="settings-panel {% if active_tab == 'editor' %}active{% endif %}" id="panel-editor">
       <div class="card-glass settings-card anim-in">
@@ -774,15 +706,6 @@
       });
     }
 
-    // Live-highlight the selected theme card before submit
-    document.querySelectorAll('.theme-option input').forEach(input => {
-      input.addEventListener('change', () => {
-        document.querySelectorAll('.theme-option').forEach(opt => opt.classList.remove('selected'));
-        input.closest('.theme-option').classList.add('selected');
-        markUnsaved(document.getElementById('appearanceForm'));
-      });
-    });
-
     // Mark form as having unsaved changes
     function markUnsaved(form) {
       if (!form) return;
@@ -792,7 +715,7 @@
     }
 
     // Attach change listeners to inputs to mark unsaved
-    document.querySelectorAll('#profileForm input, #profileForm textarea, #notificationsForm input, #appearanceForm input, #editorForm input, #privacyForm input, #passwordForm input, #editorForm select').forEach(el => {
+    document.querySelectorAll('#profileForm input, #profileForm textarea, #notificationsForm input, #editorForm input, #privacyForm input, #passwordForm input, #editorForm select').forEach(el => {
       el.addEventListener('change', (e) => markUnsaved(el.closest('form')));
     });
 
@@ -840,10 +763,6 @@
             const profileAvatar = document.getElementById('profileAvatarImg'); if (profileAvatar) profileAvatar.src = data.profile_picture_url;
             const preview = document.getElementById('profilePreview'); if (preview) preview.innerHTML = '<img src="'+data.profile_picture_url+'">';
           }
-          if (data.theme) {
-            document.documentElement.setAttribute('data-theme', data.theme);
-            try { localStorage.setItem('active_theme', data.theme); } catch (e) {}
-          }
           // Clear unsaved state
           form.classList.remove('unsaved');
           const btnEl = form.querySelector('.settings-save-btn'); if (btnEl) btnEl.classList.remove('unsaved');
@@ -873,7 +792,6 @@
     // Bind forms
     const binds = [
       { formId: 'profileForm', btnId: 'profileSaveBtn' },
-      { formId: 'appearanceForm', btnId: 'appearanceSaveBtn' },
       { formId: 'passwordForm', btnId: 'passwordSaveBtn' },
       { formId: 'notificationsForm', btnId: 'notificationsSaveBtn' },
       { formId: 'editorForm', btnId: 'editorSaveBtn' },

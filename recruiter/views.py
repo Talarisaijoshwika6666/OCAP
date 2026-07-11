@@ -1,10 +1,11 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
 from django.contrib.auth import get_user_model
+from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Avg, Q as models_Q
 from django.utils import timezone
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
-from django.utils import timezone
 from datetime import timedelta
 from collections import defaultdict
 from submissions.models import Submission
@@ -12,8 +13,219 @@ from questions.models import Question
 from assessments.models import Assessment
 from results.models import Result
 from contest.models import Contest
+from accounts.models import UserSettings
+from accounts.forms import (
+    UserProfileForm, SettingsPasswordChangeForm, NotificationsSettingsForm,
+    EditorPreferencesForm, PrivacySettingsForm,
+)
+from django.contrib.auth.decorators import login_required
 
 User = get_user_model()
+
+def recruiter_delete_candidate(request, pk):
+    if not request.user.is_authenticated or not request.user.is_staff:
+        return redirect('/accounts/login/')
+
+    if request.method != 'POST':
+        return redirect('recruiter_candidates')
+
+    candidate = get_object_or_404(
+        User,
+        pk=pk,
+        is_staff=False,
+        is_superuser=False,
+        role='candidate',
+        is_registered_candidate=True,
+    )
+    candidate.delete()
+    messages.success(request, 'Candidate deleted successfully.')
+    return redirect('recruiter_candidates')
+
+
+def recruiter_candidates_view(request):
+    if not request.user.is_authenticated or not request.user.is_staff:
+        return redirect('/accounts/login/')
+
+    search = request.GET.get('search', '').strip()
+    preferred_language_filter = request.GET.get('preferred_language', '').strip()
+    problems_solved_filter = request.GET.get('problems_solved', '').strip()
+    status_filter = request.GET.get('status', '').strip()
+
+    candidates_qs = User.objects.filter(
+        is_staff=False,
+        is_superuser=False,
+        role='candidate',
+        is_registered_candidate=True,
+    ).order_by('username')
+    if search:
+        candidates_qs = candidates_qs.filter(
+            models_Q(full_name__icontains=search) |
+            models_Q(email__icontains=search) |
+            models_Q(username__icontains=search)
+        )
+
+    def normalize_language(value):
+        if not value:
+            return 'Not available'
+        mapping = {
+            'python': 'Python',
+            'java': 'Java',
+            'cpp': 'C++',
+            'c++': 'C++',
+            'c': 'C',
+            'javascript': 'JavaScript',
+            'js': 'JavaScript',
+        }
+        return mapping.get(str(value).lower(), str(value).title())
+
+    def is_successful_submission(submission):
+        result_value = str(getattr(submission, 'result', '') or '').strip().lower()
+        if result_value in {'ac', 'accepted', 'pass', 'passed', 'success', 'successful', 'correct', 'ok'}:
+            return True
+        if getattr(submission, 'passed_cases', 0) and getattr(submission, 'total_cases', 0):
+            if submission.passed_cases >= submission.total_cases:
+                return True
+        return getattr(submission, 'score', 0) >= 50
+
+    def count_problems_solved(submissions):
+        solved_question_ids = set()
+        for submission in submissions:
+            if is_successful_submission(submission) and getattr(submission.question, 'id', None):
+                solved_question_ids.add(submission.question.id)
+        return len(solved_question_ids)
+
+    def count_contest_participation(results):
+        matched_contest_ids = set()
+        for result in results:
+            assessment_title = str(getattr(result.assessment, 'title', '') or '').lower()
+            for contest in Contest.objects.all():
+                contest_title = str(getattr(contest, 'title', '') or '').lower()
+                if contest_title and (contest_title in assessment_title or assessment_title in contest_title):
+                    matched_contest_ids.add(contest.id)
+                    break
+        return len(matched_contest_ids)
+
+    candidate_rows = []
+    for candidate in candidates_qs:
+        results = Result.objects.filter(candidate=candidate).select_related('assessment')
+        submissions = Submission.objects.filter(user=candidate).select_related('question')
+        avg_score = round(submissions.aggregate(Avg('score'))['score__avg'] or 0, 1)
+        preferred_language = 'Not available'
+        successful_submissions = [submission for submission in submissions if is_successful_submission(submission)]
+        if successful_submissions:
+            language_counts = {}
+            for submission in successful_submissions:
+                language_name = normalize_language(getattr(submission, 'language', ''))
+                if language_name == 'Not available':
+                    continue
+                language_counts[language_name] = language_counts.get(language_name, 0) + 1
+            if language_counts:
+                preferred_language = max(language_counts.items(), key=lambda item: (item[1], item[0]))[0]
+        problems_solved = count_problems_solved(successful_submissions)
+        easy_solved = sum(1 for submission in successful_submissions if str(getattr(submission.question, 'difficulty', '') or '').lower() == 'easy')
+        medium_solved = sum(1 for submission in successful_submissions if str(getattr(submission.question, 'difficulty', '') or '').lower() == 'medium')
+        hard_solved = sum(1 for submission in successful_submissions if str(getattr(submission.question, 'difficulty', '') or '').lower() == 'hard')
+        status = 'Active' if (problems_solved > 0 or results.exists() or submissions.exists()) else 'Inactive'
+
+        recent_assessment_history = [
+            {
+                'title': result.assessment.title,
+                'detail': f"Score {result.score} • {'Passed' if result.passed else 'Failed'} • {result.submitted_at.strftime('%b %d, %Y')}",
+            }
+            for result in results.order_by('-submitted_at')[:5]
+        ]
+
+        recent_submission_history = [
+            {
+                'title': submission.question.title,
+                'detail': f"{normalize_language(submission.language)} • {submission.score} • {submission.result or 'Pending'} • {submission.submitted_at.strftime('%b %d, %Y')}",
+            }
+            for submission in submissions.order_by('-submitted_at')[:5]
+        ]
+
+        recent_contest_history = []
+        contest_titles = {str(result.assessment.title or '').lower() for result in results}
+        for contest in Contest.objects.order_by('-start_time')[:5]:
+            contest_title = str(contest.title or '').lower()
+            if any(contest_title in assessment_title or assessment_title in contest_title for assessment_title in contest_titles):
+                recent_contest_history.append({
+                    'title': contest.title,
+                    'detail': f"{contest.start_time.strftime('%b %d, %Y')} • Score {next((result.score for result in results if str(result.assessment.title or '').lower() in contest_title or contest_title in str(result.assessment.title or '').lower()), 0)} • Rank {next((result.rank for result in results if str(result.assessment.title or '').lower() in contest_title or contest_title in str(result.assessment.title or '').lower()), 0)}",
+                })
+
+        row = {
+            'id': candidate.id,
+            'name': candidate.full_name or candidate.username,
+            'username': candidate.username,
+            'email': candidate.email or 'Not provided',
+            'mobile': candidate.mobile or 'Not provided',
+            'registration_date': candidate.date_joined.strftime('%b %d, %Y') if candidate.date_joined else 'N/A',
+            'last_login': candidate.last_login.strftime('%b %d, %Y %H:%M') if candidate.last_login else 'Never',
+            'problems_solved': problems_solved,
+            'average_score': avg_score,
+            'preferred_language': preferred_language,
+            'status': status,
+            'contest_participation': count_contest_participation(results),
+            'total_problems_solved': problems_solved,
+            'easy_problems_solved': easy_solved,
+            'medium_problems_solved': medium_solved,
+            'hard_problems_solved': hard_solved,
+            'recent_assessment_history': recent_assessment_history,
+            'recent_submission_history': recent_submission_history,
+            'recent_contest_history': recent_contest_history,
+        }
+
+        if preferred_language_filter and row['preferred_language'] != preferred_language_filter:
+            continue
+        if problems_solved_filter:
+            if problems_solved_filter == 'below-40':
+                if row['problems_solved'] >= 40:
+                    continue
+            elif problems_solved_filter == '40+':
+                if row['problems_solved'] < 40:
+                    continue
+            elif problems_solved_filter == '50+':
+                if row['problems_solved'] < 50:
+                    continue
+            elif problems_solved_filter == '75+':
+                if row['problems_solved'] < 75:
+                    continue
+            elif problems_solved_filter == '100+':
+                if row['problems_solved'] < 100:
+                    continue
+        if status_filter and row['status'] != status_filter:
+            continue
+
+        candidate_rows.append(row)
+
+    candidate_rows.sort(key=lambda item: (-item['average_score'], item['name'].lower(), item['id']))
+    for index, item in enumerate(candidate_rows, start=1):
+        item['global_rank'] = index
+
+    languages = sorted({
+        normalize_language(language)
+        for language in Submission.objects.exclude(language='').values_list('language', flat=True)
+        if normalize_language(language) != 'Not available'
+    })
+    problem_ranges = [
+        ('Below 40', 'below-40'),
+        ('40+', '40+'),
+        ('50+', '50+'),
+        ('75+', '75+'),
+        ('100+', '100+'),
+    ]
+
+    return render(request, 'recruiter/candidates.html', {
+        'username': request.user.username,
+        'candidates': candidate_rows,
+        'languages': languages,
+        'problem_ranges': problem_ranges,
+        'search': search,
+        'preferred_language': preferred_language_filter,
+        'problems_solved': problems_solved_filter,
+        'status': status_filter,
+    })
+
 
 def recruiter_dashboard(request):
     if not request.user.is_authenticated:
@@ -811,3 +1023,39 @@ def contest_stats_api(request):
             'success': False,
             'error': str(e)
         }, status=500)
+
+
+@login_required
+def recruiter_settings(request):
+    """Recruiter-specific settings page. Staff-only."""
+    if not request.user.is_authenticated or not request.user.is_staff:
+        return redirect('/accounts/login/')
+    
+    settings_obj, created = UserSettings.objects.get_or_create(user=request.user)
+
+    context = {
+        "profile_form": UserProfileForm(instance=request.user),
+        "password_form": SettingsPasswordChangeForm(request.user),
+        "notifications_form": NotificationsSettingsForm(instance=settings_obj),
+        "editor_form": EditorPreferencesForm(instance=settings_obj),
+        "privacy_form": PrivacySettingsForm(instance=settings_obj),
+        "settings": settings_obj,
+    }
+
+    return render(request, "recruiter/settings.html", context)
+
+    
+
+@login_required
+def recruiter_settings(request):
+    if not request.user.is_authenticated:
+        return redirect('/accounts/login/')
+
+    return render(
+        request,
+        'recruiter/settings.html',
+        {
+            'username': request.user.username,
+        }
+    )
+    
