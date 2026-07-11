@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% block page_title %}// My Analytics{% endblock %}
+{% block content %}
+{% include 'includes/back_button.html' with fallback_url='/contest/' %}
+
+<div class="anim-in" style="margin-bottom:36px; display:flex; justify-content:space-between; align-items:flex-end;">
+  <div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.68rem;letter-spacing:3px;color:var(--neon-cyan);margin-bottom:10px;">// PERFORMANCE</div>
+    <h2 style="font-family:'Orbitron',monospace;font-size:2rem;font-weight:900;color:#f0eaff; margin-bottom: 0;">
+      <i class="fas fa-chart-line" style="color:#b026ff;margin-right:10px;"></i>
+      <span style="background:linear-gradient(90deg,#ff2d78,#b026ff,#00fff7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Analytics</span>
+    </h2>
+  </div>
+</div>
+
+<div class="row g-4 mb-4 anim-in anim-d1">
+    <div class="col-md-3">
+        <div class="card-glass p-4" style="text-align:center; border-bottom: 3px solid #00fff7; background: rgba(12,8,28,0.85);">
+            <div style="color: rgba(240,234,255,0.5); font-size: 0.8rem; font-family: 'JetBrains Mono', monospace; margin-bottom: 10px;">GLOBAL CONTESTS</div>
+            <div style="font-size: 2.5rem; font-weight: 700; color: #f0eaff; font-family: 'Orbitron', monospace;">{{ total_contests }}</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card-glass p-4" style="text-align:center; border-bottom: 3px solid #b026ff; background: rgba(12,8,28,0.85);">
+            <div style="color: rgba(240,234,255,0.5); font-size: 0.8rem; font-family: 'JetBrains Mono', monospace; margin-bottom: 10px;">REGISTERED</div>
+            <div style="font-size: 2.5rem; font-weight: 700; color: #f0eaff; font-family: 'Orbitron', monospace;">{{ registered }}</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card-glass p-4" style="text-align:center; border-bottom: 3px solid #4ade80; background: rgba(12,8,28,0.85);">
+            <div style="color: rgba(240,234,255,0.5); font-size: 0.8rem; font-family: 'JetBrains Mono', monospace; margin-bottom: 10px;">COMPLETED</div>
+            <div style="font-size: 2.5rem; font-weight: 700; color: #f0eaff; font-family: 'Orbitron', monospace;">{{ completed }}</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card-glass p-4" style="text-align:center; border-bottom: 3px solid #ff2d78; background: rgba(12,8,28,0.85);">
+            <div style="color: rgba(240,234,255,0.5); font-size: 0.8rem; font-family: 'JetBrains Mono', monospace; margin-bottom: 10px;">UNDERSTANDING LEVEL</div>
+            <div style="font-size: 2.5rem; font-weight: 700; color: #f0eaff; font-family: 'Orbitron', monospace;">{{ understanding_level }}<span style="font-size: 1.5rem;">%</span></div>
+        </div>
+    </div>
+</div>
+
+</div>
+
+<div class="row g-4 mb-4 anim-in anim-d2">
+    <div class="col-md-12">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
+            <i class="fas fa-trophy" style="color:#b026ff;"></i>
+            <span style="font-family:'Orbitron',monospace;font-size:0.9rem;font-weight:700;color:#b026ff;">Global Leaderboard</span>
+        </div>
+        <div class="card-glass p-4" style="background:rgba(12,8,28,0.85); border: 1px solid rgba(176,38,255,0.2); border-radius: 8px;">
+            <div class="row text-center">
+                {% for item in top_3 %}
+                <div class="col-md-4">
+                    <div style="padding: 15px; border-radius: 8px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.1);">
+                        <div style="font-size: 2rem; font-family: 'Orbitron', monospace; {% if forloop.counter == 1 %}color: #ffd700; text-shadow: 0 0 10px rgba(255,215,0,0.5);{% elif forloop.counter == 2 %}color: #c0c0c0; text-shadow: 0 0 10px rgba(192,192,192,0.5);{% elif forloop.counter == 3 %}color: #cd7f32; text-shadow: 0 0 10px rgba(205,127,50,0.5);{% endif %} font-weight: 900;">
+                            #{{ forloop.counter }}
+                        </div>
+                        <div style="font-size: 1.1rem; color: #fff; font-weight: bold; margin-top: 10px;">{{ item.candidate__username }}</div>
+                        <div style="color: var(--neon-cyan); font-family: 'JetBrains Mono', monospace; margin-top: 5px;">{{ item.total_score }} pts</div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12" style="color: rgba(240,234,255,0.5); font-family: 'JetBrains Mono', monospace;">No candidates have completed exams yet.</div>
+                {% endfor %}
+            </div>
+            
+            {% if candidate_rank %}
+            <div style="margin-top: 25px; text-align: center; border-top: 1px solid rgba(176,38,255,0.2); padding-top: 20px;">
+                <div style="font-size: 1rem; color: rgba(240,234,255,0.7); font-family: 'Inter', sans-serif;">Your Global Rank</div>
+                <div style="font-size: 2rem; color: #00fff7; font-family: 'Orbitron', monospace; font-weight: 900; text-shadow: 0 0 10px rgba(0,255,247,0.3);">
+                    #{{ candidate_rank }}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="anim-in anim-d3">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
+        <i class="fas fa-history" style="color:#b026ff;"></i>
+        <span style="font-family:'Orbitron',monospace;font-size:0.9rem;font-weight:700;color:#b026ff;">History</span>
+    </div>
+    <div class="card-glass" style="background:rgba(12,8,28,0.85); border: 1px solid rgba(176,38,255,0.2); border-radius: 8px; overflow: hidden;">
+        <div class="table-responsive">
+            <table style="width: 100%; color: #ffffff; border-collapse: collapse;">
+                <thead>
+                    <tr style="background: #2a0a40; border-bottom: 1px solid rgba(176,38,255,0.3);">
+                        <th style="color:#b026ff;padding:16px 22px;font-size:0.75rem;letter-spacing:2px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;">CONTEST</th>
+                        <th style="color:#b026ff;padding:16px 22px;font-size:0.75rem;letter-spacing:2px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;">DATE COMPLETED</th>
+                        <th style="color:#b026ff;padding:16px 22px;font-size:0.75rem;letter-spacing:2px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;">SCORE</th>
+                        <th style="color:#b026ff;padding:16px 22px;font-size:0.75rem;letter-spacing:2px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;">ACCURACY</th>
+                    </tr>
+                </thead>
+                <tbody style="background: transparent;">
+                    {% for result in results %}
+                    <tr style="border-bottom:1px solid rgba(176,38,255,0.1); transition: background 0.3s;" onmouseover="this.style.background='rgba(176,38,255,0.05)'" onmouseout="this.style.background='transparent'">
+                        <td style="padding:16px 22px;color:#f0eaff;font-weight:600;font-family:'Orbitron',monospace;font-size:0.9rem;">
+                            <a href="{% url 'view_result' result.contest.id %}" style="color:#f0eaff; text-decoration:none;">{{ result.contest.title }}</a>
+                        </td>
+                        <td style="padding:16px 22px;color:rgba(240,234,255,0.7);font-family:'JetBrains Mono',monospace;font-size:0.8rem;">{{ result.completed_at|date:"D d M, Y H:i" }}</td>
+                        <td style="padding:16px 22px; font-family:'JetBrains Mono',monospace;">
+                            <span style="color:#00fff7; font-weight:700;">{{ result.score }}</span> <span style="color:rgba(255,255,255,0.3)">/ {{ result.total_marks }}</span>
+                        </td>
+                        <td style="padding:16px 22px;">
+                            {% if result.total_marks > 0 %}
+                                {% widthratio result.score result.total_marks 100 as percentage %}
+                                <div class="progress" style="height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px;">
+                                    <div class="progress-bar" role="progressbar" style="width: {{ percentage }}%; background: linear-gradient(90deg, #00fff7, #b026ff); border-radius: 3px;" aria-valuenow="{{ percentage }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                                <div style="font-size: 0.7rem; color: rgba(240,234,255,0.6); margin-top: 4px; font-family:'JetBrains Mono',monospace; text-align:right;">{{ percentage }}%</div>
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" style="padding:40px;text-align:center;color:rgba(240,234,255,0.45);font-family:'JetBrains Mono',monospace;font-size:0.85rem;">
+                            // No analytics data available yet.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

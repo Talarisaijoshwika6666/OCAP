@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LogicLabs — Create Objective Contest</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+:root {
+    --bg-void: #030611;
+    --neon-blue: #00e5ff;
+    --neon-purple: #7000ff;
+    --neon-indigo: #0052ff;
+    --neon-cyan: #00f5ff;
+    --neon-pink: #00a2ff;
+    --text-primary: #e0f2fe;
+    --text-dim: rgba(224, 242, 254, 0.45);
+    --sidebar-w: 240px;
+    --font-display: 'Orbitron', sans-serif;
+    --font-body: 'Inter', sans-serif;
+    --font-code: 'JetBrains Mono', monospace;
+}
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+body {
+    background: var(--bg-void);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    min-height: 100vh;
+    display: flex;
+    overflow-x: hidden;
+    position: relative;
+}
+
+/* ── BACKGROUND GLOW LAYER ── */
+.bg-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background:
+        radial-gradient(ellipse 700px 500px at 15% 50%, rgba(0, 114, 255, 0.15) 0%, transparent 65%),
+        radial-gradient(ellipse 600px 400px at 85% 30%, rgba(0, 240, 255, 0.12) 0%, transparent 65%),
+        radial-gradient(ellipse 500px 400px at 50% 90%, rgba(0, 82, 255, 0.10) 0%, transparent 65%),
+        radial-gradient(ellipse 400px 300px at 90% 80%, rgba(0, 229, 255, 0.10) 0%, transparent 65%);
+}
+
+.bg-layer::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(0, 114, 255, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 240, 255, 0.04) 1px, transparent 1px);
+    background-size: 55px 55px;
+}
+
+/* ── Sidebar ── */
+.sidebar {
+    width: var(--sidebar-w);
+    min-height: 100vh;
+    background: rgba(8, 5, 18, 0.95);
+    border-right: 1px solid rgba(0, 114, 255, 0.2);
+    display: flex;
+    flex-direction: column;
+    padding: 24px 0;
+    position: fixed;
+    top: 0; left: 0;
+    backdrop-filter: blur(24px);
+    z-index: 1000;
+    height: 100vh;
+    overflow-y: auto;
+}
+
+.sidebar::after {
+    content: '';
+    position: absolute;
+    top: 0; right: 0;
+    width: 1px; height: 100%;
+    background: linear-gradient(180deg,
+      transparent 0%,
+      rgba(0, 240, 255, 0.6) 25%,
+      rgba(176, 38, 255, 0.8) 50%,
+      rgba(0, 82, 255, 0.6) 75%,
+      transparent 100%);
+}
+
+.sidebar-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 20px 24px;
+    border-bottom: 1px solid rgba(0,114,255,0.15);
+}
+
+.logo-icon {
+    width: 38px; height: 38px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    overflow: hidden;
+    position: relative;
+}
+
+.logo-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 8px;
+    display: block;
+}
+
+.logo-text { font-size: 18px; font-weight: 700; font-family: var(--font-display); }
+.logo-text .logic { color: #fff; text-shadow: 0 0 10px rgba(255, 255, 255, 0.3); }
+.logo-text .labs  {
+    background: linear-gradient(90deg, var(--neon-cyan), var(--neon-purple), var(--neon-pink));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 8px rgba(0, 114, 255, 0.45));
+}
+
+.sidebar-section {
+    padding: 18px 20px 6px;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: rgba(0,114,255,0.5);
+    text-transform: uppercase;
+    font-family: var(--font-code);
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 20px;
+    color: var(--text-dim);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    border-left: 3px solid transparent;
+    transition: all 0.25s;
+    cursor: pointer;
+    margin: 2px 8px;
+    border-radius: 9px;
+}
+
+.nav-item:hover {
+    color: var(--neon-blue);
+    background: rgba(0, 240, 255, 0.05);
+    border-left-color: var(--neon-blue);
+    transform: translateX(4px);
+}
+
+.nav-item.active {
+    color: var(--neon-purple);
+    background: rgba(176, 38, 255, 0.07);
+    border-left-color: var(--neon-purple);
+}
+
+.nav-icon { font-size: 16px; width: 20px; text-align: center; }
+
+.sidebar-bottom {
+    margin-top: auto;
+    padding: 16px 20px;
+    border-top: 1px solid rgba(0,114,255,0.15);
+}
+
+.recruiter-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.recruiter-avatar {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--neon-blue), var(--neon-purple));
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    box-shadow: 0 0 12px rgba(0, 240, 255, 0.4);
+    color: white;
+    flex-shrink: 0;
+}
+
+.recruiter-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.recruiter-role {
+    font-size: 11px;
+    font-family: var(--font-code);
+    background: linear-gradient(90deg, var(--neon-cyan), var(--neon-blue));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.btn-logout {
+    width: 100%;
+    padding: 9px;
+    background: rgba(0, 240, 255, 0.05);
+    border: 1px solid rgba(0, 240, 255, 0.2);
+    border-radius: 8px;
+    color: var(--neon-blue);
+    font-size: 13px;
+    cursor: pointer;
+    text-align: center;
+    text-decoration: none;
+    display: block;
+    transition: all 0.2s;
+    font-family: var(--font-code);
+}
+
+.btn-logout:hover {
+    background: rgba(0, 114, 255, 0.15);
+    border-color: rgba(0, 114, 255, 0.4);
+    box-shadow: 0 0 12px rgba(0, 114, 255, 0.25);
+    color: var(--text-primary);
+}
+
+/* ── Main Content ── */
+.main {
+    margin-left: var(--sidebar-w);
+    flex: 1;
+    padding: 32px;
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: calc(100% - var(--sidebar-w));
+}
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+.page-title {
+    font-family: var(--font-display);
+    font-size: 22px;
+    color: var(--neon-blue);
+}
+.btn-back {
+    background: rgba(255,255,255,0.05);
+    color: var(--text-primary);
+    border: 1px solid rgba(255,255,255,0.15);
+    padding: 8px 16px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 14px;
+}
+.form-group {
+    margin-bottom: 16px;
+}
+label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 13px;
+    color: var(--text-dim);
+}
+input, select, textarea {
+    width: 100%;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: var(--text-primary);
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 14px;
+}
+textarea { min-height: 90px; resize: vertical; }
+.btn-neon {
+    background: linear-gradient(135deg, var(--neon-purple), var(--neon-blue));
+    color: #fff;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    cursor: pointer;
+}
+.btn-cancel {
+    background: rgba(255,255,255,0.05);
+    color: var(--text-primary);
+    border: 1px solid rgba(255,255,255,0.15);
+    padding: 10px 24px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 14px;
+    margin-right: 10px;
+}
+
+        .form-container {
+            background: rgba(12, 8, 28, 0.6);
+            border: 1px solid rgba(0, 114, 255, 0.15);
+            border-radius: 12px;
+            padding: 24px;
+        }
+        .form-control, .form-select {
+            background: rgba(3, 6, 17, 0.5) !important;
+            border: 1px solid rgba(0, 114, 255, 0.2) !important;
+            color: var(--text-primary) !important;
+        }
+        .form-control:focus, .form-select:focus {
+            background: rgba(3, 6, 17, 0.8) !important;
+            border-color: var(--neon-cyan) !important;
+            color: var(--text-primary) !important;
+            box-shadow: 0 0 0 0.25rem rgba(0, 245, 255, 0.25) !important;
+        }
+        .form-label {
+            font-size: 0.85rem;
+            color: rgba(224, 242, 254, 0.8);
+        }
+        
+        .section-header {
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid rgba(0, 114, 255, 0.2);
+            padding-bottom: 10px; margin-top: 30px; margin-bottom: 20px;
+        }
+        .section-header h4 { font-family: var(--font-body); font-size: 1.1rem; font-weight: 600; margin: 0; }
+        
+        .mcq-block, .prog-block {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        .mcq-block-header, .prog-block-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .mcq-block-title, .prog-block-title { font-weight: 600; color: var(--neon-purple); }
+        
+        .btn-remove {
+            background: rgba(255, 50, 50, 0.1); border: 1px solid rgba(255, 50, 50, 0.3); color: #ff6b6b; font-size: 0.8rem; padding: 4px 10px; border-radius: 4px;
+        }
+        .btn-remove:hover { background: rgba(255, 50, 50, 0.2); color: #ff6b6b; }
+        
+        .btn-add { background: rgba(112, 0, 255, 0.15); border: 1px solid var(--neon-purple); color: var(--text-primary); }
+        .btn-add:hover { background: rgba(112, 0, 255, 0.3); color: white; }
+        
+        .btn-submit { background: linear-gradient(90deg, var(--neon-purple), var(--neon-blue)); border: none; color: white; width: 100%; padding: 12px; border-radius: 8px; font-weight: bold; margin-top: 30px; font-size: 1.1rem;}
+
+        .tc-block {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px dashed rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+        }
+
+</style>
+</head>
+<body>
+
+<!-- Background glow layer -->
+<div class="bg-layer"></div>
+
+
+{% include 'recruiter/sidebar.html' with active_page='contests' %}
+
+<div class="main">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="page-title">// CREATE NEW CONTEST</div>
+        <a href="{% url 'recruiter_contests_list' %}" class="btn btn-outline-secondary btn-sm" style="border-color: rgba(255,255,255,0.2); color: white;"><i class="fas fa-times"></i> Close</a>
+    </div>
+
+    <form method="POST" action="{% url 'recruiter_contest_create_objective' %}" class="form-container">
+        {% csrf_token %}
+        <div class="row g-3">
+            <div class="col-12">
+                <label class="form-label">Contest Name *</label>
+                <input type="text" name="title" class="form-control" placeholder="e.g. Weekly Coding Challenge #12" required>
+            </div>
+            <div class="col-12">
+                <label class="form-label">Contest Description</label>
+                <textarea name="description" class="form-control" rows="3" placeholder="What is this contest about?"></textarea>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Topic</label>
+                <input type="text" name="topic" class="form-control" placeholder="e.g. Data Structures, Arrays">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Contest Duration (minutes) *</label>
+                <input type="number" name="duration" class="form-control" placeholder="e.g. 90" required>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Contest Start Date *</label>
+                <input type="date" name="start_date" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Contest Start Time *</label>
+                <div class="d-flex gap-2">
+                    <select name="start_hour" class="form-select" required>
+                        <option value="12">12</option>
+                        <option value="01">01</option>
+                        <option value="02">02</option>
+                        <option value="03">03</option>
+                        <option value="04">04</option>
+                        <option value="05">05</option>
+                        <option value="06">06</option>
+                        <option value="07">07</option>
+                        <option value="08">08</option>
+                        <option value="09">09</option>
+                        <option value="10">10</option>
+                        <option value="11">11</option>
+                    </select>
+                    <span class="text-light align-self-center">:</span>
+                    <input type="number" name="start_minute" class="form-control" placeholder="Min" min="0" max="59" required style="width: 80px;">
+                    <select name="start_ampm" class="form-select" required>
+                        <option value="AM">AM</option>
+                        <option value="PM">PM</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-12 mt-3">
+                <label class="form-label d-block">Programming Languages Allowed *</label>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" name="languages" value="C" id="langC">
+                    <label class="form-check-label" for="langC">C</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" name="languages" value="C++" id="langCpp" checked>
+                    <label class="form-check-label" for="langCpp">C++</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" name="languages" value="Java" id="langJava" checked>
+                    <label class="form-check-label" for="langJava">Java</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" name="languages" value="Python" id="langPython" checked>
+                    <label class="form-check-label" for="langPython">Python</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" name="languages" value="JavaScript" id="langJS" checked>
+                    <label class="form-check-label" for="langJS">JavaScript</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-header">
+            <h4><i class="fas fa-file-alt text-light me-2"></i> MCQs</h4>
+            <span class="badge" style="background: rgba(112, 0, 255, 0.3); color: var(--neon-purple); border: 1px solid var(--neon-purple);" id="mcq-count-badge">Number of MCQs: 1</span>
+        </div>
+
+        <div id="mcq-container">
+            <!-- Initial MCQ Block -->
+            <div class="mcq-block" id="mcq-1">
+                <div class="mcq-block-header">
+                    <span class="mcq-block-title">MCQ #1</span>
+                </div>
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label">Question *</label>
+                        <textarea name="mcq_1_question" class="form-control" rows="2" required></textarea>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Option A *</label>
+                        <input type="text" name="mcq_1_option_a" class="form-control" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Option B *</label>
+                        <input type="text" name="mcq_1_option_b" class="form-control" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Option C *</label>
+                        <input type="text" name="mcq_1_option_c" class="form-control" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Option D *</label>
+                        <input type="text" name="mcq_1_option_d" class="form-control" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Correct Answer *</label>
+                        <select name="mcq_1_correct" class="form-select" required>
+                            <option value="Option A">Option A</option>
+                            <option value="Option B">Option B</option>
+                            <option value="Option C">Option C</option>
+                            <option value="Option D">Option D</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Difficulty</label>
+                        <select name="mcq_1_difficulty" class="form-select">
+                            <option value="Easy">Easy</option>
+                            <option value="Medium">Medium</option>
+                            <option value="Hard">Hard</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Marks</label>
+                        <input type="number" name="mcq_1_marks" class="form-control" value="1">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <input type="hidden" name="mcq_count" id="mcq_count" value="1">
+
+        <button type="button" class="btn btn-add btn-sm mt-2" onclick="addMCQ()">+ Add MCQ</button>
+
+        <button type="submit" class="btn btn-submit">🚀 Create Contest</button>
+    </form>
+</div>
+
+<script>
+    let mcqCount = 1;
+
+    function addMCQ() {
+        mcqCount++;
+        document.getElementById('mcq_count').value = mcqCount;
+        updateBadge();
+
+        const container = document.getElementById('mcq-container');
+        const block = document.createElement('div');
+        block.className = 'mcq-block';
+        block.id = `mcq-${mcqCount}`;
+        
+        block.innerHTML = `
+            <div class="mcq-block-header">
+                <span class="mcq-block-title">MCQ #${mcqCount}</span>
+                <button type="button" class="btn btn-remove" onclick="removeMCQ(${mcqCount})"><i class="fas fa-times"></i> Remove</button>
+            </div>
+            <div class="row g-3">
+                <div class="col-12">
+                    <label class="form-label">Question *</label>
+                    <textarea name="mcq_${mcqCount}_question" class="form-control" rows="2" required></textarea>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Option A *</label>
+                    <input type="text" name="mcq_${mcqCount}_option_a" class="form-control" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Option B *</label>
+                    <input type="text" name="mcq_${mcqCount}_option_b" class="form-control" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Option C *</label>
+                    <input type="text" name="mcq_${mcqCount}_option_c" class="form-control" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Option D *</label>
+                    <input type="text" name="mcq_${mcqCount}_option_d" class="form-control" required>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Correct Answer *</label>
+                    <select name="mcq_${mcqCount}_correct" class="form-select" required>
+                        <option value="Option A">Option A</option>
+                        <option value="Option B">Option B</option>
+                        <option value="Option C">Option C</option>
+                        <option value="Option D">Option D</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Difficulty</label>
+                    <select name="mcq_${mcqCount}_difficulty" class="form-select">
+                        <option value="Easy">Easy</option>
+                        <option value="Medium">Medium</option>
+                        <option value="Hard">Hard</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Marks</label>
+                    <input type="number" name="mcq_${mcqCount}_marks" class="form-control" value="1">
+                </div>
+            </div>
+        `;
+        
+        container.appendChild(block);
+    }
+
+    function removeMCQ(id) {
+        const block = document.getElementById(`mcq-${id}`);
+        if (block) {
+            block.remove();
+            updateBadge();
+        }
+    }
+
+    function updateBadge() {
+        const count = document.querySelectorAll('.mcq-block').length;
+        document.getElementById('mcq-count-badge').innerText = `Number of MCQs: ${count}`;
+    }
+</script>
+</body>
+</html>

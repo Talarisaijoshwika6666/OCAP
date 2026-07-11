@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block page_title %}// Contest Result{% endblock %}
+{% block content %}
+{% include 'includes/back_button.html' with fallback_url='/contest/' %}
+
+<div class="anim-in" style="text-align:center;margin-bottom:36px;">
+  <div style="font-family:'JetBrains Mono',monospace;font-size:0.68rem;letter-spacing:3px;color:var(--neon-cyan);margin-bottom:10px;">// RESULT</div>
+  <h2 style="font-family:'Orbitron',monospace;font-size:2rem;font-weight:900;color:#f0eaff;">
+    <i class="fas fa-trophy" style="color:#ff2d78;margin-right:10px;"></i>
+    <span style="background:linear-gradient(90deg,#ff2d78,#b026ff,#00fff7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">{{ contest.title }}</span>
+  </h2>
+  <p style="color:rgba(240,234,255,0.45);margin-top:8px;">Completed on {{ result.completed_at|date:"F d, Y, h:i a" }}</p>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card-glass p-5" style="text-align:center; border: 1px solid rgba(176,38,255,0.3); background: rgba(12,8,28,0.85);">
+            <h4 style="font-family:'Orbitron',monospace; color: #b026ff; margin-bottom: 20px;">YOUR SCORE</h4>
+            <div style="font-size: 4rem; font-weight: 900; font-family: 'JetBrains Mono', monospace; color: #00fff7; margin-bottom: 10px; text-shadow: 0 0 15px rgba(0,255,247,0.5);">
+                {{ result.score }} <span style="font-size: 2rem; color: rgba(240,234,255,0.5);">/ {{ result.total_marks }}</span>
+            </div>
+            
+            <div style="display: flex; justify-content: center; gap: 30px; margin-top: 20px;">
+                <div style="text-align: center;">
+                    <div style="font-size: 1.5rem; font-weight: bold; color: #4ade80;">{{ correct_count }}</div>
+                    <div style="font-size: 0.8rem; color: rgba(240,234,255,0.5); font-family: 'JetBrains Mono', monospace;">CORRECT</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-size: 1.5rem; font-weight: bold; color: #f87171;">{{ wrong_count }}</div>
+                    <div style="font-size: 0.8rem; color: rgba(240,234,255,0.5); font-family: 'JetBrains Mono', monospace;">WRONG</div>
+                </div>
+            </div>
+
+            <div style="margin-top: 40px;">
+                <a href="{% url 'view_exam' contest.id %}" class="btn-neon" style="font-size: 0.9rem;"><i class="fas fa-file-alt" style="margin-right: 8px;"></i> View Detailed Feedback</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

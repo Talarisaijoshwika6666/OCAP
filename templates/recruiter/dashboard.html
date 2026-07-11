@@ -626,7 +626,7 @@
     <div class="stats-grid-row loaded-content">
         <!-- Card 1: Total Candidates -->
         <div class="stat-card-col">
-            <a href="/admin/auth/user/" class="stat-card anim-in anim-d1" style="--card-accent: var(--neon-blue); --card-accent-rgb: 0, 229, 255;">
+            <a href="/recruiter/candidates/" class="stat-card anim-in anim-d1" style="--card-accent: var(--neon-blue); --card-accent-rgb: 0, 229, 255;">
                 <div class="d-flex align-items-center gap-3 w-100">
                     <div class="stat-icon-wrapper" style="background: rgba(0, 229, 255, 0.08); border: 1px solid rgba(0, 229, 255, 0.25);">
                         <i class="fas fa-users" style="color: var(--neon-blue);"></i>
@@ -640,7 +640,7 @@
         </div>
         <!-- Card 2: Total Problems -->
         <div class="stat-card-col">
-            <a href="/admin/questions/question/" class="stat-card anim-in anim-d2" style="--card-accent: #00ff82; --card-accent-rgb: 0, 255, 130;">
+            <a href="/recruiter/problems/" class="stat-card anim-in anim-d2" style="--card-accent: #00ff82; --card-accent-rgb: 0, 255, 130;">
                 <div class="d-flex align-items-center gap-3 w-100">
                     <div class="stat-icon-wrapper" style="background: rgba(0, 255, 130, 0.08); border: 1px solid rgba(0, 255, 130, 0.25);">
                         <i class="fas fa-laptop-code" style="color: #00ff82;"></i>
@@ -654,7 +654,7 @@
         </div>
         <!-- Card 3: Total Submissions -->
         <div class="stat-card-col">
-            <a href="/admin/submissions/submission/" class="stat-card anim-in anim-d3" style="--card-accent: var(--neon-cyan); --card-accent-rgb: 0, 245, 255;">
+            <a href="/recruiter/all-submissions/" class="stat-card anim-in anim-d3" style="--card-accent: var(--neon-cyan); --card-accent-rgb: 0, 245, 255;">
                 <div class="d-flex align-items-center gap-3 w-100">
                     <div class="stat-icon-wrapper" style="background: rgba(0, 245, 255, 0.08); border: 1px solid rgba(0, 245, 255, 0.25);">
                         <i class="fas fa-paper-plane" style="color: var(--neon-cyan);"></i>
@@ -668,7 +668,7 @@
         </div>
         <!-- Card 4: Average Score -->
         <div class="stat-card-col">
-            <a href="/admin/results/result/" class="stat-card anim-in anim-d4" style="--card-accent: var(--neon-blue); --card-accent-rgb: 0, 229, 255;">
+            <a href="/recruiter/candidates/" class="stat-card anim-in anim-d4" style="--card-accent: var(--neon-blue); --card-accent-rgb: 0, 229, 255;">
                 <div class="d-flex align-items-center gap-3 w-100">
                     <div class="stat-icon-wrapper" style="background: rgba(0, 229, 255, 0.08); border: 1px solid rgba(0, 229, 255, 0.25);">
                         <i class="fas fa-chart-bar" style="color: var(--neon-blue);"></i>
@@ -701,8 +701,8 @@
             <div class="card-glass anim-in anim-d2 p-4 mb-4 loaded-content" style="border-color: rgba(0,114,255,0.25);">
                 <div style="display:flex; align-items:center; gap:10px; margin-bottom:18px;">
                     <i class="fas fa-code" style="color: var(--neon-purple);"></i>
-                    <span style="font-family: 'Orbitron', monospace; font-size: 0.85rem; font-weight: 700; color: var(--text-primary); letter-spacing: 1px;">PROBLEM_BANK</span>
-                    <a href="/questions/" class="btn-neon ms-auto" style="padding: 3px 10px; font-size: 0.7rem;"><i class="fas fa-external-link-alt"></i> View All</a>
+                    <span style="font-family: 'Orbitron', monospace; font-size: 0.85rem; font-weight: 700; color: var(--text-primary); letter-spacing: 1px;">RECENT PROBLEMS</span>
+                    <a href="/recruiter/problems/" class="btn-neon ms-auto" style="padding: 3px 10px; font-size: 0.7rem;"><i class="fas fa-external-link-alt"></i> View All</a>
                 </div>
 
                 <div class="table-responsive">
@@ -876,22 +876,22 @@
                     <i class="fas fa-terminal" style="color: var(--neon-blue); margin-right: 8px;"></i>QUICK_ACTIONS
                 </div>
 
-                <a href="/admin/assessments/assessment/add/" style="display:flex; align-items:center; gap:10px; color:rgba(240,234,255,0.45); text-decoration:none; padding:9px 12px; border-radius:8px; font-size:0.83rem; border:1px solid transparent; margin-bottom:2px; transition: all 0.2s;"
+                <a href="/recruiter/problems/" style="display:flex; align-items:center; gap:10px; color:rgba(240,234,255,0.45); text-decoration:none; padding:9px 12px; border-radius:8px; font-size:0.83rem; border:1px solid transparent; margin-bottom:2px; transition: all 0.2s;"
                    onmouseover="this.style.background='rgba(0,240,255,0.06)'; this.style.color='var(--neon-blue)'; this.style.borderColor='rgba(0,240,255,0.2)';"
                    onmouseout="this.style.background='transparent'; this.style.color='rgba(240,234,255,0.45)'; this.style.borderColor='transparent';">
                     <i class="fas fa-plus-circle" style="color: var(--neon-blue); width: 16px;"></i> Create Assessment
                 </a>
-                <a href="/admin/auth/user/" style="display:flex; align-items:center; gap:10px; color:rgba(240,234,255,0.45); text-decoration:none; padding:9px 12px; border-radius:8px; font-size:0.83rem; border:1px solid transparent; margin-bottom:2px; transition: all 0.2s;"
+                <a href="/recruiter/candidates/" style="display:flex; align-items:center; gap:10px; color:rgba(240,234,255,0.45); text-decoration:none; padding:9px 12px; border-radius:8px; font-size:0.83rem; border:1px solid transparent; margin-bottom:2px; transition: all 0.2s;"
                    onmouseover="this.style.background='rgba(0,255,130,0.06)'; this.style.color='#00ff82'; this.style.borderColor='rgba(0,255,130,0.2)';"
                    onmouseout="this.style.background='transparent'; this.style.color='rgba(240,234,255,0.45)'; this.style.borderColor='transparent';">
                     <i class="fas fa-users-cog" style="color: #00ff82; width: 16px;"></i> Manage Candidates
                 </a>
-                <a href="/admin/questions/question/" style="display:flex; align-items:center; gap:10px; color:rgba(240,234,255,0.45); text-decoration:none; padding:9px 12px; border-radius:8px; font-size:0.83rem; border:1px solid transparent; margin-bottom:2px; transition: all 0.2s;"
+                <a href="/recruiter/problems/" style="display:flex; align-items:center; gap:10px; color:rgba(240,234,255,0.45); text-decoration:none; padding:9px 12px; border-radius:8px; font-size:0.83rem; border:1px solid transparent; margin-bottom:2px; transition: all 0.2s;"
                    onmouseover="this.style.background='rgba(0,255,247,0.06)'; this.style.color='#00fff7'; this.style.borderColor='rgba(0,255,247,0.2)';"
                    onmouseout="this.style.background='transparent'; this.style.color='rgba(240,234,255,0.45)'; this.style.borderColor='transparent';">
                     <i class="fas fa-tasks" style="color: #00fff7; width: 16px;"></i> Manage Problems
                 </a>
-                <a href="/admin/results/result/" style="display:flex; align-items:center; gap:10px; color:rgba(240,234,255,0.45); text-decoration:none; padding:9px 12px; border-radius:8px; font-size:0.83rem; border:1px solid transparent; transition: all 0.2s;"
+                <a href="/recruiter/reports/" style="display:flex; align-items:center; gap:10px; color:rgba(240,234,255,0.45); text-decoration:none; padding:9px 12px; border-radius:8px; font-size:0.83rem; border:1px solid transparent; transition: all 0.2s;"
                    onmouseover="this.style.background='rgba(0,114,255,0.06)'; this.style.color='#0072ff'; this.style.borderColor='rgba(0,114,255,0.2)';"
                    onmouseout="this.style.background='transparent'; this.style.color='rgba(240,234,255,0.45)'; this.style.borderColor='transparent';">
                     <i class="fas fa-chart-line" style="color: #0072ff; width: 16px;"></i> View Reports
