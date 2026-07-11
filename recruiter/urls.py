@@ -18,4 +18,12 @@ urlpatterns = [
     path('reports/api/contest-results/', views.contest_results_api, name='contest_results_api'),
     path('reports/api/contest-analytics/', views.contest_analytics_api, name='contest_analytics_api'),
     path('reports/api/contest-stats/', views.contest_stats_api, name='contest_stats_api'),
+    path('contests/', views.recruiter_contests_list, name='recruiter_contests_list'),
+    path('contests/analytics/', views.recruiter_contest_analytics, name='recruiter_contest_analytics'),
+    path('contests/create/', views.recruiter_contest_create, name='recruiter_contest_create'),
+    path('contests/create/objective/', views.recruiter_contest_create_objective, name='recruiter_contest_create_objective'),
+    path('contests/create/interactive/', views.recruiter_contest_create_interactive, name='recruiter_contest_create_interactive'),
+    path('contests/<int:contest_id>/edit/', views.recruiter_contest_edit, name='recruiter_contest_edit'),
+    path('contests/<int:contest_id>/preview/', views.recruiter_contest_preview, name='recruiter_contest_preview'),
+    path('contests/<int:contest_id>/delete/', views.recruiter_contest_delete, name='recruiter_contest_delete'),
 ]
