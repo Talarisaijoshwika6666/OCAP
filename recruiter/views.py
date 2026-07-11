@@ -1306,3 +1306,21 @@ def recruiter_contest_analytics(request):
         'leaderboard': leaderboard,
     })
 
+@login_required
+def recruiter_settings(request):
+    """Recruiter-specific settings page. Staff-only."""
+    if not request.user.is_authenticated or not request.user.is_staff:
+        return redirect('/accounts/login/')
+    
+    settings_obj, created = UserSettings.objects.get_or_create(user=request.user)
+
+    context = {
+        "profile_form": UserProfileForm(instance=request.user),
+        "password_form": SettingsPasswordChangeForm(request.user),
+        "notifications_form": NotificationsSettingsForm(instance=settings_obj),
+        "editor_form": EditorPreferencesForm(instance=settings_obj),
+        "privacy_form": PrivacySettingsForm(instance=settings_obj),
+        "settings": settings_obj,
+    }
+
+    return render(request, "recruiter/settings.html", context)
