@@ -121,7 +121,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # Internationalization
 LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Kolkata'
 USE_I18N = True
 USE_TZ = True
 
@@ -147,3 +147,4 @@ LOGOUT_REDIRECT_URL = '/accounts/login/'
 # Groq API configuration for AI Chatbot
 GROQ_API_KEY = os.environ.get('GROQ_API_KEY', 'YOUR_GROQ_API_KEY_HERE')
 GROQ_MODEL = os.environ.get('GROQ_MODEL', 'llama-3.3-70b-versatile')
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

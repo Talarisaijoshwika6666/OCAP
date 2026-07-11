@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam - {{ contest.title }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-void: #030611;
+            --panel-bg: rgba(12, 8, 28, 0.95);
+            --neon-blue: #00e5ff;
+            --neon-purple: #7000ff;
+            --neon-green: #4ade80;
+            --text-primary: #e0f2fe;
+            --text-dim: rgba(224, 242, 254, 0.6);
+            --font-display: 'Orbitron', sans-serif;
+            --font-body: 'Inter', sans-serif;
+            --font-code: 'JetBrains Mono', monospace;
+        }
+        body {
+            background: var(--bg-void);
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .exam-header {
+            background: var(--panel-bg);
+            border-bottom: 1px solid rgba(0, 114, 255, 0.2);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .exam-title {
+            font-family: var(--font-display);
+            font-size: 1.2rem;
+            color: var(--neon-blue);
+            margin: 0;
+        }
+        .timer-box {
+            background: rgba(0, 229, 255, 0.1);
+            border: 1px solid rgba(0, 229, 255, 0.3);
+            padding: 5px 15px;
+            border-radius: 6px;
+            font-family: var(--font-code);
+            font-size: 1.1rem;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .candidate-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .candidate-avatar {
+            width: 40px; height: 40px;
+            background: linear-gradient(135deg, var(--neon-purple), var(--neon-blue));
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: bold;
+        }
+        .exam-body {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        .question-area {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+            border-right: 1px solid rgba(0, 114, 255, 0.2);
+            display: flex;
+            flex-direction: column;
+        }
+        .palette-area {
+            width: 320px;
+            background: var(--panel-bg);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        .question-number {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--neon-purple);
+        }
+        .question-marks {
+            font-size: 0.9rem;
+            color: var(--text-dim);
+        }
+        .question-text {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+        .option-label {
+            display: block;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .option-label:hover {
+            background: rgba(0, 229, 255, 0.05);
+            border-color: rgba(0, 229, 255, 0.3);
+        }
+        .option-label input[type="radio"] {
+            transform: scale(1.2);
+            accent-color: var(--neon-blue);
+        }
+        .option-label.selected {
+            background: rgba(0, 229, 255, 0.1);
+            border-color: var(--neon-blue);
+        }
+        .action-bar {
+            margin-top: auto;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+        }
+        .btn-exam {
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-clear {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .btn-clear:hover { background: rgba(255, 255, 255, 0.2); }
+        .btn-mark {
+            background: rgba(255, 165, 0, 0.1);
+            color: #ffbf00;
+            border: 1px solid rgba(255, 165, 0, 0.4);
+        }
+        .btn-mark:hover { background: rgba(255, 165, 0, 0.2); }
+        .btn-save {
+            background: linear-gradient(135deg, var(--neon-purple), var(--neon-blue));
+            color: #fff;
+        }
+        .btn-save:hover { box-shadow: 0 0 15px rgba(0, 229, 255, 0.4); }
+        .palette-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin-top: 20px;
+            margin-bottom: auto;
+            overflow-y: auto;
+        }
+        .palette-btn {
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: transparent;
+            color: var(--text-primary);
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 0.85rem;
+        }
+        .palette-btn.answered {
+            background: var(--neon-green);
+            color: #000;
+            border-color: var(--neon-green);
+        }
+        .palette-btn.marked {
+            background: #ffbf00;
+            color: #000;
+            border-color: #ffbf00;
+            border-radius: 50% 50% 0 50%;
+        }
+        .palette-btn.marked-answered {
+            background: var(--neon-green);
+            color: #000;
+            border-color: var(--neon-green);
+            position: relative;
+        }
+        .palette-btn.marked-answered::after {
+            content: '';
+            position: absolute;
+            bottom: 2px; right: 2px;
+            width: 8px; height: 8px;
+            background: #ffbf00;
+            border-radius: 50%;
+        }
+        .palette-btn.not-visited {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .palette-btn.not-answered {
+            background: #ff4757;
+            color: white;
+            border-color: #ff4757;
+            border-radius: 6px;
+        }
+        .palette-btn.active {
+            box-shadow: 0 0 0 3px rgba(0, 229, 255, 0.5);
+        }
+        .legend {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        .legend-icon {
+            width: 18px; height: 18px;
+            display: inline-block;
+        }
+        .btn-submit-exam {
+            background: rgba(255, 71, 87, 0.1);
+            color: #ff4757;
+            border: 1px solid rgba(255, 71, 87, 0.4);
+            padding: 12px;
+            border-radius: 6px;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 20px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-submit-exam:hover {
+            background: #ff4757;
+            color: #fff;
+        }
+        .q-container { display: none; }
+        .q-container.active { display: block; }
+    </style>
+</head>
+<body>
+    <header class="exam-header">
+        <h1 class="exam-title"><i class="fas fa-laptop-code me-2"></i>{{ contest.title }}</h1>
+        <div class="timer-box">
+            <i class="fas fa-clock" style="color: var(--neon-blue);"></i>
+            <span id="timer">Time Left: --:--:--</span>
+        </div>
+        <div class="candidate-info">
+            <div class="text-end">
+                <div style="font-weight: 600; font-size: 0.9rem;">{{ request.user.get_full_name|default:request.user.username }}</div>
+                <div style="font-size: 0.75rem; color: var(--text-dim);">Candidate</div>
+            </div>
+            <div class="candidate-avatar">
+                <i class="fas fa-user"></i>
+            </div>
+        </div>
+    </header>
+
+    <div class="exam-body">
+        <div class="question-area">
+            {% for q in questions %}
+            <div class="q-container" id="q-container-{{ forloop.counter }}" data-qid="{{ q.id }}" data-idx="{{ forloop.counter }}">
+                <div class="question-header">
+                    <div class="question-number">Question No. <span>{{ forloop.counter }}</span></div>
+                    <div class="question-marks">Marks: <span class="text-success">+{{ q.marks }}</span> | <span class="text-danger">-0</span></div>
+                </div>
+                <div class="question-text">
+                    {{ q.question_text|linebreaksbr }}
+                </div>
+                <div class="options">
+                    <label class="option-label" onclick="selectOption({{ forloop.counter }}, 'Option A')">
+                        <input type="radio" name="answer_{{ q.id }}" value="Option A"> A. {{ q.option_a }}
+                    </label>
+                    <label class="option-label" onclick="selectOption({{ forloop.counter }}, 'Option B')">
+                        <input type="radio" name="answer_{{ q.id }}" value="Option B"> B. {{ q.option_b }}
+                    </label>
+                    <label class="option-label" onclick="selectOption({{ forloop.counter }}, 'Option C')">
+                        <input type="radio" name="answer_{{ q.id }}" value="Option C"> C. {{ q.option_c }}
+                    </label>
+                    <label class="option-label" onclick="selectOption({{ forloop.counter }}, 'Option D')">
+                        <input type="radio" name="answer_{{ q.id }}" value="Option D"> D. {{ q.option_d }}
+                    </label>
+                </div>
+            </div>
+            {% endfor %}
+
+            <div class="action-bar mt-auto">
+                <div>
+                    <button class="btn-exam btn-mark me-2" onclick="markForReview()">Mark for Review & Next</button>
+                    <button class="btn-exam btn-clear" onclick="clearResponse()">Clear Response</button>
+                </div>
+                <button class="btn-exam btn-save" onclick="saveAndNext()">Save & Next</button>
+            </div>
+        </div>
+
+        <div class="palette-area">
+            <h5 style="font-family: var(--font-display); font-size: 1rem; margin-bottom: 15px;">Question Palette</h5>
+            <div class="legend">
+                <div class="row g-2">
+                    <div class="col-6 legend-item"><div class="legend-icon palette-btn answered"></div> Answered</div>
+                    <div class="col-6 legend-item"><div class="legend-icon palette-btn not-answered"></div> Not Answered</div>
+                    <div class="col-6 legend-item"><div class="legend-icon palette-btn not-visited"></div> Not Visited</div>
+                    <div class="col-6 legend-item"><div class="legend-icon palette-btn marked"></div> Marked</div>
+                </div>
+            </div>
+            <div class="palette-grid" id="palette-grid">
+                {% for q in questions %}
+                <button class="palette-btn not-visited" id="pal-{{ forloop.counter }}" onclick="goToQuestion({{ forloop.counter }})">{{ forloop.counter }}</button>
+                {% endfor %}
+            </div>
+            <div class="btn-submit-exam mt-auto" onclick="submitExam()">Submit Exam</div>
+        </div>
+    </div>
+
+    <script>
+        const totalQuestions = {{ questions|length }};
+        let currentIdx = 1;
+        let qStatus = {}; 
+        
+        for (let i = 1; i <= totalQuestions; i++) {
+            qStatus[i] = 1;
+        }
+        
+        function updatePalette() {
+            for (let i = 1; i <= totalQuestions; i++) {
+                let btn = document.getElementById('pal-' + i);
+                if(!btn) continue;
+                btn.className = 'palette-btn';
+                if (i === currentIdx) btn.classList.add('active');
+                
+                if (qStatus[i] === 1) btn.classList.add('not-visited');
+                else if (qStatus[i] === 2) btn.classList.add('not-answered');
+                else if (qStatus[i] === 3) btn.classList.add('answered');
+                else if (qStatus[i] === 4) btn.classList.add('marked');
+                else if (qStatus[i] === 5) btn.classList.add('marked-answered');
+            }
+        }
+        
+        function goToQuestion(idx) {
+            if (qStatus[currentIdx] === 1) {
+                if (!hasAnswer(currentIdx)) qStatus[currentIdx] = 2;
+            }
+            document.querySelectorAll('.q-container').forEach(c => c.classList.remove('active'));
+            let nextQ = document.getElementById('q-container-' + idx);
+            if(nextQ) nextQ.classList.add('active');
+            currentIdx = idx;
+            if (qStatus[currentIdx] === 1) qStatus[currentIdx] = 2;
+            updatePalette();
+        }
+        
+        function selectOption(idx, val) {
+            let container = document.getElementById('q-container-' + idx);
+            let radios = container.querySelectorAll('input[type="radio"]');
+            radios.forEach(r => r.checked = (r.value === val));
+            
+            container.querySelectorAll('.option-label').forEach(l => l.classList.remove('selected'));
+            let selectedRadio = container.querySelector(`input[value="${val}"]`);
+            if(selectedRadio) selectedRadio.parentElement.classList.add('selected');
+        }
+        
+        function hasAnswer(idx) {
+            let container = document.getElementById('q-container-' + idx);
+            if(!container) return false;
+            let checked = container.querySelector('input[type="radio"]:checked');
+            return checked !== null;
+        }
+        
+        function clearResponse() {
+            let container = document.getElementById('q-container-' + currentIdx);
+            let radios = container.querySelectorAll('input[type="radio"]');
+            radios.forEach(r => r.checked = false);
+            container.querySelectorAll('.option-label').forEach(l => l.classList.remove('selected'));
+            qStatus[currentIdx] = 2;
+            updatePalette();
+        }
+        
+        function saveAndNext() {
+            if (hasAnswer(currentIdx)) {
+                qStatus[currentIdx] = 3;
+            } else {
+                qStatus[currentIdx] = 2;
+            }
+            if (currentIdx < totalQuestions) {
+                goToQuestion(currentIdx + 1);
+            } else {
+                updatePalette();
+            }
+        }
+        
+        function markForReview() {
+            if (hasAnswer(currentIdx)) {
+                qStatus[currentIdx] = 5;
+            } else {
+                qStatus[currentIdx] = 4;
+            }
+            if (currentIdx < totalQuestions) {
+                goToQuestion(currentIdx + 1);
+            } else {
+                updatePalette();
+            }
+        }
+        
+        let durationMinutes = parseInt("{{ contest.duration_minutes|default:90 }}");
+        let endTime = new Date().getTime() + durationMinutes * 60000;
+        let timerInterval = setInterval(function() {
+            let now = new Date().getTime();
+            let distance = endTime - now;
+            if (distance < 0) {
+                clearInterval(timerInterval);
+                document.getElementById("timer").innerHTML = "EXAM ENDED";
+                autoSubmit();
+                return;
+            }
+            let hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            let minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            let seconds = Math.floor((distance % (1000 * 60)) / 1000);
+            document.getElementById("timer").innerHTML = "Time Left: " + 
+                (hours < 10 ? "0" + hours : hours) + ":" + 
+                (minutes < 10 ? "0" + minutes : minutes) + ":" + 
+                (seconds < 10 ? "0" + seconds : seconds);
+        }, 1000);
+
+        function gatherAnswers() {
+            let answers = {};
+            document.querySelectorAll('.q-container').forEach(c => {
+                let qid = c.getAttribute('data-qid');
+                let checked = c.querySelector('input[type="radio"]:checked');
+                if (checked) {
+                    answers[qid] = checked.value;
+                }
+            });
+            return answers;
+        }
+
+        function submitExam() {
+            if(confirm("Are you sure you want to submit the exam?")) {
+                performSubmit();
+            }
+        }
+        
+        function autoSubmit() {
+            alert("Time is up! Submitting automatically.");
+            performSubmit();
+        }
+
+        function performSubmit() {
+            let payload = {
+                answers: gatherAnswers()
+            };
+            fetch("{% url 'submit_exam' contest.id %}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": "{{ csrf_token }}"
+                },
+                body: JSON.stringify(payload)
+            }).then(res => res.json()).then(data => {
+                if(data.success) {
+                    window.location.href = data.redirect_url;
+                } else {
+                    alert(data.message || "Error submitting exam");
+                }
+            }).catch(err => {
+                alert("Network error.");
+            });
+        }
+        
+        if (totalQuestions > 0) goToQuestion(1);
+    </script>
+</body>
+</html>

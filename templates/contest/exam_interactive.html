@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam - {{ contest.title }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-void: #030611;
+            --panel-bg: rgba(12, 8, 28, 0.95);
+            --neon-blue: #00e5ff;
+            --neon-purple: #7000ff;
+            --neon-green: #4ade80;
+            --text-primary: #e0f2fe;
+            --text-dim: rgba(224, 242, 254, 0.6);
+            --font-display: 'Orbitron', sans-serif;
+            --font-body: 'Inter', sans-serif;
+            --font-code: 'JetBrains Mono', monospace;
+        }
+        body {
+            background: var(--bg-void);
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        /* Topbar */
+        .exam-header {
+            background: var(--panel-bg);
+            border-bottom: 1px solid rgba(0, 114, 255, 0.2);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .exam-title {
+            font-family: var(--font-display);
+            font-size: 1.2rem;
+            color: var(--neon-blue);
+            margin: 0;
+        }
+        .timer-box {
+            background: rgba(0, 229, 255, 0.1);
+            border: 1px solid rgba(0, 229, 255, 0.3);
+            padding: 5px 15px;
+            border-radius: 6px;
+            font-family: var(--font-code);
+            font-size: 1.1rem;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .candidate-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .candidate-avatar {
+            width: 40px; height: 40px;
+            background: linear-gradient(135deg, var(--neon-purple), var(--neon-blue));
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: bold;
+        }
+        
+        /* Main Layout */
+        .exam-body {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        .palette-area {
+            width: 320px;
+            background: var(--panel-bg);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            border-left: 1px solid rgba(0, 114, 255, 0.2);
+        }
+
+        /* Question Content */
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        .question-number {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--neon-purple);
+        }
+        .question-marks {
+            font-size: 0.9rem;
+            color: var(--text-dim);
+        }
+        .q-container { display: none; }
+        .q-container.active { display: block; }
+        .c-container { display: none; }
+        .c-container.active { display: flex; }
+
+        /* Action Buttons */
+        .action-bar {
+            margin-top: auto;
+            padding-top: 20px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .btn-exam {
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-clear {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .btn-clear:hover { background: rgba(255, 255, 255, 0.2); }
+        .btn-mark {
+            background: rgba(255, 165, 0, 0.1);
+            color: #ffbf00;
+            border: 1px solid rgba(255, 165, 0, 0.4);
+        }
+        .btn-mark:hover { background: rgba(255, 165, 0, 0.2); }
+        .btn-save {
+            background: linear-gradient(135deg, var(--neon-purple), var(--neon-blue));
+            color: #fff;
+        }
+        .btn-save:hover { box-shadow: 0 0 15px rgba(0, 229, 255, 0.4); }
+
+        /* Palette */
+        .palette-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-top: 20px;
+            margin-bottom: auto;
+        }
+        .palette-btn {
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: transparent;
+            color: var(--text-primary);
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .palette-btn.answered {
+            background: var(--neon-green);
+            color: #000;
+            border-color: var(--neon-green);
+        }
+        .palette-btn.marked {
+            background: #ffbf00;
+            color: #000;
+            border-color: #ffbf00;
+            border-radius: 50% 50% 0 50%; 
+        }
+        .palette-btn.marked-answered {
+            background: var(--neon-green);
+            color: #000;
+            border-color: var(--neon-green);
+            position: relative;
+        }
+        .palette-btn.marked-answered::after {
+            content: '';
+            position: absolute;
+            bottom: 2px; right: 2px;
+            width: 10px; height: 10px;
+            background: #ffbf00;
+            border-radius: 50%;
+        }
+        .palette-btn.not-visited {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .palette-btn.not-answered {
+            background: #ff4757;
+            color: white;
+            border-color: #ff4757;
+            border-radius: 6px;
+        }
+        .palette-btn.active {
+            box-shadow: 0 0 0 3px rgba(0, 229, 255, 0.5);
+        }
+
+        .legend {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+        .legend-icon {
+            width: 20px; height: 20px;
+            display: inline-block;
+        }
+
+        .btn-submit-exam {
+            background: rgba(255, 71, 87, 0.1);
+            color: #ff4757;
+            border: 1px solid rgba(255, 71, 87, 0.4);
+            padding: 12px;
+            border-radius: 6px;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 20px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-submit-exam:hover {
+            background: #ff4757;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="exam-header">
+        <h1 class="exam-title"><i class="fas fa-laptop-code me-2"></i>{{ contest.title }}</h1>
+        <div class="timer-box">
+            <i class="fas fa-clock" style="color: var(--neon-blue);"></i>
+            <span id="timer">Time Left: --:--:--</span>
+        </div>
+        <div class="candidate-info">
+            <div class="text-end">
+                <div style="font-weight: 600; font-size: 0.9rem;">{{ request.user.get_full_name|default:request.user.username }}</div>
+                <div style="font-size: 0.75rem; color: var(--text-dim);">Candidate</div>
+            </div>
+            <div class="candidate-avatar"><i class="fas fa-user"></i></div>
+        </div>
+    </header>
+
+    <div class="exam-body">
+        
+        <!-- Left: Split Panel for Interactive -->
+        <div style="flex: 1; display: flex; flex-direction: row; overflow: hidden; padding: 0;">
+            <!-- Problem Description -->
+            <div style="width: 40%; padding: 30px; overflow-y: auto; border-right: 1px solid rgba(0, 114, 255, 0.2);">
+                {% for q in questions %}
+                <div class="q-container" id="q-container-{{ forloop.counter }}" data-qid="{{ q.id }}" data-idx="{{ forloop.counter }}">
+                    <div class="question-header">
+                        <div class="question-number">Question No. <span>{{ forloop.counter }}</span></div>
+                        <div class="question-marks">Marks: <span class="text-success">+{{ q.marks }}</span></div>
+                    </div>
+                    <h4 style="color: var(--neon-blue);">{{ q.title }}</h4>
+                    <div style="font-size: 1rem; margin-top: 15px; line-height: 1.6;">
+                        {{ q.description|linebreaksbr }}
+                    </div>
+                    
+                    {% if q.constraints %}
+                    <div class="mt-4">
+                        <h6 style="color: var(--neon-purple);">Constraints</h6>
+                        <pre style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px; color: var(--text-dim); white-space: pre-wrap;">{{ q.constraints }}</pre>
+                    </div>
+                    {% endif %}
+                    
+                    {% if q.sample_input %}
+                    <div class="mt-4">
+                        <h6 style="color: var(--neon-purple);">Sample Input</h6>
+                        <pre style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px; color: var(--neon-cyan); white-space: pre-wrap;">{{ q.sample_input }}</pre>
+                    </div>
+                    {% endif %}
+                    
+                    {% if q.sample_output %}
+                    <div class="mt-4">
+                        <h6 style="color: var(--neon-purple);">Sample Output</h6>
+                        <pre style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px; color: var(--neon-green); white-space: pre-wrap;">{{ q.sample_output }}</pre>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Code Editor Area -->
+            <div style="width: 60%; padding: 20px; display: flex; flex-direction: column;">
+                {% for q in questions %}
+                <div class="c-container" id="c-container-{{ forloop.counter }}" style="height: 100%; flex-direction: column;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <select id="lang-select-{{ forloop.counter }}" style="background: #0a0614; border: 1px solid rgba(176,38,255,0.3); border-radius: 6px; color: #f0eaff; padding: 5px 10px; font-family: var(--font-code); font-size: 0.85rem; outline: none;">
+                            <option value="python">Python 3</option>
+                            <option value="java">Java</option>
+                            <option value="javascript">JavaScript</option>
+                            <option value="c">C</option>
+                            <option value="cpp">C++</option>
+                            <option value="ruby">Ruby</option>
+                        </select>
+                        <button onclick="runCode('{{ q.id }}', {{ forloop.counter }})" style="padding: 6px 15px; border-radius: 6px; border: none; background: linear-gradient(135deg, #00fff7, #b026ff); color: #fff; font-family: var(--font-display); font-size: 0.8rem; font-weight: 700; cursor: pointer;">
+                            <i class="fas fa-play"></i> RUN
+                        </button>
+                    </div>
+                    <textarea id="code-editor-{{ forloop.counter }}" oninput="checkCodeChange({{ forloop.counter }})" style="flex: 1; min-height: 200px; background: #0a0614; color: #f0eaff; font-family: var(--font-code); font-size: 0.95rem; padding: 16px; border: 1px solid rgba(176,38,255,0.3); border-radius: 12px; outline: none; resize: none; tab-size: 4;" placeholder="# Write your code here..."></textarea>
+                    
+                    <div style="margin-top: 15px; font-family: var(--font-code); font-size: 0.8rem; color: var(--neon-purple); margin-bottom: 5px;">// OUTPUT CONSOLE</div>
+                    <pre id="output-console-{{ forloop.counter }}" style="height: 120px; background: #0a0614; border: 1px solid rgba(0,255,247,0.3); border-radius: 8px; padding: 12px; color: rgba(240,234,255,0.7); font-family: var(--font-code); font-size: 0.85rem; overflow-y: auto; white-space: pre-wrap; margin: 0;">Click RUN to test your code against sample test cases.</pre>
+                </div>
+                {% endfor %}
+                <div class="action-bar">
+                    <div>
+                        <button class="btn-exam btn-mark me-2" onclick="markForReview()">Mark for Review</button>
+                        <button class="btn-exam btn-clear" onclick="clearResponse()">Clear Code</button>
+                    </div>
+                    <button class="btn-exam btn-save" onclick="saveAndNext()">Save & Next</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Palette -->
+        <div class="palette-area">
+            <h5 style="font-family: var(--font-display); font-size: 1rem; margin-bottom: 15px;">Question Palette</h5>
+            <div class="legend">
+                <div class="row g-2">
+                    <div class="col-6 legend-item"><div class="legend-icon palette-btn answered"></div> Answered</div>
+                    <div class="col-6 legend-item"><div class="legend-icon palette-btn not-answered"></div> Not Answered</div>
+                    <div class="col-6 legend-item"><div class="legend-icon palette-btn not-visited"></div> Not Visited</div>
+                    <div class="col-6 legend-item"><div class="legend-icon palette-btn marked"></div> Marked</div>
+                </div>
+            </div>
+            <div class="palette-grid" id="palette-grid">
+                {% for q in questions %}
+                <button class="palette-btn not-visited" id="pal-{{ forloop.counter }}" onclick="goToQuestion({{ forloop.counter }})">{{ forloop.counter }}</button>
+                {% endfor %}
+            </div>
+            <div class="btn-submit-exam mt-auto" onclick="submitExam()">Submit Exam</div>
+        </div>
+    </div>
+
+    <script>
+        const totalQuestions = {{ questions|length }};
+        let currentIdx = 1;
+        let qStatus = {}; 
+        
+        for (let i = 1; i <= totalQuestions; i++) {
+            qStatus[i] = 1;
+        }
+
+        // Initialize first question
+        if (totalQuestions > 0) {
+            document.getElementById('q-container-1').classList.add('active');
+            document.getElementById('c-container-1').classList.add('active');
+            qStatus[1] = 2; // Not answered initially
+            updatePalette();
+        }
+        
+        function updatePalette() {
+            for (let i = 1; i <= totalQuestions; i++) {
+                let btn = document.getElementById('pal-' + i);
+                if(!btn) continue;
+                btn.className = 'palette-btn';
+                if (i === currentIdx) btn.classList.add('active');
+                
+                if (qStatus[i] === 1) btn.classList.add('not-visited');
+                else if (qStatus[i] === 2) btn.classList.add('not-answered');
+                else if (qStatus[i] === 3) btn.classList.add('answered');
+                else if (qStatus[i] === 4) btn.classList.add('marked');
+                else if (qStatus[i] === 5) btn.classList.add('marked-answered');
+            }
+        }
+        
+        function goToQuestion(idx) {
+            if (qStatus[currentIdx] === 1) {
+                if (!hasAnswer(currentIdx)) qStatus[currentIdx] = 2;
+            }
+            
+            document.querySelectorAll('.q-container').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.c-container').forEach(c => c.classList.remove('active'));
+            
+            let nextQ = document.getElementById('q-container-' + idx);
+            if(nextQ) nextQ.classList.add('active');
+            
+            let nextC = document.getElementById('c-container-' + idx);
+            if(nextC) nextC.classList.add('active');
+            
+            currentIdx = idx;
+            if (qStatus[currentIdx] === 1) qStatus[currentIdx] = 2;
+            updatePalette();
+        }
+        
+        function hasAnswer(idx) {
+            let codeBox = document.getElementById('code-editor-' + idx);
+            if(!codeBox) return false;
+            return codeBox.value.trim().length > 0;
+        }
+
+        function checkCodeChange(idx) {
+            // Update palette color slightly if they start typing and it was not answered
+            if(qStatus[idx] === 2 && hasAnswer(idx)) {
+                // Optionally auto-mark as answered when they type, but let's stick to explicit 'save and next'
+            }
+        }
+        
+        function clearResponse() {
+            let codeBox = document.getElementById('code-editor-' + currentIdx);
+            if(codeBox) codeBox.value = '';
+            qStatus[currentIdx] = 2;
+            updatePalette();
+        }
+        
+        function saveAndNext() {
+            if (hasAnswer(currentIdx)) {
+                qStatus[currentIdx] = 3;
+            } else {
+                qStatus[currentIdx] = 2;
+            }
+            if (currentIdx < totalQuestions) {
+                goToQuestion(currentIdx + 1);
+            } else {
+                updatePalette();
+            }
+        }
+        
+        function markForReview() {
+            if (hasAnswer(currentIdx)) {
+                qStatus[currentIdx] = 5;
+            } else {
+                qStatus[currentIdx] = 4;
+            }
+            if (currentIdx < totalQuestions) {
+                goToQuestion(currentIdx + 1);
+            } else {
+                updatePalette();
+            }
+        }
+        
+        // Timer Logic
+        let durationMinutes = parseInt("{{ contest.duration_minutes|default:90 }}");
+        let endTime = new Date().getTime() + durationMinutes * 60000;
+        let timerInterval = setInterval(function() {
+            let now = new Date().getTime();
+            let distance = endTime - now;
+            if (distance < 0) {
+                clearInterval(timerInterval);
+                document.getElementById("timer").innerHTML = "EXAM ENDED";
+                autoSubmit();
+                return;
+            }
+            let hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            let minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            let seconds = Math.floor((distance % (1000 * 60)) / 1000);
+            document.getElementById("timer").innerHTML = "Time Left: " + 
+                (hours < 10 ? "0" + hours : hours) + ":" + 
+                (minutes < 10 ? "0" + minutes : minutes) + ":" + 
+                (seconds < 10 ? "0" + seconds : seconds);
+        }, 1000);
+
+        function gatherAnswers() {
+            let answers = {};
+            document.querySelectorAll('.q-container').forEach(c => {
+                let qid = c.getAttribute('data-qid');
+                let idx = c.getAttribute('data-idx');
+                let codeBox = document.getElementById('code-editor-' + idx);
+                let langSelect = document.getElementById('lang-select-' + idx);
+                if (codeBox && langSelect) {
+                    answers[qid] = {
+                        'code': codeBox.value,
+                        'language': langSelect.value
+                    };
+                }
+            });
+            return answers;
+        }
+
+        function runCode(qid, idx) {
+            let codeBox = document.getElementById('code-editor-' + idx);
+            let langSelect = document.getElementById('lang-select-' + idx);
+            let consoleBox = document.getElementById('output-console-' + idx);
+            
+            if (!codeBox || !langSelect || !consoleBox) return;
+            
+            let code = codeBox.value;
+            let lang = langSelect.value;
+            
+            if (code.trim().length === 0) {
+                consoleBox.innerHTML = '<span style="color: #ff4757;">// Please write some code before running.</span>';
+                return;
+            }
+            
+            consoleBox.innerHTML = '<span style="color: #ffbf00;">// Running...</span>';
+            
+            fetch(`/contest/run/${qid}/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({ code: code, language: lang })
+            })
+            .then(res => res.json())
+            .then(data => {
+                let outputLines = [];
+                if (data.output) {
+                    let rawLines = data.output.split('\n');
+                    rawLines.forEach(line => {
+                        if (line.includes('✓ Passed')) outputLines.push(`<span style="color:#00ff82;font-weight:700;">${line}</span>`);
+                        else if (line.includes('✗ Failed')) outputLines.push(`<span style="color:#ff2d78;font-weight:700;">${line}</span>`);
+                        else if (line.trim().startsWith('Input:')) outputLines.push(`<span style="color:rgba(240,234,255,0.5);">${line}</span>`);
+                        else if (line.trim().startsWith('Expected:')) outputLines.push(`<span style="color:#00fff7;">${line}</span>`);
+                        else if (line.trim().startsWith('Got:')) outputLines.push(`<span style="color:#ffbf00;">${line}</span>`);
+                        else outputLines.push(line);
+                    });
+                    consoleBox.innerHTML = outputLines.join('\n');
+                } else {
+                    consoleBox.innerHTML = '// No output returned';
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                consoleBox.innerHTML = '<span style="color: #ff4757;">// Network or Server Error.</span>';
+            });
+        }
+
+        function submitExam() {
+            if(confirm("Are you sure you want to submit the exam?")) {
+                performSubmit();
+            }
+        }
+        
+        function autoSubmit() {
+            alert("Time is up! Submitting automatically.");
+            performSubmit();
+        }
+
+        function performSubmit() {
+            let payload = {
+                answers: gatherAnswers()
+            };
+            fetch("{% url 'submit_exam' contest.id %}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": "{{ csrf_token }}"
+                },
+                body: JSON.stringify(payload)
+            }).then(res => res.json()).then(data => {
+                if (data.success) {
+                    alert("Exam submitted successfully!");
+                    window.location.href = data.redirect_url;
+                } else {
+                    alert("Submission failed: " + data.message);
+                }
+            }).catch(err => {
+                console.error(err);
+                alert("An error occurred while submitting.");
+            });
+        }
+    </script>
+</body>
+</html>

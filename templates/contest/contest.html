@@ -3,7 +3,10 @@
 {% block content %}
 {% include 'includes/back_button.html' with fallback_url='/' %}
 
-<div class="anim-in" style="text-align:center;margin-bottom:36px;">
+<div class="anim-in" style="text-align:center;margin-bottom:36px;position:relative;">
+  <div style="position:absolute; top: 0; right: 0;">
+    <a href="{% url 'candidate_analytics' %}" class="btn-neon" style="font-size: 0.8rem; padding: 8px 16px;"><i class="fas fa-chart-line me-2"></i>View Analytics</a>
+  </div>
   <div style="font-family:'JetBrains Mono',monospace;font-size:0.68rem;letter-spacing:3px;color:var(--neon-cyan);margin-bottom:10px;">// COMPETE</div>
   <h2 style="font-family:'Orbitron',monospace;font-size:2rem;font-weight:900;color:#f0eaff;">
     <i class="fas fa-flag-checkered" style="color:#ff2d78;margin-right:10px;"></i>
@@ -24,51 +27,73 @@
       <div class="card-glass p-4">
         <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px;">
           <h5 style="font-family:'Orbitron',monospace;font-weight:700;color:#f0eaff;font-size:0.95rem;margin:0;">{{ contest.title }}</h5>
-          <span style="background:rgba(0,255,247,0.1);color:#00fff7;padding:3px 12px;border-radius:20px;font-size:0.68rem;font-family:'JetBrains Mono',monospace;border:1px solid rgba(0,255,247,0.3);">Upcoming</span>
+          {% if contest.id in user_registrations %}
+            <span style="background:linear-gradient(90deg, rgba(255,165,0,0.2), rgba(255,223,0,0.2)); color:#ffbf00; padding:3px 12px; border-radius:20px; font-size:0.68rem; font-family:'JetBrains Mono',monospace; border:1px solid rgba(255,191,0,0.4);">Registered</span>
+          {% else %}
+            <span style="background:rgba(0,255,247,0.1);color:#00fff7;padding:3px 12px;border-radius:20px;font-size:0.68rem;font-family:'JetBrains Mono',monospace;border:1px solid rgba(0,255,247,0.3);">Upcoming</span>
+          {% endif %}
         </div>
-        <p style="color:rgba(240,234,255,0.45);font-size:0.82rem;margin-bottom:12px;">{{ contest.problem_count }} 4 problems · 90 minutes · All levels</p>
+        <p style="color:rgba(240,234,255,0.45);font-size:0.82rem;margin-bottom:12px;">{{ contest.duration_minutes }} minutes · {{ contest.get_format_type_display }}</p>
         <div style="color:#b026ff;font-size:0.78rem;font-family:'JetBrains Mono',monospace;margin-bottom:16px;">
           <i class="fas fa-calendar" style="margin-right:6px;"></i>{{ contest.start_time|date:"D d M, H:i" }}
         </div>
-        <a href="/contest/register/{{ contest.pk }}/" class="btn-neon" style="font-size:0.78rem;">Register</a>
+        {% if contest.id in user_registrations %}
+            <button class="btn-neon" style="font-size:0.78rem; opacity: 0.5; cursor: not-allowed; pointer-events: none;">Starts Soon</button>
+        {% else %}
+            <button onclick="openRegisterModal({{ contest.id }}, '{{ contest.title|escapejs }}')" class="btn-neon" style="font-size:0.78rem;">Register</button>
+        {% endif %}
       </div>
     </div>
     {% empty %}
-    <div class="col-12">
-      <div class="card-glass p-4" style="text-align:center;">
-        <div class="row g-3">
-          <div class="col-md-6">
-            <div class="card-glass p-4">
-              <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px;">
-                <h5 style="font-family:'Orbitron',monospace;font-weight:700;color:#f0eaff;font-size:0.95rem;margin:0;">LogicLabs Weekly #42</h5>
-                <span style="background:rgba(0,255,247,0.1);color:#00fff7;padding:3px 12px;border-radius:20px;font-size:0.68rem;font-family:'JetBrains Mono',monospace;border:1px solid rgba(0,255,247,0.3);">Upcoming</span>
-              </div>
-              <p style="color:rgba(240,234,255,0.45);font-size:0.82rem;margin-bottom:12px;">4 problems · 90 minutes · All levels</p>
-              <div style="color:#b026ff;font-size:0.78rem;font-family:'JetBrains Mono',monospace;margin-bottom:16px;">
-                <i class="fas fa-calendar" style="margin-right:6px;"></i>Every Sunday 8:00 PM IST
-              </div>
-              <a href="/contest/register/1/" class="btn-neon" style="font-size:0.78rem;">Register</a>
-            </div>
-          </div>
-          <div class="col-md-6">
-            <div class="card-glass p-4">
-              <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px;">
-                <h5 style="font-family:'Orbitron',monospace;font-weight:700;color:#f0eaff;font-size:0.95rem;margin:0;">LogicLabs Biweekly #21</h5>
-                <span style="background:rgba(0,255,247,0.1);color:#00fff7;padding:3px 12px;border-radius:20px;font-size:0.68rem;font-family:'JetBrains Mono',monospace;border:1px solid rgba(0,255,247,0.3);">Upcoming</span>
-              </div>
-              <p style="color:rgba(240,234,255,0.45);font-size:0.82rem;margin-bottom:12px;">4 problems · 90 minutes · Intermediate+</p>
-              <div style="color:#b026ff;font-size:0.78rem;font-family:'JetBrains Mono',monospace;margin-bottom:16px;">
-                <i class="fas fa-calendar" style="margin-right:6px;"></i>Every other Saturday 8:00 PM IST
-              </div>
-              <a href="/contest/register/{{ contest.pk }}/" class="btn-neon" style="font-size:0.78rem;"z>Register</a>
-            </div>
+        <div class="col-12">
+          <div class="card-glass p-4" style="text-align:center; color: var(--text-dim);">
+            No upcoming contests at this time.
           </div>
         </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Active / In Progress -->
+{% if active %}
+<div class="anim-in anim-d1" style="margin-bottom:28px;">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
+    <i class="fas fa-play-circle" style="color:#4ade80;"></i>
+    <span style="font-family:'Orbitron',monospace;font-size:0.9rem;font-weight:700;color:#4ade80;">In Progress</span>
+  </div>
+  <div class="row g-3">
+    {% for contest in active %}
+    <div class="col-md-6">
+      <div class="card-glass p-4">
+        <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px;">
+          <h5 style="font-family:'Orbitron',monospace;font-weight:700;color:#f0eaff;font-size:0.95rem;margin:0;">{{ contest.title }}</h5>
+          
+          {% if contest.id in user_submissions %}
+            <span style="background:rgba(74,222,128,0.1);color:#4ade80;padding:3px 12px;border-radius:20px;font-size:0.68rem;font-family:'JetBrains Mono',monospace;border:1px solid rgba(74,222,128,0.3);">Submitted</span>
+          {% elif contest.id in user_registrations %}
+            <span style="background:rgba(74,222,128,0.1);color:#4ade80;padding:3px 12px;border-radius:20px;font-size:0.68rem;font-family:'JetBrains Mono',monospace;border:1px solid rgba(74,222,128,0.3);">In Progress</span>
+          {% else %}
+            <span style="background:linear-gradient(90deg, rgba(248,113,113,0.1), rgba(255,215,0,0.1)); color:#f87171; padding:3px 12px; border-radius:20px; font-size:0.68rem; font-family:'JetBrains Mono',monospace; border:1px solid rgba(255,215,0,0.4);">Time out</span>
+          {% endif %}
+        </div>
+        <p style="color:rgba(240,234,255,0.45);font-size:0.82rem;margin-bottom:12px;">{{ contest.duration_minutes }} minutes · {{ contest.get_format_type_display }}</p>
+        <div style="color:#b026ff;font-size:0.78rem;font-family:'JetBrains Mono',monospace;margin-bottom:16px;">
+          <i class="fas fa-calendar" style="margin-right:6px;"></i>{{ contest.start_time|date:"D d M, H:i" }}
+        </div>
+        
+        {% if contest.id in user_submissions %}
+            <a href="{% url 'view_result' contest.id %}" class="btn-neon" style="font-size:0.78rem; text-decoration: none; display: inline-block;"><i class="fas fa-trophy" style="margin-right: 5px;"></i> View Results</a>
+        {% elif contest.id in user_registrations %}
+            <button onclick="openStartModal({{ contest.id }}, '{{ contest.title|escapejs }}')" class="btn-neon" style="font-size:0.78rem; background: linear-gradient(135deg, #10b981, #059669);">Start</button>
+        {% else %}
+            <button class="btn-neon" style="font-size:0.78rem; background: rgba(248,113,113,0.1); color: #fffdd0; border-color: rgba(248,113,113,0.3); cursor: not-allowed; pointer-events: none;">Not Available</button>
+        {% endif %}
       </div>
     </div>
     {% endfor %}
   </div>
 </div>
+{% endif %}
 
 <!-- Past Contests -->
 <div class="anim-in anim-d2">
@@ -76,34 +101,243 @@
     <i class="fas fa-history" style="color:#b026ff;"></i>
     <span style="font-family:'Orbitron',monospace;font-size:0.9rem;font-weight:700;color:#b026ff;">Past Contests</span>
   </div>
-  <div class="card-glass" style="background:rgba(12,8,28,0.85);">
+  <div class="card-glass" style="background:rgba(12,8,28,0.85); border: 1px solid rgba(176,38,255,0.2); border-radius: 8px; overflow: hidden;">
     <div class="table-responsive">
-      <table class="table mb-0" style="background:#0c081c;">
+      <table style="width: 100%; color: #ffffff; border-collapse: collapse;">
         <thead>
-  <tr style="background:rgba(176,38,255,0.1);">
-    <th style="color:#b026ff;padding:13px 22px;font-size:0.7rem;letter-spacing:2px;font-family:'JetBrains Mono',monospace;border-bottom:1px solid rgba(176,38,255,0.2);border-top:none;background:rgba(176,38,255,0.1);">CONTEST</th>
-    <th style="color:#b026ff;padding:13px 22px;font-size:0.7rem;letter-spacing:2px;font-family:'JetBrains Mono',monospace;border-bottom:1px solid rgba(176,38,255,0.2);border-top:none;background:rgba(176,38,255,0.1);">DATE</th>
-    <th style="color:#b026ff;padding:13px 22px;font-size:0.7rem;letter-spacing:2px;font-family:'JetBrains Mono',monospace;border-bottom:1px solid rgba(176,38,255,0.2);border-top:none;background:rgba(176,38,255,0.1);">STATUS</th>
-  </tr>
-</thead>
-        <tbody style="background:#0c081c;">
-          {% for contest in past_contests %}
-          <tr style="border-bottom:1px solid rgba(176,38,255,0.07);background:#0c081c;" onmouseover="this.style.background='rgba(176,38,255,0.05)'" onmouseout="this.style.background='#0c081c'">
-            <td style="padding:14px 22px;color:#f0eaff;font-weight:600;">{{ contest.title }}</td>
-            <td style="padding:14px 22px;color:rgba(240,234,255,0.45);font-family:'JetBrains Mono',monospace;font-size:0.8rem;">{{ contest.date }}</td>
-            <td style="padding:14px 22px;"><span class="badge-easy">Finished</span></td>
+          <tr style="background: #2a0a40; border-bottom: 1px solid rgba(176,38,255,0.3);">
+            <th style="color:#b026ff;padding:16px 22px;font-size:0.75rem;letter-spacing:2px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;">CONTEST</th>
+            <th style="color:#b026ff;padding:16px 22px;font-size:0.75rem;letter-spacing:2px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;">DATE</th>
+            <th style="color:#b026ff;padding:16px 22px;font-size:0.75rem;letter-spacing:2px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;">STATUS</th>
+            <th style="color:#b026ff;padding:16px 22px;font-size:0.75rem;letter-spacing:2px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;">ACTIONS</th>
+          </tr>
+        </thead>
+        <tbody style="background: transparent;">
+          {% for contest in past %}
+          <tr style="border-bottom:1px solid rgba(176,38,255,0.1); transition: background 0.3s;" onmouseover="this.style.background='rgba(176,38,255,0.05)'" onmouseout="this.style.background='transparent'">
+            <td style="padding:16px 22px;color:#f0eaff;font-weight:600;font-family:'Orbitron',monospace;font-size:0.9rem;">{{ contest.title }}</td>
+            <td style="padding:16px 22px;color:rgba(240,234,255,0.7);font-family:'JetBrains Mono',monospace;font-size:0.8rem;">{{ contest.start_time|date:"D d M, Y" }}</td>
+            <td style="padding:16px 22px;">
+              <span style="background:rgba(74,222,128,0.1);color:#4ade80;padding:4px 12px;border-radius:20px;font-size:0.7rem;font-family:'JetBrains Mono',monospace;border:1px solid rgba(74,222,128,0.3);">Finished</span>
+            </td>
+            <td style="padding:16px 22px;">
+                <a href="{% url 'view_result' contest.id %}" class="btn-neon" style="font-size: 0.7rem; padding: 6px 12px; margin-right: 8px; display: inline-block; text-decoration: none;"><i class="fas fa-trophy" style="margin-right: 5px;"></i> View Results</a>
+                <a href="{% url 'view_exam' contest.id %}" class="btn-neon" style="font-size: 0.7rem; padding: 6px 12px; display: inline-block; text-decoration: none; background: rgba(0,255,247,0.1); border-color: rgba(0,255,247,0.3); color: #00fff7;"><i class="fas fa-file-alt" style="margin-right: 5px;"></i> View Your Exam</a>
+            </td>
           </tr>
           {% empty %}
-          <tr style="background:#0c081c;">
-  <td colspan="3" style="padding:40px;text-align:center;color:rgba(240,234,255,0.3);background:#0c081c;font-family:'JetBrains Mono',monospace;font-size:0.85rem;">
-    // no past contests yet
-  </td>
-</tr>
+          <tr>
+            <td colspan="4" style="padding:40px;text-align:center;color:rgba(240,234,255,0.45);font-family:'JetBrains Mono',monospace;font-size:0.85rem;">
+              // No contest available currently.
+            </td>
+          </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
   </div>
 </div>
+
+<style>
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(3, 6, 17, 0.8);
+    backdrop-filter: blur(8px);
+    z-index: 2000;
+    justify-content: center;
+    align-items: center;
+}
+.modal-overlay.active {
+    display: flex;
+}
+.modal-content {
+    background: rgba(12, 8, 28, 0.95);
+    border: 1px solid rgba(0, 114, 255, 0.3);
+    border-radius: 12px;
+    padding: 30px;
+    width: 90%;
+    max-width: 500px;
+    position: relative;
+    box-shadow: 0 0 25px rgba(0, 114, 255, 0.2);
+}
+.modal-close {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.modal-close:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+.form-control {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    color: white !important;
+}
+.form-control:focus {
+    border-color: #00e5ff !important;
+    box-shadow: 0 0 10px rgba(0, 229, 255, 0.2) !important;
+}
+.form-label {
+    color: rgba(224, 242, 254, 0.7);
+}
+</style>
+
+<!-- Registration Modal -->
+<div class="modal-overlay" id="registerModal">
+    <div class="modal-content">
+        <button class="modal-close" onclick="closeRegisterModal()"><i class="fas fa-times"></i> Close</button>
+        
+        <div style="text-align: center; margin-bottom: 20px; padding-top: 10px;">
+            <h4 style="font-family: var(--font-display); color: var(--neon-blue);">REGISTER CONTEST</h4>
+            <p id="registerModalTitle" class="text-muted"></p>
+        </div>
+
+        <form method="POST" id="registerForm" onsubmit="return validateRegisterForm(event)">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label class="form-label">Candidate Name</label>
+                <input type="text" name="candidate_name" class="form-control" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Candidate Email ID</label>
+                <input type="email" name="candidate_email" class="form-control" value="{{ request.user.email }}" required>
+            </div>
+            <div class="mb-3 position-relative">
+                <label class="form-label">Create Exam PIN (Password)</label>
+                <div class="input-group">
+                    <input type="password" name="password" id="regPassword" class="form-control" required>
+                    <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('regPassword', this)" style="border-color: rgba(255,255,255,0.15); color: white;"><i class="fas fa-eye"></i></button>
+                </div>
+            </div>
+            <div class="mb-4 position-relative">
+                <label class="form-label">Confirm Exam PIN (Password)</label>
+                <div class="input-group">
+                    <input type="password" name="confirm_password" id="regConfirmPassword" class="form-control" required>
+                    <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('regConfirmPassword', this)" style="border-color: rgba(255,255,255,0.15); color: white;"><i class="fas fa-eye"></i></button>
+                </div>
+                <div id="passwordMatchError" class="text-danger" style="display: none; font-size: 0.8rem; margin-top: 5px;">Passwords do not match.</div>
+            </div>
+            <button type="submit" class="btn-neon w-100">Confirm Registration</button>
+        </form>
+    </div>
+</div>
+
+<!-- Start Exam Auth Modal -->
+<div class="modal-overlay" id="startModal">
+    <div class="modal-content">
+        <button class="modal-close" onclick="closeStartModal()"><i class="fas fa-times"></i> Close</button>
+        
+        <div style="text-align: center; margin-bottom: 20px; padding-top: 10px;">
+            <h4 style="font-family: var(--font-display); color: #4ade80;">START EXAM</h4>
+            <p id="startModalTitle" class="text-muted"></p>
+        </div>
+
+        <form id="startForm">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label class="form-label">Candidate Email ID</label>
+                <input type="email" name="email" class="form-control" value="{{ request.user.email }}" required>
+            </div>
+            <div class="mb-4 position-relative">
+                <label class="form-label">Exam PIN (Password)</label>
+                <div class="input-group">
+                    <input type="password" name="password" id="startPassword" class="form-control" required>
+                    <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('startPassword', this)" style="border-color: rgba(255,255,255,0.15); color: white;"><i class="fas fa-eye"></i></button>
+                </div>
+            </div>
+            <div id="startAuthError" class="text-danger mb-3" style="display: none; font-size: 0.8rem;"></div>
+            <button type="submit" class="btn-neon w-100" style="background: linear-gradient(135deg, #10b981, #059669);">Authenticate & Start</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openRegisterModal(contestId, contestTitle) {
+        document.getElementById('registerModalTitle').innerText = contestTitle;
+        document.getElementById('registerForm').action = "/contest/register/" + contestId + "/";
+        document.getElementById('passwordMatchError').style.display = 'none';
+        document.getElementById('registerModal').classList.add('active');
+    }
+    function closeRegisterModal() {
+        document.getElementById('registerModal').classList.remove('active');
+    }
+    
+    function openStartModal(contestId, contestTitle) {
+        document.getElementById('startModalTitle').innerText = contestTitle;
+        document.getElementById('startForm').action = "/contest/start/" + contestId + "/";
+        document.getElementById('startAuthError').style.display = 'none';
+        document.getElementById('startModal').classList.add('active');
+    }
+    function closeStartModal() {
+        document.getElementById('startModal').classList.remove('active');
+    }
+
+    function togglePassword(inputId, btn) {
+        const input = document.getElementById(inputId);
+        const icon = btn.querySelector('i');
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
+    }
+
+    function validateRegisterForm(e) {
+        const p1 = document.getElementById('regPassword').value;
+        const p2 = document.getElementById('regConfirmPassword').value;
+        if (p1 !== p2) {
+            e.preventDefault();
+            document.getElementById('passwordMatchError').style.display = 'block';
+            return false;
+        }
+        document.getElementById('passwordMatchError').style.display = 'none';
+        return true;
+    }
+
+    document.getElementById('startForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        const errorDiv = document.getElementById('startAuthError');
+        errorDiv.style.display = 'none';
+        
+        fetch(this.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                closeStartModal();
+                window.open(data.exam_url, '_blank');
+            } else {
+                errorDiv.innerText = data.message || 'Authentication failed';
+                errorDiv.style.display = 'block';
+            }
+        })
+        .catch(err => {
+            errorDiv.innerText = 'An error occurred. Please try again.';
+            errorDiv.style.display = 'block';
+        });
+    });
+</script>
 
 {% endblock %}
