@@ -167,6 +167,7 @@ def settings_view(request):
         "editor_form": EditorPreferencesForm(instance=settings_obj),
         "privacy_form": PrivacySettingsForm(instance=settings_obj),
         "settings": settings_obj,
+        "user_settings": settings_obj,
     }
 
     return render(request, "accounts/settings.html", context)
