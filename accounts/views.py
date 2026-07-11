@@ -136,6 +136,10 @@ def profile_view(request, username=None):
             return redirect('/')
 
     submissions       = Submission.objects.filter(user=profile_user)
+    recent_submissions = submissions.order_by('-submitted_at')[:5]
+    easy_solved = submissions.filter(question__difficulty='Easy', score__gt=0).count()
+    medium_solved = submissions.filter(question__difficulty='Medium', score__gt=0).count()
+    hard_solved = submissions.filter(question__difficulty='Hard', score__gt=0).count()
     total_submissions = submissions.count()
     total_score       = submissions.aggregate(total=Sum('score'))['total'] or 0
     problems_solved   = submissions.filter(
@@ -146,6 +150,10 @@ def profile_view(request, username=None):
         'total_submissions': total_submissions,
         'total_score':       total_score,
         'problems_solved':   problems_solved,
+        'recent_submissions': recent_submissions,
+        'easy_solved': easy_solved,
+        'medium_solved': medium_solved,
+        'hard_solved': hard_solved,
     })
 
 @login_required
